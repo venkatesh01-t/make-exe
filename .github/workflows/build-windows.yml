@@ -22,7 +22,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install nuitka ordered-set zstandard
+          pip install nuitka ordered-set zstandard customtkinter darkdetect requests
 
       - name: Build EXE with Nuitka
         run: |
