@@ -26,7 +26,7 @@ jobs:
 
       - name: Build EXE with Nuitka
         run: |
-          python -m nuitka --onefile --standalone --mingw64 --assume-yes-for-downloads  main.py
+          python -m nuitka --onefile --standalone --enable-plugin=tk-inter --include-package=requests --include-package=customtkinter --include-package=darkdetect --follow-imports --mingw64 --assume-yes-for-downloads  main.py
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
