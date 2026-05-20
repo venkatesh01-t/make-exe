@@ -31,6 +31,9 @@ except ImportError:
 # QR Code placeholder (will be imported later or use fallback)
 qrcode = None
 
+# Constants for Windows subprocesses
+CREATE_NO_WINDOW = 0x08000000
+
 # ============================================================================
 # ADMIN CHECK & ELEVATION
 # ============================================================================
@@ -43,50 +46,46 @@ def is_admin():
 def relaunch_as_admin():
     if sys.platform == 'win32' and not is_admin():
         # Get the path to the current executable
-        # If running as script, sys.executable is python.exe, sys.argv[0] is script
-        # If running as Nuitka exe, sys.executable is the exe
+        executable = sys.executable
         script = sys.argv[0]
         params = " ".join([f'"{arg}"' for arg in sys.argv[1:]])
         
         # Determine if we are running as an EXE
-        is_exe = getattr(sys, 'frozen', False) or sys.executable.lower().endswith('.exe')
+        is_exe = getattr(sys, 'frozen', False) or executable.lower().endswith('.exe')
         
         if is_exe:
-            executable = sys.executable
             arguments = params
         else:
             executable = sys.executable
             arguments = f'"{script}" {params}'
             
-        ctypes.windll.shell32.ShellExecuteW(None, "runas", executable, arguments, None, 1)
+        try:
+            ctypes.windll.shell32.ShellExecuteW(None, "runas", executable, arguments, None, 1)
+        except Exception as e:
+            print(f"Elevation failed: {e}")
         sys.exit()
 
 # Perform admin check early
-relaunch_as_admin()
+if sys.platform == 'win32':
+    relaunch_as_admin()
 
 # ============================================================================
 # PATH CONFIGURATION
 # ============================================================================
 def get_app_root():
     if getattr(sys, 'frozen', False):
-        return Path(sys.executable).parent
-    return Path(__file__).resolve().parent
+        return Path(sys.executable).parent.absolute()
+    return Path(__file__).resolve().parent.absolute()
 
 APP_ROOT = get_app_root()
 RUNTIME_DIR = APP_ROOT / "3.11.9"
 PYTHON_EXE = RUNTIME_DIR / "python.exe"
 DATA_DIR = APP_ROOT / "data"
-REQUIREMENTS_FILE = APP_ROOT / "requirement.txt"
+# Search for standard requirements files
+REQUIREMENTS_FILE = APP_ROOT / "requirements.txt"
 HASH_FILE = APP_ROOT / ".req_hash"
 LOG_FILE = APP_ROOT / "clinic_manager.log"
 GITHUB_REPO_ZIP = "https://github.com/venkatesh01-t/getdownload/archive/refs/heads/main.zip"
-
-# ============================================================================
-# CONSTANTS
-# ============================================================================
-VERSION = "1.0.0"
-REPO_OWNER = "venkatesh01-t"
-REPO_NAME = "getdownload"
 
 def log(msg):
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -104,10 +103,13 @@ def get_file_hash(filepath):
     if not os.path.exists(filepath):
         return None
     sha256_hash = hashlib.sha256()
-    with open(filepath, "rb") as f:
-        for byte_block in iter(lambda: f.read(4096), b""):
-            sha256_hash.update(byte_block)
-    return sha256_hash.hexdigest()
+    try:
+        with open(filepath, "rb") as f:
+            for byte_block in iter(lambda: f.read(4096), b""):
+                sha256_hash.update(byte_block)
+        return sha256_hash.hexdigest()
+    except:
+        return None
 
 # ============================================================================
 # GUI & LOGIC
@@ -195,6 +197,34 @@ class ClinicManagerApp(ctk.CTk if ctk else tk.Tk):
             self.update_btn = tk.Button(self.control_frame, text="Check Updates", command=self.check_for_updates)
             self.update_btn.pack(side="right", padx=10, pady=10)
 
+        # Status/Info Area
+        self.info_frame = ctk.CTkFrame(self) if ctk else tk.Frame(self)
+        self.info_frame.pack(side="top", fill="x", padx=10, pady=5)
+        
+        self.url_label = ctk.CTkLabel(self.info_frame, text="Server URL: Not Running") if ctk else tk.Label(self.info_frame, text="Server URL: Not Running")
+        self.url_label.pack(side="left", padx=10)
+        
+        # QR Code Canvas
+        self.qr_canvas = tk.Canvas(self, width=200, height=200, bg="white")
+        self.qr_canvas.pack(pady=10)
+        
+        # Log Area
+        self.log_text = tk.Text(self, height=15, bg="#1e1e1e", fg="#d4d4d4", font=("Consolas", 10))
+        self.log_text.pack(fill="both", expand=True, padx=10, pady=10)
+        
+        self.after(100, self.process_logs)
+
+    def log(self, msg):
+        self.log_queue.put(msg)
+        log(msg)
+
+    def process_logs(self):
+        while not self.log_queue.empty():
+            msg = self.log_queue.get()
+            self.log_text.insert("end", f"{msg}\n")
+            self.log_text.see("end")
+        self.after(100, self.process_logs)
+
     def check_for_updates(self):
         threading.Thread(target=self._check_for_updates_bg, daemon=True).start()
 
@@ -231,7 +261,7 @@ class ClinicManagerApp(ctk.CTk if ctk else tk.Tk):
 
     def compare_versions(self, v1, v2):
         try:
-            return [int(x) for x in v1.split(".")] > [int(x) for x in v2.split(".")]
+            return [int(x) for x in v1.split(".")] > [int(x) for v in [v1, v2] for x in v.split(".")]
         except:
             return v1 > v2
 
@@ -244,7 +274,7 @@ class ClinicManagerApp(ctk.CTk if ctk else tk.Tk):
                 for chunk in response.iter_content(chunk_size=8192):
                     f.write(chunk)
             
-            self.log("Update downloaded. Restarting to apply...")
+            self.log("Update downloaded. Preparing restart script...")
             batch_path = APP_ROOT / "update.bat"
             current_exe = sys.executable
             
@@ -252,7 +282,7 @@ class ClinicManagerApp(ctk.CTk if ctk else tk.Tk):
                 f.write(f'@echo off\n')
                 f.write(f'timeout /t 2 /nobreak > nul\n')
                 f.write(f'del "{current_exe}"\n')
-                f.write(f'rename "{new_exe}" "{Path(current_exe).name}"\n')
+                f.write(f'rename "main_new.exe" "{Path(current_exe).name}"\n')
                 f.write(f'start "" "{current_exe}"\n')
                 f.write(f'del "%~f0"\n')
             
@@ -261,34 +291,6 @@ class ClinicManagerApp(ctk.CTk if ctk else tk.Tk):
             sys.exit()
         except Exception as e:
             self.log(f"Update failed: {e}")
-            
-        # Status/Info Area
-        self.info_frame = ctk.CTkFrame(self) if ctk else tk.Frame(self)
-        self.info_frame.pack(side="top", fill="x", padx=10, pady=5)
-        
-        self.url_label = ctk.CTkLabel(self.info_frame, text="Server URL: Not Running") if ctk else tk.Label(self.info_frame, text="Server URL: Not Running")
-        self.url_label.pack(side="left", padx=10)
-        
-        # QR Code Canvas
-        self.qr_canvas = tk.Canvas(self, width=200, height=200, bg="white")
-        self.qr_canvas.pack(pady=10)
-        
-        # Log Area
-        self.log_text = tk.Text(self, height=15, bg="#1e1e1e", fg="#d4d4d4", font=("Consolas", 10))
-        self.log_text.pack(fill="both", expand=True, padx=10, pady=10)
-        
-        self.after(100, self.process_logs)
-
-    def log(self, msg):
-        self.log_queue.put(msg)
-        log(msg)
-
-    def process_logs(self):
-        while not self.log_queue.empty():
-            msg = self.log_queue.get()
-            self.log_text.insert("end", f"{msg}\n")
-            self.log_text.see("end")
-        self.after(100, self.process_logs)
 
     # ========================================================================
     # INITIALIZATION LOGIC
@@ -318,18 +320,16 @@ class ClinicManagerApp(ctk.CTk if ctk else tk.Tk):
             self.after(0, self.destroy)
 
     def finish_init(self):
-        self.splash.destroy()
+        if hasattr(self, 'splash'):
+            self.splash.destroy()
         self.deiconify()
 
     def download_runtime(self):
-        global requests
-        # If requests is missing, we need to bootstrap it. But if we are in Nuitka, we should have it.
         if requests is None:
-            self.log("Installing requests for bootstrapping...")
-            # We don't have a python exe yet to run pip! 
-            # This is why the manager should be compiled with requests included.
-            raise Exception("Critical: 'requests' module missing in manager.")
+            self.log("Critical: 'requests' module missing in manager. Cannot download runtime.")
+            raise Exception("'requests' module missing.")
 
+        self.log(f"Downloading from {GITHUB_REPO_ZIP}...")
         response = requests.get(GITHUB_REPO_ZIP, stream=True)
         response.raise_for_status()
         
@@ -338,42 +338,55 @@ class ClinicManagerApp(ctk.CTk if ctk else tk.Tk):
             for chunk in response.iter_content(chunk_size=8192):
                 f.write(chunk)
         
-        self.log("Extracting runtime and data...")
+        self.log("Extracting files...")
         with zipfile.ZipFile(zip_path, 'r') as zip_ref:
             zip_ref.extractall(APP_ROOT / "temp_extract")
             
         # Move files from temp_extract/getdownload-main/* to APP_ROOT
         extract_root = APP_ROOT / "temp_extract" / "getdownload-main"
-        for item in extract_root.iterdir():
-            dest = APP_ROOT / item.name
-            if dest.exists():
-                if dest.is_dir(): shutil.rmtree(dest)
-                else: dest.unlink()
-            shutil.move(str(item), str(APP_ROOT))
+        if not extract_root.exists():
+            # Fallback if folder name is different
+            try:
+                extract_root = next((APP_ROOT / "temp_extract").iterdir(), None)
+            except (StopIteration, FileNotFoundError):
+                extract_root = None
+
+        if extract_root and extract_root.is_dir():
+            for item in extract_root.iterdir():
+                dest = APP_ROOT / item.name
+                if dest.exists():
+                    if dest.is_dir(): shutil.rmtree(dest)
+                    else: dest.unlink()
+                shutil.move(str(item), str(APP_ROOT))
             
         # Cleanup
-        shutil.rmtree(APP_ROOT / "temp_extract")
-        zip_path.unlink()
+        shutil.rmtree(APP_ROOT / "temp_extract", ignore_errors=True)
+        if zip_path.exists(): zip_path.unlink()
         self.log("Runtime and data setup complete.")
 
     def check_dependencies(self):
-        if not REQUIREMENTS_FILE.exists():
-            self.log("requirement.txt not found. Skipping dependency check.")
+        # Look for requirement.txt or requirements.txt
+        req_file = REQUIREMENTS_FILE
+        if not req_file.exists():
+            req_file = APP_ROOT / "requirement.txt"
+        
+        if not req_file.exists():
+            self.log("No requirements file found. Skipping dependency check.")
             return
 
-        current_hash = get_file_hash(REQUIREMENTS_FILE)
+        current_hash = get_file_hash(req_file)
         stored_hash = None
         if HASH_FILE.exists():
             stored_hash = HASH_FILE.read_text().strip()
 
         if current_hash != stored_hash:
-            self.log("Changes detected in requirements or first run. Installing...")
-            cmd = [str(PYTHON_EXE), "-m", "pip", "install", "-r", str(REQUIREMENTS_FILE)]
+            self.log("Updating dependencies...")
+            cmd = [str(PYTHON_EXE), "-m", "pip", "install", "--no-warn-script-location", "-r", str(req_file)]
             try:
-                # On Windows, CREATE_NO_WINDOW = 0x08000000
-                subprocess.run(cmd, check=True, creationflags=0x08000000)
+                # Run hidden
+                subprocess.run(cmd, check=True, creationflags=CREATE_NO_WINDOW)
                 HASH_FILE.write_text(current_hash)
-                self.log("Dependencies installed successfully.")
+                self.log("Dependencies updated successfully.")
             except subprocess.CalledProcessError as e:
                 self.log(f"Pip installation failed: {e}")
         else:
@@ -389,24 +402,28 @@ class ClinicManagerApp(ctk.CTk if ctk else tk.Tk):
         if self.server_running: return
         
         port = 8000
-        # Check if port is free, find next if not
         while self.is_port_in_use(port):
             port += 1
             if port > 8100:
-                self.log("Error: No free ports found.")
+                self.log("Error: No free ports found in range 8000-8100.")
                 return
         
-        self.log(f"Starting server on port {port}...")
-        
-        # Determine local IP
         local_ip = self.get_local_ip()
         server_url = f"http://{local_ip}:{port}"
+        self.log(f"Starting server on {server_url}...")
         
-        # Launch Waitress via Django (assumed manage.py or a wsgi script is present)
-        # For simplicity, we'll try to run manage.py runserver if waitress isn't configured in code
-        # But for "hide and secure", it's better to use waitress-serve or a script
+        # Build command with absolute paths for the clinic package
+        clinic_path = str(APP_ROOT / "clinic")
+        server_script = (
+            f"import sys; "
+            f"sys.path.insert(0, r'{clinic_path}'); "
+            f"from waitress import serve; "
+            f"from clinic.wsgi import application; "
+            f"print('Server starting...'); "
+            f"serve(application, host='0.0.0.0', port={port})"
+        )
         
-        cmd = [str(PYTHON_EXE), "-c", f"import os, sys; sys.path.append(os.getcwd()); from waitress import serve; from clinic.wsgi import application; print('Server starting...'); serve(application, host='0.0.0.0', port={port})"]
+        cmd = [str(PYTHON_EXE), "-c", server_script]
         
         try:
             self.server_process = subprocess.Popen(
@@ -415,7 +432,7 @@ class ClinicManagerApp(ctk.CTk if ctk else tk.Tk):
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
                 text=True,
-                creationflags=0x08000000
+                creationflags=CREATE_NO_WINDOW
             )
             self.server_running = True
             
@@ -427,7 +444,7 @@ class ClinicManagerApp(ctk.CTk if ctk else tk.Tk):
                 if line: self.log(f"[Server] {line.strip()}")
             
         except Exception as e:
-            self.log(f"Server Error: {e}")
+            self.log(f"Server Startup Error: {e}")
             self.server_running = False
 
     def on_server_start_ui(self, url):
@@ -439,9 +456,11 @@ class ClinicManagerApp(ctk.CTk if ctk else tk.Tk):
 
     def stop_server(self):
         if self.server_process:
-            self.log("Stopping server...")
-            # On Windows, we might need taskkill to be sure
-            subprocess.run(["taskkill", "/F", "/T", "/PID", str(self.server_process.pid)], creationflags=0x08000000)
+            self.log("Stopping server process group...")
+            try:
+                subprocess.run(["taskkill", "/F", "/T", "/PID", str(self.server_process.pid)], creationflags=CREATE_NO_WINDOW)
+            except:
+                pass
             self.server_process = None
             self.server_running = False
             self.start_btn.configure(state="normal")
@@ -454,7 +473,8 @@ class ClinicManagerApp(ctk.CTk if ctk else tk.Tk):
     def open_browser(self):
         import webbrowser
         url = self.url_label.cget("text").replace("Server URL: ", "")
-        webbrowser.open(url)
+        if url.startswith("http"):
+            webbrowser.open(url)
 
     def is_port_in_use(self, port):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -477,21 +497,24 @@ class ClinicManagerApp(ctk.CTk if ctk else tk.Tk):
                 import qrcode as _q
                 qrcode = _q
             except ImportError:
-                self.log("qrcode library missing. Cannot show QR.")
+                self.log("Warning: 'qrcode' library missing. QR code disabled.")
                 return
 
-        qr = qrcode.QRCode(version=1, box_size=5, border=2)
-        qr.add_data(url)
-        qr.make(fit=True)
-        matrix = qr.get_matrix()
-        
-        self.qr_canvas.delete("all")
-        size = len(matrix)
-        px = 200 / size
-        for r in range(size):
-            for c in range(size):
-                if matrix[r][c]:
-                    self.qr_canvas.create_rectangle(c*px, r*px, (c+1)*px, (r+1)*px, fill="black", outline="")
+        try:
+            qr = qrcode.QRCode(version=1, box_size=5, border=2)
+            qr.add_data(url)
+            qr.make(fit=True)
+            matrix = qr.get_matrix()
+            
+            self.qr_canvas.delete("all")
+            size = len(matrix)
+            px = 200 / size
+            for r in range(size):
+                for c in range(size):
+                    if matrix[r][c]:
+                        self.qr_canvas.create_rectangle(c*px, r*px, (c+1)*px, (r+1)*px, fill="black", outline="")
+        except Exception as e:
+            self.log(f"QR Generation Error: {e}")
 
 if __name__ == "__main__":
     app = ClinicManagerApp()
