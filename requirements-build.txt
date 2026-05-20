@@ -4,5 +4,5 @@ requests
 qrcode[pil]
 waitress
 django
-python-opencv
+opencv-python-headless
 numpy
