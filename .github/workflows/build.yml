@@ -1,0 +1,47 @@
+name: Build Clinic Manager
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install Build Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install nuitka customtkinter requests qrcode[pil] waitress 
+
+      - name: Build with Nuitka
+        run: |
+          python -m nuitka --standalone --onefile `
+            --enable-plugin=tk-inter `
+            --include-package=clinic `
+            --windows-disable-console `
+            --windows-uac-admin `
+            --output-filename=clinic_manager.exe `
+            main.py
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: clinic_manager_exe
+          path: clinic_manager.exe
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: clinic_manager.exe
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
