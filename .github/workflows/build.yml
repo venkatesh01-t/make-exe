@@ -1,109 +1,37 @@
-name: Build Windows EXE
+name: Build Windows EXE (Nuitka)
 
 on:
   push:
-    branches:
-      - main
-    tags:
-      - 'v*'
-  pull_request:
-    branches:
-      - main
   workflow_dispatch:
-    inputs:
-      onefile:
-        description: Build a single-file EXE (slower build/startup)
-        type: boolean
-        default: false
-      enable_upx:
-        description: Compress binaries with UPX (smaller, may trigger AV)
-        type: boolean
-        default: false
-
-permissions:
-  contents: write
-
-concurrency:
-  group: windows-build-${{ github.ref }}
-  cancel-in-progress: true
 
 jobs:
-  build-windows:
+  build:
     runs-on: windows-latest
-    timeout-minutes: 60
-    env:
-      APP_NAME: clinic_manager
-      PYTHON_VERSION: '3.11'
-      DIST_DIR: build_output
+
     steps:
-      - name: Checkout
+      - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: ${{ env.PYTHON_VERSION }}
-          cache: 'pip'
-          cache-dependency-path: requirements-build.txt
+          python-version: "3.11"
 
-      - name: Install build dependencies
-        shell: pwsh
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements-build.txt
+      - name: Upgrade pip
+        run: python -m pip install --upgrade pip
 
-      - name: Install UPX (optional)
-        if: ${{ inputs.enable_upx == true }}
-        shell: pwsh
+      - name: Install dependencies
         run: |
-          choco install upx -y
+          pip install nuitka ordered-set zstandard customtkinter darkdetect requests
 
-      - name: Run tests
-        shell: pwsh
+      - name: Build EXE with Nuitka
         run: |
-          python clinic/manage.py test
-
-      - name: Build with Nuitka
-        shell: pwsh
-        run: |
-          $args = @(
-            "--standalone",
-            "--enable-plugin=tk-inter",
-            "--include-package=clinic",
-            "--windows-disable-console",
-            "--windows-uac-admin",
-            "--output-filename=${{ env.APP_NAME }}.exe",
-            "--output-dir=${{ env.DIST_DIR }}",
-            "--jobs=$env:NUMBER_OF_PROCESSORS"
-          )
-          if ("${{ inputs.onefile }}" -eq "true") { $args += "--onefile" }
-          if ("${{ inputs.enable_upx }}" -eq "true") { $args += "--enable-plugin=upx" }
-          python -m nuitka @args main.py
-
-      - name: Package artifact
-        shell: pwsh
-        run: |
-          $distFolder = Get-ChildItem "${{ env.DIST_DIR }}" -Directory -Filter "*.dist" | Select-Object -First 1
-          $zipPath = Join-Path "${{ env.DIST_DIR }}" "${{ env.APP_NAME }}-windows.zip"
-          if ($distFolder) {
-            Compress-Archive -Path (Join-Path $distFolder.FullName '*') -DestinationPath $zipPath -Force
-          } else {
-            $exe = Get-ChildItem "${{ env.DIST_DIR }}" -Filter "*.exe" | Select-Object -First 1
-            if (-not $exe) { throw "No build output found in ${{ env.DIST_DIR }}" }
-            Compress-Archive -Path $exe.FullName -DestinationPath $zipPath -Force
-          }
+          python -m nuitka main.py --onefile --standalone --enable-plugin=tk-inter --include-package=clinic --include-package=requests --include-package=customtkinter --include-package=darkdetect --assume-yes-for-downloads
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ env.APP_NAME }}-windows
-          path: ${{ env.DIST_DIR }}/${{ env.APP_NAME }}-windows.zip
-          retention-days: 7
-
-      - name: Publish GitHub Release
-        if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v2
-        with:
-          files: ${{ env.DIST_DIR }}/${{ env.APP_NAME }}-windows.zip
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          name: windows-exe
+          path: |
+            *.exe
+            **/*.exe
