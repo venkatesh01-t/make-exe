@@ -1,0 +1,23 @@
+{% for i in labdetails %}
+<tr class="hover:bg-slate-50 transition">
+    <td class="py-4 px-6 font-semibold text-slate-900">
+        {{ i.lab_name }}
+    </td>
+    <td class="py-4 px-6 text-slate-600">
+        {{ i.lab_address }}
+    </td>
+    <td class="py-4 px-6 text-slate-600">
+        {{ i.lab_phone }}
+    </td>
+    <td class="py-4 px-6 text-slate-600">
+        {{ i.lab_email }}
+    </td>
+    <td class="py-4 px-6 text-center">
+        <button
+            onclick="editLabDetails('{{ i.id }}', '{{ i.lab_name }}', '{{ i.lab_address }}', '{{ i.lab_phone }}', '{{ i.lab_email }}')"
+            class="text-blue-600 hover:text-blue-800 font-medium text-sm">
+            Edit
+        </button>
+    </td>
+</tr>
+{% endfor %}

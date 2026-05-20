@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Billing Invoice - {{ invoice.invoice_number }}</title>
+    <style>
+        :root {
+            --invoice-watermark-opacity: 0.16;
+            --invoice-watermark-blur: 0.4px;
+            --ink: #0f172a;
+            --soft: #64748b;
+            --line: #e2e8f0;
+            --paper: #ffffff;
+            --panel: #f8fafc;
+            --accent: #0f766e;
+            --warn: #f59e0b;
+            --paid: #16a34a;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 22px;
+            background: radial-gradient(circle at 20% 0%, #1f2937 0%, #0f172a 42%, #020617 100%);
+            color: var(--ink);
+            font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+        }
+
+        .toolbar {
+            width: 210mm;
+            margin: 0 auto 14px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .btn {
+            border: 0;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            padding: 10px 14px;
+            transition: 0.2s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+        }
+
+        .btn-print {
+            background: #14b8a6;
+            color: white;
+        }
+
+        .btn-download {
+            background: #2563eb;
+            color: white;
+        }
+
+        #invoice-print-source.a4-container {
+            background: var(--paper);
+            width: 210mm;
+            height: 297mm;
+            padding: 10mm;
+            margin: 0 auto;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            position: relative;
+            transform-origin: top center;
+            overflow: hidden;
+        }
+
+        .page-border {
+            border: 2px solid #1e293b;
+            height: 100%;
+            padding: 5mm 8mm 8mm;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            z-index: 1;
+            background: #fff;
+        }
+
+        .invoice-watermark {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 0;
+            pointer-events: none;
+            user-select: none;
+        }
+
+        .invoice-watermark-logo {
+            width: clamp(90px, 32vmin, 320px);
+            height: clamp(90px, 32vmin, 320px);
+            object-fit: contain;
+            opacity: var(--invoice-watermark-opacity);
+            filter: blur(var(--invoice-watermark-blur));
+        }
+
+        .invoice-watermark-text {
+            font-size: clamp(56px, 12vmin, 116px);
+            letter-spacing: 0.14em;
+            font-weight: 800;
+            color: #cbd5e1;
+            opacity: var(--invoice-watermark-opacity);
+            transform: rotate(-36deg);
+        }
+
+        .header {
+            border-bottom: 2px solid #1e293b;
+            padding-bottom: 10px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+        }
+
+        .header-left {
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+            min-width: 0;
+        }
+
+        .logo {
+            width: 76px;
+            height: 76px;
+            overflow: hidden;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: 800;
+            color: #334155;
+        }
+
+        .logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .clinic-title {
+            font-size: 22px;
+            font-weight: 800;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            line-height: 1.15;
+        }
+
+        .clinic-sub {
+            margin-top: 4px;
+            font-size: 10px;
+            color: #475569;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            font-weight: 700;
+        }
+
+        .clinic-meta {
+            margin-top: 4px;
+            font-size: 10px;
+            color: #475569;
+            line-height: 1.55;
+        }
+
+        .header-right {
+            min-width: 260px;
+            text-align: right;
+            font-size: 10px;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            font-weight: 700;
+            line-height: 1.8;
+        }
+
+        .header-right strong {
+            color: #0f172a;
+            margin-right: 6px;
+            min-width: 122px;
+            display: inline-block;
+        }
+
+        .status-badge {
+            display: inline-block;
+            margin-top: 2px;
+            border-radius: 999px;
+            padding: 2px 10px;
+            font-size: 10px;
+            letter-spacing: 0.08em;
+            font-weight: 800;
+            border: 1px solid transparent;
+        }
+
+        .status-paid {
+            background: #dcfce7;
+            color: #166534;
+            border-color: #86efac;
+        }
+
+        .status-pending {
+            background: #fef3c7;
+            color: #92400e;
+            border-color: #fcd34d;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .panel {
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: var(--panel);
+            padding: 10px 12px;
+        }
+
+        .panel-title {
+            margin: 0 0 8px;
+            font-size: 10px;
+            color: var(--soft);
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
+            font-weight: 800;
+        }
+
+        .panel p {
+            margin: 0;
+            font-size: 12px;
+            line-height: 1.55;
+            color: #1e293b;
+        }
+
+        .panel .sub {
+            color: #475569;
+            font-size: 11px;
+        }
+
+        .section {
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .section-head {
+            background: #f1f5f9;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 8px 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-head h3 {
+            margin: 0;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
+            color: #475569;
+            font-weight: 800;
+        }
+
+        .section-body {
+            background: #fff;
+            padding: 0;
+        }
+
+        .details-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .details-table th,
+        .details-table td {
+            border-bottom: 1px solid #f1f5f9;
+            padding: 9px 12px;
+            text-align: left;
+            font-size: 12px;
+            vertical-align: top;
+        }
+
+        .details-table tr:last-child th,
+        .details-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .details-table th {
+            width: 34%;
+            background: #fafafa;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            font-size: 10px;
+            font-weight: 800;
+        }
+
+        .amount-card {
+            border: 1px solid #bbf7d0;
+            border-left: 4px solid var(--paid);
+            border-radius: 8px;
+            background: #f0fdf4;
+            padding: 10px 12px;
+            margin-bottom: 10px;
+            display: grid;
+            grid-template-columns: 1fr auto;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .amount-card .title {
+            margin: 0;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: #166534;
+            font-weight: 800;
+        }
+
+        .amount-card .sub {
+            margin-top: 4px;
+            font-size: 11px;
+            color: #065f46;
+        }
+
+        .amount-value {
+            font-size: 30px;
+            font-weight: 900;
+            letter-spacing: -0.04em;
+            color: #065f46;
+            font-family: "Courier New", monospace;
+        }
+
+        .note {
+            border: 1px solid #dbeafe;
+            border-left: 4px solid #0ea5e9;
+            border-radius: 8px;
+            background: #f8fdff;
+            padding: 10px 12px;
+            margin-bottom: 10px;
+        }
+
+        .note h4 {
+            margin: 0 0 6px;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: #0369a1;
+            font-weight: 800;
+        }
+
+        .note p {
+            margin: 0;
+            font-size: 12px;
+            color: #1e293b;
+            line-height: 1.6;
+        }
+
+        .footer {
+            margin-top: auto;
+            border-top: 2px solid #1e293b;
+            padding-top: 8px;
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 12px;
+            align-items: end;
+        }
+
+        .footer-left {
+            font-size: 9px;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            line-height: 1.6;
+        }
+
+        .signature {
+            text-align: center;
+            min-width: 170px;
+        }
+
+        .signature-slot {
+            width: 170px;
+            height: 46px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            margin-bottom: 3px;
+        }
+
+        .signature-slot img {
+            max-width: 170px;
+            max-height: 46px;
+            object-fit: contain;
+        }
+
+        .signature-line {
+            border-bottom: 1px solid #0f172a;
+            margin-bottom: 4px;
+        }
+
+        .signature-title {
+            font-size: 10px;
+            color: #64748b;
+            font-weight: 800;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+
+        .signature-name {
+            margin-top: 3px;
+            font-size: 11px;
+            color: #0f172a;
+            font-weight: 700;
+        }
+
+        @media (max-width: 1024px) {
+            #invoice-print-source.a4-container {
+                transform: scale(0.8);
+                margin-bottom: -60mm;
+            }
+
+            .toolbar {
+                width: 100%;
+                max-width: 210mm;
+            }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            #invoice-print-source.a4-container {
+                transform: scale(0.66);
+                margin-bottom: -98mm;
+            }
+
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 480px) {
+            #invoice-print-source.a4-container {
+                transform: scale(0.44);
+                margin-bottom: -170mm;
+            }
+        }
+
+        @media print {
+            @page {
+                size: A4;
+                margin: 0mm !important;
+            }
+
+            html,
+            body {
+                margin: 0 !important;
+                padding: 0 !important;
+                background: #fff !important;
+            }
+
+            #invoice-print-source.a4-container {
+                transform: none !important;
+                box-shadow: none !important;
+                margin: 0 !important;
+                width: 210mm !important;
+                height: 297mm !important;
+                padding: 6mm !important;
+            }
+
+            #invoice-print-source .page-border {
+                border: 2px solid #000 !important;
+                padding: 4mm 7mm 7mm !important;
+            }
+
+            .toolbar {
+                display: none !important;
+            }
+
+            .invoice-watermark-logo {
+                opacity: var(--invoice-watermark-opacity) !important;
+                filter: blur(var(--invoice-watermark-blur)) !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="toolbar">
+        <button class="btn btn-print" type="button" onclick="printInvoice(this)">Print</button>
+        <button class="btn btn-download" type="button" onclick="downloadInvoicePDF(this)">Download PDF</button>
+    </div>
+
+    <section id="invoice-print-source" class="a4-container">
+        <div class="page-border">
+            <div class="invoice-watermark" aria-hidden="true">
+                {% if clinic and clinic.logo %}
+                    <img src="{{ clinic.logo.url }}" alt="" class="invoice-watermark-logo">
+                {% else %}
+                    <div class="invoice-watermark-text">INVOICE</div>
+                {% endif %}
+            </div>
+
+            <header class="header">
+                <div class="header-left">
+                    <div class="logo">
+                        {% if clinic and clinic.logo %}
+                            <img src="{{ clinic.logo.url }}" alt="Clinic Logo">
+                        {% else %}
+                            INV
+                        {% endif %}
+                    </div>
+                    <div>
+                        <div class="clinic-title">{{ clinic.clinic_name|default:"Dental Clinic" }}</div>
+                        <div class="clinic-sub">Professional Billing Invoice</div>
+                        <div class="clinic-meta">{{ clinic.address|default:"Clinic address not configured" }}</div>
+                        <div class="clinic-meta">{{ clinic.phone|default:"-" }}{% if clinic.email %} | {{ clinic.email }}{% endif %}</div>
+                    </div>
+                </div>
+                <div class="header-right">
+                    <div><strong>Invoice No</strong> {{ invoice.invoice_number }}</div>
+                    <div><strong>Issued Date</strong> {{ generated_at|date:"d M Y" }}</div>
+                    <div><strong>Bill Date</strong> {{ invoice.bill_date|date:"d M Y" }}</div>
+                    <div><strong>Bill Time</strong> {{ invoice.bill_date|date:"h:i A" }}</div>
+                    <div><strong>Status</strong>
+                        <span class="status-badge {% if invoice.status == 'paid' %}status-paid{% else %}status-pending{% endif %}">
+                            {{ invoice.status|upper }}
+                        </span>
+                    </div>
+                </div>
+            </header>
+
+            <div class="info-grid">
+                <div class="panel">
+                    <h3 class="panel-title">Bill To (Patient)</h3>
+                    <p><strong>{{ invoice.patient }}</strong></p>
+                    <p class="sub">Patient ID: {{ invoice.patient.id|default:"-" }}</p>
+                    {% if invoice.daily_patient %}
+                    <p class="sub">Visit Ref: DP-{{ invoice.daily_patient.id }}</p>
+                    {% endif %}
+                </div>
+                <div class="panel">
+                    <h3 class="panel-title">Attending Doctor</h3>
+                    <p><strong>{{ doctor_display_name|default:"N/A" }}</strong></p>
+                    <p class="sub">{{ doctor_education|default:"Dental Practitioner" }}</p>
+                    {% if doctor_specialization %}
+                    <p class="sub">{{ doctor_specialization }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <section class="section">
+                <div class="section-head">
+                    <h3>Invoice Details</h3>
+                    <span class="status-badge {% if invoice.status == 'paid' %}status-paid{% else %}status-pending{% endif %}">
+                        {{ invoice.status|upper }}
+                    </span>
+                </div>
+                <div class="section-body">
+                    <table class="details-table">
+                        <tr>
+                            <th>Treatment</th>
+                            <td>{{ invoice.treatment|default:"-" }}</td>
+                        </tr>
+                        {% if treatment_description %}
+                        <tr>
+                            <th>Description</th>
+                            <td>{{ treatment_description }}</td>
+                        </tr>
+                        {% endif %}
+                        {% if prescription_treatments %}
+                        <tr>
+                            <th>Treatment Details</th>
+                            <td>
+                                <ul style="margin: 0; padding-left: 20px;">
+                                    {% for tx in prescription_treatments %}
+                                    <li>
+                                        {{ tx.treatment_name }}
+                                        {% if tx.tooth_number %}<strong>(Tooth: {{ tx.tooth_number }}){% endif %}
+                                        - <span style="color: {% if tx.is_paid %}green{% else %}orange{% endif %}">
+                                            {% if tx.is_paid %}PAID{% else %}UNPAID{% endif %}
+                                        </span>
+                                    </li>
+                                    {% endfor %}
+                                </ul>
+                            </td>
+                        </tr>
+                        {% endif %}
+                        <tr>
+                            <th>Payment Status</th>
+                            <td>{{ invoice.status|title }}</td>
+                        </tr>
+                        <tr>
+                            <th>Created By</th>
+                            <td>{{ invoice.created_by.get_full_name|default:invoice.created_by.username|default:"System" }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </section>
+
+            <section class="amount-card">
+                <div>
+                    <h4 class="title">Total Amount Due</h4>
+                    <p class="sub">Professional dental services and consultation charges</p>
+                </div>
+                <div class="amount-value">₹{{ invoice.amount }}</div>
+            </section>
+
+            {% if invoice.note %}
+            <section class="note">
+                <h4>Invoice Note</h4>
+                <p>{{ invoice.note }}</p>
+            </section>
+            {% endif %}
+
+            <footer class="footer">
+                <div class="footer-left">
+                    <div>This document is system generated for billing, accounting, and patient service records.</div>
+                    <div id="invoice-footer-stamp"></div>
+                </div>
+                <div class="signature">
+                    <div class="signature-slot">
+                        {% if doctor_signature and doctor_signature.signature %}
+                            <img src="{{ doctor_signature.signature.url }}" alt="Authorized signature">
+                        {% endif %}
+                    </div>
+                    <div class="signature-line"></div>
+                    <div class="signature-title">Authorized Signature</div>
+                    <div class="signature-name">{{ doctor_display_name|default:clinic.doctor_name|default:"Authorized Doctor" }}</div>
+                </div>
+            </footer>
+        </div>
+    </section>
+
+    <script>
+        let isInvoicePrintRunning = false;
+
+        function printInvoice(triggerButton = null) {
+            if (isInvoicePrintRunning) return;
+
+            const source = document.getElementById('invoice-print-source');
+            if (!source) {
+                window.print();
+                return;
+            }
+
+            isInvoicePrintRunning = true;
+
+            if (triggerButton) {
+                triggerButton.disabled = true;
+                triggerButton.style.opacity = '0.7';
+            }
+
+            const originalTitle = document.title;
+            document.title = 'Invoice_{{ invoice.invoice_number|escapejs }}';
+
+            const finishPrint = () => {
+                window.removeEventListener('afterprint', onAfterPrint);
+                document.title = originalTitle;
+                if (triggerButton) {
+                    triggerButton.disabled = false;
+                    triggerButton.style.opacity = '1';
+                }
+                isInvoicePrintRunning = false;
+            };
+
+            const onAfterPrint = () => finishPrint();
+            window.addEventListener('afterprint', onAfterPrint, { once: true });
+
+            setTimeout(() => {
+                if (isInvoicePrintRunning) finishPrint();
+            }, 60000);
+
+            requestAnimationFrame(() => window.print());
+        }
+
+        function downloadInvoicePDF(triggerButton = null) {
+            printInvoice(triggerButton);
+        }
+
+        (function setFooterStamp() {
+            const stamp = document.getElementById('invoice-footer-stamp');
+            if (!stamp) return;
+            stamp.textContent = 'INVOICE SECURE ID: {{ invoice.invoice_number }} • ' + new Date().toLocaleDateString();
+        })();
+    </script>
+</body>
+</html>

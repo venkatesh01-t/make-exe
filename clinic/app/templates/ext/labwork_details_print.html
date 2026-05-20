@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lab Work Details - LC-{{ order.id }}</title>
+    <style>
+        :root {
+            --lab-watermark-opacity: 0.18;
+            --lab-watermark-blur: 0.4px;
+            --ink: #0f172a;
+            --soft: #64748b;
+            --line: #e2e8f0;
+            --paper: #ffffff;
+            --panel: #f8fafc;
+            --accent: #0f766e;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 22px;
+            background: radial-gradient(circle at 20% 0%, #1f2937 0%, #0f172a 42%, #020617 100%);
+            color: var(--ink);
+            font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+        }
+
+        .toolbar {
+            width: 210mm;
+            margin: 0 auto 14px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .btn {
+            border: 0;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            padding: 10px 14px;
+            transition: 0.2s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+        }
+
+        .btn-print {
+            background: #14b8a6;
+            color: white;
+        }
+
+        .btn-download {
+            background: #2563eb;
+            color: white;
+        }
+
+        .btn-close {
+            background: #e2e8f0;
+            color: #0f172a;
+        }
+
+        #lab-print-source.a4-container {
+            background: var(--paper);
+            width: 210mm;
+            height: 297mm;
+            padding: 10mm;
+            margin: 0 auto;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            position: relative;
+            transform-origin: top center;
+            overflow: hidden;
+        }
+
+        .page-border {
+            border: 2px solid #1e293b;
+            height: 100%;
+            padding: 5mm 8mm 8mm;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            z-index: 1;
+            background: #fff;
+        }
+
+        .lab-watermark {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 0;
+            pointer-events: none;
+            user-select: none;
+        }
+
+        .lab-watermark-logo {
+            width: clamp(90px, 32vmin, 320px);
+            height: clamp(90px, 32vmin, 320px);
+            object-fit: contain;
+            opacity: var(--lab-watermark-opacity);
+            filter: blur(var(--lab-watermark-blur));
+        }
+
+        .header {
+            border-bottom: 2px solid #1e293b;
+            padding-bottom: 10px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+        }
+
+        .header-left {
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+            min-width: 0;
+        }
+
+        .logo {
+            width: 76px;
+            height: 76px;
+            overflow: hidden;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: 800;
+            color: #334155;
+        }
+
+        .logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .clinic-title {
+            font-size: 22px;
+            font-weight: 800;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            line-height: 1.15;
+        }
+
+        .clinic-sub {
+            margin-top: 4px;
+            font-size: 10px;
+            color: #475569;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            font-weight: 700;
+        }
+
+        .clinic-meta {
+            margin-top: 4px;
+            font-size: 10px;
+            color: #475569;
+            line-height: 1.55;
+        }
+
+        .header-right {
+            min-width: 220px;
+            text-align: right;
+            font-size: 10px;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            font-weight: 700;
+            line-height: 1.8;
+        }
+
+        .header-right strong {
+            color: #0f172a;
+            margin-right: 6px;
+            min-width: 112px;
+            display: inline-block;
+        }
+
+        .status-badge {
+            display: inline-block;
+            margin-top: 2px;
+            border-radius: 999px;
+            padding: 2px 10px;
+            background: #ecfeff;
+            color: #0f766e;
+            border: 1px solid #99f6e4;
+            font-size: 10px;
+            letter-spacing: 0.08em;
+            font-weight: 800;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .panel {
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: var(--panel);
+            padding: 10px 12px;
+        }
+
+        .panel-title {
+            margin: 0 0 8px;
+            font-size: 10px;
+            color: var(--soft);
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
+            font-weight: 800;
+        }
+
+        .panel p {
+            margin: 0;
+            font-size: 12px;
+            line-height: 1.55;
+            color: #1e293b;
+        }
+
+        .panel .sub {
+            color: #475569;
+        }
+
+        .section {
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .section-head {
+            background: #f1f5f9;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 8px 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-head h3 {
+            margin: 0;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
+            color: #475569;
+            font-weight: 800;
+        }
+
+        .section-body {
+            background: #fff;
+            padding: 0;
+        }
+
+        .details-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .details-table th,
+        .details-table td {
+            border-bottom: 1px solid #f1f5f9;
+            padding: 9px 12px;
+            text-align: left;
+            font-size: 12px;
+        }
+
+        .details-table tr:last-child th,
+        .details-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .details-table th {
+            width: 32%;
+            background: #fafafa;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            font-size: 10px;
+            font-weight: 800;
+        }
+
+        .note {
+            border: 1px solid #dbeafe;
+            border-left: 4px solid #0ea5e9;
+            border-radius: 8px;
+            background: #f8fdff;
+            padding: 10px 12px;
+            margin-bottom: 10px;
+        }
+
+        .note h4 {
+            margin: 0 0 6px;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: #0369a1;
+            font-weight: 800;
+        }
+
+        .note p {
+            margin: 0;
+            font-size: 12px;
+            color: #1e293b;
+            line-height: 1.6;
+        }
+
+        .timeline {
+            margin-bottom: 10px;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 10px;
+        }
+
+        .timeline h4 {
+            margin: 0 0 8px;
+            font-size: 10px;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
+            font-weight: 800;
+        }
+
+        .timeline-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+
+        .timeline-item {
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 8px;
+            background: #f8fafc;
+        }
+
+        .timeline-label {
+            font-size: 9px;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            font-weight: 800;
+        }
+
+        .timeline-date {
+            margin-top: 5px;
+            font-size: 12px;
+            font-weight: 800;
+            color: #0f172a;
+        }
+
+        .footer {
+            margin-top: auto;
+            border-top: 2px solid #1e293b;
+            padding-top: 8px;
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 12px;
+            align-items: end;
+        }
+
+        .footer-left {
+            font-size: 9px;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            line-height: 1.6;
+        }
+
+        .signature {
+            text-align: center;
+            min-width: 170px;
+        }
+
+        .signature-slot {
+            width: 170px;
+            height: 46px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            margin-bottom: 3px;
+        }
+
+        .signature-slot img {
+            max-width: 170px;
+            max-height: 46px;
+            object-fit: contain;
+        }
+
+        .signature-line {
+            border-bottom: 1px solid #0f172a;
+            margin-bottom: 4px;
+        }
+
+        .signature-title {
+            font-size: 10px;
+            color: #64748b;
+            font-weight: 800;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+
+        .signature-name {
+            margin-top: 3px;
+            font-size: 11px;
+            color: #0f172a;
+            font-weight: 700;
+        }
+
+        @media (max-width: 1024px) {
+            #lab-print-source.a4-container {
+                transform: scale(0.8);
+                margin-bottom: -60mm;
+            }
+
+            .toolbar {
+                width: 100%;
+                max-width: 210mm;
+            }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            #lab-print-source.a4-container {
+                transform: scale(0.66);
+                margin-bottom: -98mm;
+            }
+
+            .info-grid,
+            .timeline-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 480px) {
+            #lab-print-source.a4-container {
+                transform: scale(0.44);
+                margin-bottom: -170mm;
+            }
+        }
+
+        @media print {
+            @page {
+                size: A4;
+                margin: 0mm !important;
+            }
+
+            html,
+            body {
+                margin: 0 !important;
+                padding: 0 !important;
+                background: #fff !important;
+            }
+
+            #lab-print-source.a4-container {
+                transform: none !important;
+                box-shadow: none !important;
+                margin: 0 !important;
+                width: 210mm !important;
+                height: 297mm !important;
+                padding: 6mm !important;
+            }
+
+            #lab-print-source .page-border {
+                border: 2px solid #000 !important;
+                padding: 4mm 7mm 7mm !important;
+            }
+
+            .toolbar {
+                display: none !important;
+            }
+
+            .lab-watermark-logo {
+                opacity: var(--lab-watermark-opacity) !important;
+                filter: blur(var(--lab-watermark-blur)) !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    
+
+    <section id="lab-print-source" class="a4-container">
+        <div class="page-border">
+            <div class="lab-watermark" aria-hidden="true">
+                {% if clinic_info and clinic_info.logo %}
+                    <img src="{{ clinic_info.logo.url }}" alt="" class="lab-watermark-logo">
+                {% endif %}
+            </div>
+
+            <header class="header">
+                <div class="header-left">
+                    <div class="logo">
+                        {% if clinic_info and clinic_info.logo %}
+                            <img src="{{ clinic_info.logo.url }}" alt="Clinic Logo">
+                        {% else %}
+                            LAB
+                        {% endif %}
+                    </div>
+                    <div>
+                        <div class="clinic-title">{{ clinic_info.clinic_name|default:"Clinic Name" }}</div>
+                        <div class="clinic-sub">Lab Work Details Form</div>
+                        <div class="clinic-meta">{{ clinic_info.address|default:"Clinic address not configured" }}</div>
+                        <div class="clinic-meta">{{ clinic_info.phone|default:"-" }}{% if clinic_info.email %} | {{ clinic_info.email }}{% endif %}</div>
+                    </div>
+                </div>
+                <div class="header-right">
+                    <div><strong>Reference</strong> LC-{{ order.id }}</div>
+                    <div><strong>Issued Date</strong> {{ today|date:"d M Y" }}</div>
+                    <div><strong>Date Taken</strong> {{ sent_date|date:"d M Y" }}</div>
+                    <div><strong>Received</strong> {{ received_date|date:"d M Y" }}</div>
+                    <div><strong>Finish Date</strong> {{ finish_date|date:"d M Y" }}</div>
+                    <div class="status-badge">{{ order.workflow_status|default:"SEND" }}</div>
+                </div>
+            </header>
+
+            <div class="info-grid">
+                <div class="panel">
+                    <h3 class="panel-title">From Address (Clinic)</h3>
+                    <p><strong>{{ clinic_info.clinic_name|default:"Dental Clinic" }}</strong></p>
+                    <p class="sub">{{ clinic_info.address|default:"Clinic address not configured" }}</p>
+                    <p class="sub">Phone: {{ clinic_info.phone|default:"-" }}</p>
+                    <p class="sub">Email: {{ clinic_info.email|default:"-" }}</p>
+                </div>
+                <div class="panel">
+                    <h3 class="panel-title">To Address (Lab)</h3>
+                    <p><strong>{{ lab_info.lab_name|default:order.lab_name|default:"Lab" }}</strong></p>
+                    <p class="sub">{{ lab_info.lab_address|default:"Lab address not available" }}</p>
+                    <p class="sub">Phone: {{ lab_info.lab_phone|default:"-" }}</p>
+                    <p class="sub">Email: {{ lab_info.lab_email|default:"-" }}</p>
+                </div>
+            </div>
+
+            <section class="section">
+                <div class="section-head">
+                    <h3>Lab Case Information</h3>
+                    <span class="status-badge">{{ order.work_type|default:"Lab Work" }}</span>
+                </div>
+                <div class="section-body">
+                    <table class="details-table">
+                        <tr>
+                            <th>Patient Name</th>
+                            <td>{{ order.patient|default:order.patient_name|default:"-" }}</td>
+                        </tr>
+                        <tr>
+                            <th>Work Type</th>
+                            <td>{{ order.work_type|default:"-" }}</td>
+                        </tr>
+                        <tr>
+                            <th>Laboratory</th>
+                            <td>{{ order.lab_name|default:"-" }}</td>
+                        </tr>
+                        <tr>
+                            <th>Date Taken</th>
+                            <td>{{ sent_date|date:"d M Y" }}</td>
+                        </tr>
+                        <tr>
+                            <th>Received Date</th>
+                            <td>{{ received_date|date:"d M Y" }}</td>
+                        </tr>
+                        <tr>
+                            <th>Expected Finish Date</th>
+                            <td>{{ finish_date|date:"d M Y" }} (2 Days)</td>
+                        </tr>
+                    </table>
+                </div>
+            </section>
+
+            <section class="note">
+                <h4>Patient Note</h4>
+                <p>{{ order.note|default:"No notes added." }}</p>
+            </section>
+
+            <section class="timeline">
+                <h4>Work Timeline</h4>
+                <div class="timeline-grid">
+                    <div class="timeline-item">
+                        <div class="timeline-label">Taken / Sent</div>
+                        <div class="timeline-date">{{ sent_date|date:"d M Y" }}</div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-label">Received</div>
+                        <div class="timeline-date">{{ received_date|date:"d M Y" }}</div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-label">Finish Target</div>
+                        <div class="timeline-date">{{ finish_date|date:"d M Y" }}</div>
+                    </div>
+                </div>
+            </section>
+
+            <footer class="footer">
+                <div class="footer-left">
+                    <div>This document is system generated for laboratory workflow and patient case tracking.</div>
+                    <div id="lab-footer-stamp"></div>
+                </div>
+                <div class="signature">
+                    <div class="signature-slot">
+                        {% if doctor_signature and doctor_signature.signature %}
+                            <img src="{{ doctor_signature.signature.url }}" alt="Authorized signature">
+                        {% endif %}
+                    </div>
+                    <div class="signature-line"></div>
+                    <div class="signature-title">Authorized Signature</div>
+                    <div class="signature-name">{{ clinic_info.doctor_name|default:doctor_signature.name|default:"Authorized Doctor" }}</div>
+                </div>
+            </footer>
+        </div>
+    </section>
+
+    <script>
+        let isLabPrintRunning = false;
+
+        function printLabPreview(triggerButton = null) {
+            if (isLabPrintRunning) return;
+
+            const source = document.getElementById('lab-print-source');
+            if (!source) {
+                window.print();
+                return;
+            }
+
+            isLabPrintRunning = true;
+
+            if (triggerButton) {
+                triggerButton.disabled = true;
+                triggerButton.style.opacity = '0.7';
+            }
+
+            const originalTitle = document.title;
+            document.title = `LabWork_LC-{{ order.id }}`;
+
+            const finishPrint = () => {
+                window.removeEventListener('afterprint', onAfterPrint);
+                document.title = originalTitle;
+                if (triggerButton) {
+                    triggerButton.disabled = false;
+                    triggerButton.style.opacity = '1';
+                }
+                isLabPrintRunning = false;
+            };
+
+            const onAfterPrint = () => finishPrint();
+            window.addEventListener('afterprint', onAfterPrint, { once: true });
+
+            setTimeout(() => {
+                if (isLabPrintRunning) finishPrint();
+            }, 60000);
+
+            requestAnimationFrame(() => window.print());
+        }
+
+        function downloadLabPDF(triggerButton = null) {
+            printLabPreview(triggerButton);
+        }
+
+        (function setFooterStamp() {
+            const stamp = document.getElementById('lab-footer-stamp');
+            if (!stamp) return;
+            stamp.textContent = 'LAB DOC SECURE ID: LC-{{ order.id }} • ' + new Date().toLocaleDateString();
+        })();
+    </script>
+</body>
+</html>

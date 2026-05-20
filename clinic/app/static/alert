@@ -1,0 +1,30 @@
+if not patient_name:
+        return JsonResponse({
+            'status': 'error',
+            'message': 'Patient name is required!',
+            'duration': 4000
+        }, status=400)
+
+    if not doctor:
+        return JsonResponse({
+            'status': 'warning',
+            'message': 'Please select a doctor!',
+            'duration': 4000
+        }, status=400)
+
+    try:
+        # Save logic here
+        # Appointment.objects.create(...)
+
+        return JsonResponse({
+            'status': 'success',
+            'message': f'Appointment booked for {patient_name} on {appointment_date}!',
+            'duration': 4000
+        })
+
+    except Exception as e:
+        return JsonResponse({
+            'status': 'error',
+            'message': f'Booking failed: {str(e)}',
+            'duration': 5000
+        }, status=500)

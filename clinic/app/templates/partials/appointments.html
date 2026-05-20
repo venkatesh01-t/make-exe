@@ -1,0 +1,888 @@
+
+<div class="page-content">
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+    <div>
+      <h3 class="text-xl font-bold text-gray-800">Appointment Calendar</h3>
+      <p class="text-sm text-gray-400">Manage and schedule patient appointments</p>
+    </div>
+    <button
+      class="bg-gradient-to-r from-teal-500 to-teal-600 text-white px-5 py-2.5 rounded-xl text-sm font-semibold shadow-lg shadow-teal-200 hover:shadow-xl transition flex items-center gap-2 w-fit"
+      onclick="openModal('appointmentModal')">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+      </svg>New Appointment
+    </button>
+  </div>
+  
+  <!-- Advanced Animated Calendar -->
+  <style>
+    /* ===== CSS Variables ===== */
+    :root {
+      --transition-duration: 350ms;
+      --transition-timing: cubic-bezier(0.4, 0, 0.2, 1);
+      --color-teal-primary: rgb(20, 184, 166);
+      --color-teal-light: rgb(240, 253, 250);
+      --color-gray-light: rgb(249, 250, 251);
+    }
+
+    /* ===== Animation Keyframes ===== */
+    @keyframes fadeInSlideRight {
+      from {
+        opacity: 0;
+        transform: translateX(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    @keyframes fadeOutSlideLeft {
+      from {
+        opacity: 1;
+        transform: translateX(0);
+      }
+      to {
+        opacity: 0;
+        transform: translateX(-20px);
+      }
+    }
+
+    @keyframes fadeInSlideUp {
+      from {
+        opacity: 0;
+        max-height: 0;
+      }
+      to {
+        opacity: 1;
+        max-height: 600px;
+      }
+    }
+
+    @keyframes fadeOutSlideDown {
+      from {
+        opacity: 1;
+        max-height: 600px;
+      }
+      to {
+        opacity: 0;
+        max-height: 0;
+      }
+    }
+
+    /* ===== Animation Classes ===== */
+    .calendar-grid-enter {
+      animation: fadeInSlideRight var(--transition-duration) var(--transition-timing) forwards;
+    }
+
+    .calendar-grid-exit {
+      animation: fadeOutSlideLeft var(--transition-duration) var(--transition-timing) forwards;
+    }
+
+    .calendar-container {
+      max-height: 600px;
+      overflow: hidden;
+      transition: max-height var(--transition-duration) var(--transition-timing),
+                  opacity var(--transition-duration) var(--transition-timing);
+      opacity: 1;
+    }
+
+    .calendar-container.collapsed {
+      max-height: 0;
+      opacity: 0;
+    }
+
+    /* ===== Day Cell Styling ===== */
+    .calendar-day {
+      transition: all var(--transition-duration) var(--transition-timing);
+      position: relative;
+      min-height: 100px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      align-items: center;
+      padding: 0.5rem;
+    }
+
+    .calendar-day:not(.today):not(.has-appointments):hover {
+      background-color: var(--color-gray-light);
+      transform: scale(1.05);
+    }
+
+    .calendar-day:not(.today):not(.has-appointments):active {
+      transform: scale(0.98);
+    }
+
+    /* ===== Today & Selected Styling ===== */
+    .calendar-day.today {
+      background: linear-gradient(135deg, var(--color-teal-primary), rgb(13, 148, 136));
+      color: white;
+      font-weight: bold;
+      border-radius: 0.75rem;
+      box-shadow: 0 4px 12px rgba(20, 184, 166, 0.3);
+    }
+
+    .calendar-day.selected {
+      outline: 2px solid var(--color-teal-primary);
+      outline-offset: -2px;
+      border-radius: 0.75rem;
+    }
+
+    .calendar-day.has-appointments {
+      background-color: var(--color-teal-light);
+      border: 1px solid var(--color-teal-primary);
+      border-radius: 0.75rem;
+    }
+
+    /* ===== Day Cell Content ===== */
+    .day-number {
+      font-weight: 500;
+      font-size: 0.875rem;
+    }
+
+    .appointment-count {
+      font-weight: bold;
+      font-size: 0.75rem;
+      margin-top: 0.25rem;
+      color: rgb(55, 65, 81);
+    }
+
+    .appointment-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.25rem;
+      margin-top: 0.5rem;
+      justify-content: center;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.375rem;
+      font-size: 0.625rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .badge-confirmed {
+      background-color: rgb(220, 252, 231);
+      color: rgb(34, 197, 94);
+    }
+
+    .badge-pending {
+      background-color: rgb(254, 252, 232);
+      color: rgb(202, 138, 4);
+    }
+
+    .badge-cancelled {
+      background-color: rgb(254, 226, 226);
+      color: rgb(220, 38, 38);
+    }
+
+    /* ===== Nav Button Styling ===== */
+    .nav-button {
+      transition: all var(--transition-duration) var(--transition-timing);
+    }
+
+    .nav-button:hover {
+      background-color: var(--color-gray-light);
+      transform: scale(1.1);
+    }
+
+    .nav-button:active {
+      transform: scale(0.95);
+    }
+
+    /* ===== Chevron Icon ===== */
+    .chevron-icon {
+      transition: transform var(--transition-duration) var(--transition-timing);
+    }
+
+    .chevron-icon.rotated {
+      transform: rotate(180deg);
+    }
+
+    /* ===== Horizontal Month Selector ===== */
+    .month-scroll-container {
+      display: flex;
+      gap: 1rem;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      scroll-behavior: smooth;
+      padding-bottom: 0.5rem;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .month-scroll-container::-webkit-scrollbar {
+      height: 4px;
+    }
+
+    .month-scroll-container::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .month-scroll-container::-webkit-scrollbar-thumb {
+      background: rgba(20, 184, 166, 0.3);
+      border-radius: 4px;
+    }
+
+    .month-card {
+      flex-shrink: 0;
+      min-width: 120px;
+      padding: 0.75rem;
+      border-radius: 0.75rem;
+      border: 2px solid transparent;
+      cursor: pointer;
+      transition: all var(--transition-duration) var(--transition-timing);
+      scroll-snap-align: center;
+      background-color: var(--color-gray-light);
+      color: rgb(107, 114, 128);
+      font-weight: 500;
+      font-size: 0.875rem;
+      text-align: center;
+    }
+
+    .month-card:hover {
+      border-color: var(--color-teal-primary);
+      transform: translateY(-2px);
+    }
+
+    .month-card.active {
+      background: linear-gradient(135deg, var(--color-teal-primary), rgb(13, 148, 136));
+      color: white;
+      border-color: var(--color-teal-primary);
+      box-shadow: 0 4px 12px rgba(20, 184, 166, 0.3);
+    }
+
+    /* ===== Responsive Touch Adjustments ===== */
+    @media (hover: none) and (pointer: coarse) {
+      .calendar-day:not(.today):not(.has-appointments):hover {
+        background-color: transparent;
+        transform: scale(1);
+      }
+
+      .calendar-day:not(.today):not(.has-appointments):active {
+        background-color: var(--color-gray-light);
+        transform: scale(1.02);
+      }
+    }
+
+    /* ===== Accessibility: Prefer Reduced Motion ===== */
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+
+  <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 sm:p-6 mb-6 stagger-item">
+    <!-- Header with Navigation -->
+    <div class="flex items-center justify-between mb-6">
+      <!-- Prev Button -->
+      <button id="prevBtn" class="nav-button p-2 rounded-xl transition" title="Previous month">
+        <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+        </svg>
+      </button>
+
+      <!-- Month/Year Label -->
+      <div class="flex items-center gap-3">
+        <h2 id="calendarMonth" class="text-lg sm:text-xl font-bold text-gray-800">January 2026</h2>
+        <!-- Collapse Button -->
+        <button id="collapseBtn" class="p-2 rounded-xl hover:bg-gray-100 transition" title="Collapse calendar">
+          <svg class="chevron-icon w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Next Button -->
+      <button id="nextBtn" class="nav-button p-2 rounded-xl transition" title="Next month">
+        <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+        </svg>
+      </button>
+    </div>
+
+    <!-- Calendar Container (Collapsible) -->
+    <div id="calendarContainer" class="calendar-container">
+      <!-- Weekday Headers -->
+      <div class="grid grid-cols-7 gap-1 mb-3">
+        <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider py-2 text-center">Sun</div>
+        <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider py-2 text-center">Mon</div>
+        <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider py-2 text-center">Tue</div>
+        <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider py-2 text-center">Wed</div>
+        <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider py-2 text-center">Thu</div>
+        <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider py-2 text-center">Fri</div>
+        <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider py-2 text-center">Sat</div>
+      </div>
+
+      <!-- Calendar Grid (animated) -->
+      <div id="calendarGrid" class="grid grid-cols-7 gap-1 mb-4 calendar-grid-enter"></div>
+    </div>
+  </div>
+
+  <!-- Horizontal Month Selector -->
+  <div id="monthSelectorContainer" class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 sm:p-6 mb-6">
+    <h3 class="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wider mb-4">Navigate Months</h3>
+    <div id="monthScroller" class="month-scroll-container"></div>
+  </div>
+
+  <!-- Appointments Table -->
+  <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6 mb-6">
+    <form id="filtersForm" method="get"
+          hx-get="{% url 'clinic:appointments_data' %}"
+          hx-target="#appointmentTableBody"
+          hx-trigger="change from:input, change from:select">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div>
+          <label class="text-xs text-gray-500 mb-1 block font-medium">Date</label>
+          <input name="date" id="filterDate" type="date" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm">
+        </div>
+        <div>
+          <label class="text-xs text-gray-500 mb-1 block font-medium">Doctor</label>
+          <select name="doctor" id="filterDoctor" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm">
+            <option>All</option>
+            {% for doctor in doctors %}
+              <option value="{{ doctor.name }}">DR. {{ doctor.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="text-xs text-gray-500 mb-1 block font-medium">Status</label>
+          <select name="status" id="filterStatus" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm">
+            <option>All</option>
+
+            <option>confirmed</option>
+            <option>pending</option>
+            <option>cancelled</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-xs text-gray-500 mb-1 block font-medium">Treatment</label>
+          <select name="treatment" id="filterTreatment" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm">
+            <option>All</option>
+            {% for i in treatment%}
+            <option value="{{i.Treatment_name}}">{{i.Treatment_name}}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <!-- Table -->
+  <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden" id="patientTable">
+    <div class="overflow-x-auto">
+      <table class="w-full min-w-[700px]">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-6 py-4">Patient</th>
+            <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-6 py-4">Date & Time
+            </th>
+            <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-6 py-4">Treatment</th>
+            <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-6 py-4">Doctor</th>
+            <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-6 py-4">Status</th>
+            <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-6 py-4">Actions</th>
+          </tr>
+        </thead>
+        <tbody hx-get="{% url 'clinic:appointments_data' %}"
+       hx-trigger="load"
+       hx-headers='{"X-Requested-With":"XMLHttpRequest"}'
+       hx-target="#appointmentTableBody"
+       hx-swap="innerHTML" class="divide-y divide-gray-100" id="appointmentTableBody">
+          {% include 'ext/appointment_data.html' %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+      
+<div id="viewModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+  <div class="modal-backdrop absolute inset-0" onclick="closeModal('viewModal')"></div>
+  <div class="modal-content bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl m-4">
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="text-xl font-bold">Appointment Details</h3>
+      <button onclick="closeModal('viewModal')" class="text-gray-400 hover:text-gray-600">✕</button>
+    </div>
+    <div class="space-y-4">
+      <div class="p-4 bg-gray-50 rounded-xl">
+        <p class="text-xs text-gray-500 uppercase font-bold">Patient</p>
+        <p id="viewName" class="text-lg font-bold text-gray-800">--</p>
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div class="p-4 bg-gray-50 rounded-xl">
+          <p class="text-xs text-gray-500 uppercase font-bold">Treatment</p>
+          <p id="viewTreatment" class="text-teal-600 font-medium">--</p>
+        </div>
+        <div class="p-4 bg-gray-50 rounded-xl">
+          <p class="text-xs text-gray-500 uppercase font-bold">Time</p>
+          <p id="viewTime" class="text-gray-800 font-medium">--</p>
+        </div>
+      </div>
+      <button onclick="closeModal('viewModal')"
+        class="w-full py-3 bg-gray-800 text-white rounded-xl font-bold hover:bg-gray-900 transition">Close</button>
+    </div>
+  </div>
+</div>
+
+<div id="editModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+  <div class="modal-backdrop absolute inset-0" onclick="closeModal('editModal')"></div>
+  <div class="modal-content bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl m-4">
+    <h3 class="text-xl font-bold mb-6">Edit Appointment</h3>
+    <form id="editForm" hx-post="{% url 'clinic:appointments_edit' %}"
+          hx-target="#appointmentTableBody" hx-swap="innerHTML"
+          hx-headers='{"X-CSRFToken":"{{csrf_token}}"}' class="space-y-4">
+      <input type="hidden" name="appointment_id" id="editRowId">
+      <div>
+        <label class="text-sm font-medium text-gray-700">Patient Name</label>
+        <input type="text" name="name" id="editName"
+          class="w-full mt-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 outline-none">
+      </div>
+      <div>
+        <label class="text-sm font-medium text-gray-700">Treatment</label>
+        <select name="treatment" id="editTreatment"
+          class="w-full mt-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 outline-none bg-white">
+          {% for i in treatment%}
+            <option value="{{i.Treatment_name}}">{{i.Treatment_name}}</option>
+            {% endfor %}
+        </select>
+      </div>
+      <div class="flex gap-3 pt-4">
+        <button type="button" onclick="closeModal('editModal')"
+          class="flex-1 py-2 bg-gray-100 text-gray-700 rounded-lg font-bold">Cancel</button>
+        <button type="submit"
+          class="flex-1 py-2 bg-teal-600 text-white rounded-lg font-bold hover:bg-teal-700">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div id="deleteModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+  <div class="modal-backdrop absolute inset-0" onclick="closeModal('deleteModal')"></div>
+  <div class="modal-content bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl m-4 text-center">
+    <form id="deleteForm" hx-post="{% url 'clinic:appointments_delete' %}"
+          hx-target="#appointmentTableBody" hx-swap="innerHTML"
+          hx-headers='{"X-CSRFToken":"{{csrf_token}}"}'>
+      <input type="hidden" name="appointment_id" id="deleteRowId">
+      <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4 text-red-500">
+        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+        </svg>
+      </div>
+      <h3 class="text-xl font-bold text-gray-900">Delete Appointment?</h3>
+      <p class="text-sm text-gray-500 mt-2 mb-6">
+        Are you sure you want to remove <span id="deleteItemName" class="font-bold text-gray-800">this item</span>? This
+        action cannot be undone.
+      </p>
+      <div class="flex gap-3">
+        <button type="button" onclick="closeModal('deleteModal')"
+          class="flex-1 py-2.5 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200 transition">Cancel</button>
+        <button type="submit"
+          class="flex-1 py-2.5 bg-red-600 text-white font-bold rounded-xl shadow-lg shadow-red-200 hover:bg-red-700 transition">Yes,
+          Delete</button>
+      </div>
+    </form>
+  </div>
+</div>
+</div>
+
+<!-- Appointment Modal -->
+<div id="appointmentModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+  <div class="modal-backdrop absolute inset-0" onclick="closeModal('appointmentModal')"></div>
+  <div class="modal-content bg-white rounded-2xl shadow-2xl w-full max-w-lg relative z-10 max-h-[90vh] overflow-y-auto">
+
+    <!-- Form starts here and wraps everything -->
+    <form hx-post="{% url 'clinic:appointments_create' %}" hx-target="#appointmentTableBody" hx-headers='{"X-CSRFTOKEN":"{{csrf_token}}"}'
+          >
+
+      <!-- Header -->
+      <div
+        class="px-6 py-4 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white rounded-t-2xl">
+        <h3 class="text-lg font-bold text-gray-800">New Appointment</h3>
+        <button type="button" class="p-2 rounded-xl hover:bg-gray-100 transition"
+          onclick="closeModal('appointmentModal')">
+          <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Form Fields -->
+      <div class="p-6 space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Patient Name <span
+              class="text-red-500">*</span></label>
+          <input type="text" name="name" placeholder="Search or enter patient name"
+            class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-800 transition" required>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Doctor <span class="text-red-500">*</span></label>
+          <select name="doctor"
+            class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-800 bg-white" required>
+            <option value="">Select Doctor</option>
+            {% for doctor in doctors %}
+              <option value="{{ doctor.name }}">DR. {{ doctor.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Treatment <span
+              class="text-red-500">*</span></label>
+          <select name="treatment"
+            class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-800 bg-white" required>
+            <option value="">Select Treatment</option>
+            {% for i in treatment%}
+            <option value="{{i.Treatment_name}}">{{i.Treatment_name}}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Date <span class="text-red-500">*</span></label>
+            <input type="date" name="date"
+              class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-800" required>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Time <span class="text-red-500">*</span></label>
+            <input type="time" name="time"
+              class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-800" required>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+          <textarea name="notes" rows="3" placeholder="Additional notes..."
+            class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-800 resize-none"></textarea>
+        </div>
+      </div>
+
+      <!-- Footer with Submit Button - INSIDE the form -->
+      <div
+        class="px-6 py-4 border-t border-gray-100 flex items-center justify-end gap-3 sticky bottom-0 bg-white rounded-b-2xl">
+        <button type="button"
+          class="px-5 py-2.5 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-100 transition"
+          onclick="closeModal('appointmentModal')">Cancel</button>
+        <button type="submit"
+          class="bg-gradient-to-r from-teal-500 to-teal-600 text-white px-5 py-2.5 rounded-xl text-sm font-semibold shadow-lg shadow-teal-200 hover:shadow-xl transition ">Schedule
+          Appointment</button>
+      </div>
+
+    </form>
+    <!-- Form ends here -->
+
+  </div>
+</div>
+
+
+
+
+
+
+<script>
+  // ===== State Management =====
+  const calendarState = {
+    currentDate: new Date(),
+    selectedDate: null,
+    isCollapsed: false,
+    appointmentData: {{ appointment_calendar_data_json|safe }} || {}
+  };
+
+  // ===== Utility Functions =====
+  function formatDateKey(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  function formatMonthYear(date) {
+    const months = ['January', 'February', 'March', 'April', 'May', 'June', 
+                  'July', 'August', 'September', 'October', 'November', 'December'];
+    return `${months[date.getMonth()]} ${date.getFullYear()}`;
+  }
+
+  function getFirstDayOfMonth(date) {
+    return new Date(date.getFullYear(), date.getMonth(), 1).getDay();
+  }
+
+  function getDaysInMonth(date) {
+    return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+  }
+
+  function isToday(year, month, day) {
+    const today = new Date();
+    return day === today.getDate() && 
+           month === today.getMonth() && 
+           year === today.getFullYear();
+  }
+
+  // ===== Calendar Rendering =====
+  function renderCalendar() {
+    const grid = document.getElementById('calendarGrid');
+    const monthLabel = document.getElementById('calendarMonth');
+    
+    if (!grid || !monthLabel) return;
+    
+    const date = new Date(calendarState.currentDate);
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    
+    // Update month label
+    monthLabel.textContent = formatMonthYear(date);
+    
+    // Calculate calendar dimensions
+    const firstDay = getFirstDayOfMonth(date);
+    const daysInMonth = getDaysInMonth(date);
+    
+    // Build calendar HTML
+    let html = '';
+    
+    // Empty cells for days before month starts
+    for (let i = 0; i < firstDay; i++) {
+      html += '<div></div>';
+    }
+    
+    // Calendar days
+    for (let day = 1; day <= daysInMonth; day++) {
+      const dateKey = formatDateKey(new Date(year, month, day));
+      const appointmentInfo = calendarState.appointmentData[dateKey] || {};
+      const dayIsToday = isToday(year, month, day);
+      const dayIsSelected = calendarState.selectedDate === dateKey;
+      const hasAppointments = appointmentInfo.total > 0;
+      
+      // Build day cell classes
+      let classes = 'calendar-day rounded-xl cursor-pointer text-center';
+      if (dayIsToday) classes += ' today';
+      if (dayIsSelected) classes += ' selected';
+      if (hasAppointments) classes += ' has-appointments';
+      
+      html += `<div class="${classes}" data-date="${dateKey}" data-day="${day}">`;
+      html += `<div class="day-number text-xs sm:text-sm font-semibold">${day}</div>`;
+      
+      if (hasAppointments) {
+        html += `<div class="appointment-count">${appointmentInfo.total}-A</div>`;
+        html += '<div class="appointment-badges">';
+        
+        if (appointmentInfo.confirmed > 0) {
+          html += `<span class="status-badge badge-confirmed">✓ ${appointmentInfo.confirmed}</span>`;
+        }
+        if (appointmentInfo.pending > 0) {
+          html += `<span class="status-badge badge-pending">◐ ${appointmentInfo.pending}</span>`;
+        }
+        if (appointmentInfo.cancelled > 0) {
+          html += `<span class="status-badge badge-cancelled">✕ ${appointmentInfo.cancelled}</span>`;
+        }
+        
+        html += '</div>';
+      }
+      
+      html += '</div>';
+    }
+    
+    // Add animation class
+    grid.className = 'grid grid-cols-7 gap-1 mb-4 calendar-grid-enter';
+    grid.innerHTML = html;
+    
+    // Attach event listeners
+    grid.querySelectorAll('.calendar-day').forEach(cell => {
+      cell.addEventListener('click', handleDayClick);
+    });
+    
+    // Update month selector active state
+    updateMonthSelector();
+  }
+
+  function handleDayClick(e) {
+    const dateStr = e.currentTarget.dataset.date;
+    const day = e.currentTarget.dataset.day;
+    
+    // Remove previous selection
+    document.querySelectorAll('.calendar-day.selected').forEach(cell => {
+      cell.classList.remove('selected');
+    });
+    
+    // Add selection to clicked day
+    calendarState.selectedDate = dateStr;
+    e.currentTarget.classList.add('selected');
+    
+    // Update filter input and trigger HTMX/form change
+    const input = document.getElementById('filterDate');
+    if (input) {
+      input.value = dateStr;
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+  }
+
+  // ===== Month Navigation with Animation =====
+  function changeMonth(direction) {
+    const grid = document.getElementById('calendarGrid');
+    
+    // Trigger exit animation
+    grid.classList.remove('calendar-grid-enter');
+    grid.classList.add('calendar-grid-exit');
+    
+    // Update date after animation starts
+    setTimeout(() => {
+      calendarState.currentDate.setMonth(calendarState.currentDate.getMonth() + direction);
+      renderCalendar();
+    }, 175); // Half the animation duration
+  }
+
+  // ===== Collapse/Expand =====
+  function toggleCollapse() {
+    const container = document.getElementById('calendarContainer');
+    const btn = document.getElementById('collapseBtn');
+    const monthSelector = document.getElementById('monthSelectorContainer');
+    
+    calendarState.isCollapsed = !calendarState.isCollapsed;
+    
+    if (calendarState.isCollapsed) {
+      container.classList.add('collapsed');
+      if (monthSelector) monthSelector.classList.add('hidden');
+      btn.querySelector('.chevron-icon').classList.add('rotated');
+    } else {
+      container.classList.remove('collapsed');
+      if (monthSelector) monthSelector.classList.remove('hidden');
+      btn.querySelector('.chevron-icon').classList.remove('rotated');
+    }
+  }
+
+  // ===== Month Selector =====
+  function renderMonthSelector() {
+    const scroller = document.getElementById('monthScroller');
+    if (!scroller) return;
+    
+    let html = '';
+    const today = new Date();
+    const currentYear = today.getFullYear();
+    
+    // Generate months for current year and next year
+    for (let year of [currentYear - 1, currentYear, currentYear + 1]) {
+      for (let month = 0; month < 12; month++) {
+        const date = new Date(year, month, 1);
+        const monthStr = date.toLocaleString('default', { month: 'short', year: 'numeric' });
+        const isActive = year === calendarState.currentDate.getFullYear() && 
+                        month === calendarState.currentDate.getMonth();
+        
+        const classes = isActive ? 'month-card active' : 'month-card';
+        html += `<button type="button" class="${classes}" data-year="${year}" data-month="${month}">${monthStr}</button>`;
+      }
+    }
+    
+    scroller.innerHTML = html;
+    
+    // Attach event listeners
+    scroller.querySelectorAll('.month-card').forEach(card => {
+      card.addEventListener('click', handleMonthSelect);
+    });
+  }
+
+  function handleMonthSelect(e) {
+    e.preventDefault();
+    const year = parseInt(e.currentTarget.dataset.year);
+    const month = parseInt(e.currentTarget.dataset.month);
+    
+    calendarState.currentDate = new Date(year, month, 1);
+    changeMonth(0); // Trigger animation without actual month change
+  }
+
+  function updateMonthSelector() {
+    const cards = document.querySelectorAll('.month-card');
+    cards.forEach(card => {
+      const cardYear = parseInt(card.dataset.year);
+      const cardMonth = parseInt(card.dataset.month);
+      const isActive = cardYear === calendarState.currentDate.getFullYear() && 
+                      cardMonth === calendarState.currentDate.getMonth();
+      
+      if (isActive) {
+        card.classList.add('active');
+      } else {
+        card.classList.remove('active');
+      }
+    });
+  }
+
+  // ===== Event Listeners =====
+  function initializeCalendar() {
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const collapseBtn = document.getElementById('collapseBtn');
+    
+    if (prevBtn) prevBtn.addEventListener('click', () => changeMonth(-1));
+    if (nextBtn) nextBtn.addEventListener('click', () => changeMonth(1));
+    if (collapseBtn) collapseBtn.addEventListener('click', toggleCollapse);
+    
+    renderCalendar();
+    renderMonthSelector();
+  }
+
+  // Initialize when DOM is ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeCalendar);
+  } else {
+    initializeCalendar();
+  }
+
+  // ===== Global API (for integration with parent app) =====
+  window.CalendarComponent = {
+    selectDate: (dateStr) => {
+      const cell = document.querySelector(`[data-date="${dateStr}"]`);
+      if (cell) cell.click();
+    },
+    setAppointmentData: (data) => {
+      calendarState.appointmentData = data;
+      renderCalendar();
+    },
+    getCurrentDate: () => new Date(calendarState.currentDate),
+    getSelectedDate: () => calendarState.selectedDate
+  };
+</script>
+  <script>
+    // === menu helpers ===
+    function toggleMenu(menuId) {
+      const menu = document.getElementById(menuId);
+      const isHidden = menu.classList.contains('hidden');
+      document.querySelectorAll('.action-menu').forEach(m => m.classList.add('hidden'));
+      if (isHidden) menu.classList.remove('hidden');
+    }
+
+    window.addEventListener('click', (e) => {
+      if (!e.target.closest('.relative')) {
+        document.querySelectorAll('.action-menu').forEach(m => m.classList.add('hidden'));
+      }
+    });
+
+
+
+    // === view details ===
+    function openViewModal(name, treatment, time, doctor) {
+      document.getElementById('viewName').textContent = name;
+      document.getElementById('viewTreatment').textContent = treatment;
+      document.getElementById('viewTime').textContent = time;
+      openModal('viewModal');
+    }
+
+    // === edit / delete helpers ===
+    function openEditModal(apptId, name, treatment) {
+      document.getElementById('editRowId').value = apptId;
+      document.getElementById('editName').value = name;
+      document.getElementById('editTreatment').value = treatment;
+      openModal('editModal');
+    }
+
+    function openDeleteModal(apptId, name) {
+      document.getElementById('deleteRowId').value = apptId;
+      document.getElementById('deleteItemName').textContent = name;
+      openModal('deleteModal');
+    }
+  </script>

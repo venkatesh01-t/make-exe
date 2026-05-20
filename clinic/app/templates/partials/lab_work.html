@@ -1,0 +1,955 @@
+<!-- 
+  DCMS PRO: Lab Work Orders Core Module
+  This version uses static HTML for initial data loading to ensure older data is always visible.
+  New data is prepended to the list, and status updates affect specific rows directly.
+-->
+
+<style>
+    :root {
+        --primary-blue: #2563eb;
+        --bg-slate: #f8fafc;
+    }
+
+    .table-container {
+        background: white;
+        border-radius: 24px;
+        border: 1px solid #e2e8f0;
+        overflow-x: auto;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .dcms-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        min-width: 850px;
+    }
+
+    .dcms-table th {
+        background: #f8fafc;
+        padding: 16px 24px;
+        text-align: left;
+        font-size: 11px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #64748b;
+        border-bottom: 1px solid #e2e8f0;
+        white-space: nowrap;
+    }
+
+    .dcms-table td {
+        padding: 16px 24px;
+        font-size: 14px;
+        color: #1e293b;
+        border-bottom: 1px solid #f1f5f9;
+        vertical-align: middle;
+        white-space: nowrap;
+    }
+
+    .dcms-table tr:hover td {
+        background-color: #f8fafc;
+    }
+
+    .dcms-table tr {
+        transition: all 0.2s;
+        cursor: pointer;
+    }
+
+    /* Workflow Dots Styling */
+    .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        transition: all 0.3s;
+    }
+
+    .dot-active {
+        background-color: var(--primary-blue);
+        transform: scale(1.2);
+    }
+
+    .dot-inactive {
+        background-color: #e2e8f0;
+    }
+
+    /* Modal Pulse */
+    .node-pulse {
+        position: relative;
+    }
+
+    .node-pulse::after {
+        content: '';
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        background: var(--primary-blue);
+        opacity: 0.4;
+        animation: pulse-ring 2s infinite;
+        z-index: -1;
+    }
+
+    @keyframes pulse-ring {
+        0% {
+            transform: scale(1);
+            opacity: 0.5;
+        }
+
+        100% {
+            transform: scale(1.8);
+            opacity: 0;
+        }
+    }
+
+    .scroll-hide::-webkit-scrollbar {
+        display: none;
+    }
+
+    .scroll-hide {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+</style>
+
+<!-- 1. HEADER & ACTIONS -->
+<div class="main-header flex flex-col xl:flex-row xl:items-start justify-between gap-6 mb-8">
+    <div>
+        <h1 class="text-4xl font-extrabold text-slate-900 tracking-tighter">Lab Work Orders</h1>
+        <p class="text-slate-500 mt-2 font-medium">Static-loaded dental cases with real-time status control.</p>
+    </div>
+    <div class="w-full xl:w-auto flex flex-col gap-3">
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+
+        <!-- Button 1: View Lab Details Table -->
+        <button onclick="openModal('lab-details-table-modal')"
+            class="w-full min-h-[88px] bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-4 rounded-2xl shadow-xl shadow-blue-100 transition-all active:scale-95 flex items-center justify-center gap-2 text-center">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="3">
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+            Lab Details
+        </button>
+
+        <!-- Button 2: View Lab Work Table -->
+        <button onclick="openModal('lab-work-table-modal')"
+            class="w-full min-h-[88px] bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 px-4 rounded-2xl shadow-xl shadow-emerald-100 transition-all active:scale-95 flex items-center justify-center gap-2 text-center">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="3">
+                <path
+                    d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
+            </svg>
+            Lab Work
+        </button>
+        <button onclick="openModal('add-lab-modal')"
+            class="w-full min-h-[88px] bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 px-4 rounded-2xl shadow-xl shadow-emerald-100 transition-all active:scale-95 flex items-center justify-center gap-2 text-center">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="3">
+                <path
+                    d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
+            </svg>
+            add Lab Work
+        </button>
+
+        <div class="w-full min-h-[88px] bg-white px-4 py-4 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-center">
+            <span class="text-[10px] uppercase font-black text-slate-400 tracking-widest">Active Orders</span>
+            <span class="block text-2xl font-black text-blue-600" id="lab-count">--</span>
+        </div>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 w-full">
+            <div class="bg-blue-50 border border-blue-100 rounded-2xl px-4 py-3">
+                <p class="text-[10px] uppercase font-black text-blue-400 tracking-widest">SEND</p>
+                <p id="count-sent" class="text-xl font-black text-blue-700 mt-1">--</p>
+            </div>
+            <div class="bg-sky-50 border border-sky-100 rounded-2xl px-4 py-3">
+                <p class="text-[10px] uppercase font-black text-sky-400 tracking-widest">RECEIVED</p>
+                <p id="count-received" class="text-xl font-black text-sky-700 mt-1">--</p>
+            </div>
+            <div class="bg-indigo-50 border border-indigo-100 rounded-2xl px-4 py-3">
+                <p class="text-[10px] uppercase font-black text-indigo-400 tracking-widest">INFORMED</p>
+                <p id="count-designing" class="text-xl font-black text-indigo-700 mt-1">--</p>
+            </div>
+            <div class="bg-amber-50 border border-amber-100 rounded-2xl px-4 py-3">
+                <p class="text-[10px] uppercase font-black text-amber-500 tracking-widest">QA</p>
+                <p id="count-qa-check" class="text-xl font-black text-amber-700 mt-1">--</p>
+            </div>
+            <div class="bg-emerald-50 border border-emerald-100 rounded-2xl px-4 py-3">
+                <p class="text-[10px] uppercase font-black text-emerald-500 tracking-widest">FINISHED</p>
+                <p id="count-ready" class="text-xl font-black text-emerald-700 mt-1">--</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 2. MAIN ORDERS TABLE -->
+<div class="table-container scroll-hide">
+    <table class="dcms-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Patient</th>
+                <th>Work Type</th>
+                <th>Laboratory</th>
+                <th>Status Workflow</th>
+                <th>Date Sent</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="lab-orders-table-body" hx-get="{% url 'clinic:lab_work_paginated' %}" hx-trigger="load" hx-swap="innerHTML">
+            <!-- Loading state -->
+            <tr>
+                <td colspan="7" class="text-center py-8">
+                    <div class="flex items-center justify-center gap-2">
+                        <div class="w-3 h-3 bg-blue-600 rounded-full animate-bounce"></div>
+                        <div class="w-3 h-3 bg-blue-600 rounded-full animate-bounce" style="animation-delay: 0.1s;"></div>
+                        <div class="w-3 h-3 bg-blue-600 rounded-full animate-bounce" style="animation-delay: 0.2s;"></div>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- Lab Work Print Preview Modal -->
+<div id="labwork-print-modal" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 hidden">
+    <div class="modal-backdrop absolute inset-0 bg-slate-900/70 backdrop-blur-md"
+        onclick="closeModal('labwork-print-modal')"></div>
+
+    <div
+        class="modal-content bg-slate-950 rounded-[32px] w-full max-w-6xl shadow-2xl overflow-hidden relative z-10 h-[92vh] flex flex-col border border-white/10">
+
+        <div class="no-print px-5 sm:px-7 py-4 border-b border-white/10 flex items-center justify-between bg-slate-900/70">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-lg bg-teal-500/20 text-teal-300 flex items-center justify-center">
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.6a1 1 0 0 1 .7.3l5.4 5.4a1 1 0 0 1 .3.7V19a2 2 0 0 1-2 2z" />
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="text-xs font-bold text-white uppercase tracking-widest">Lab Work Print Preview</h3>
+                    <p class="text-[10px] text-slate-400 font-medium tracking-tight">A4 Secure Document Viewer</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <button type="button" onclick="printLabWorkFromModal()"
+                    class="w-9 h-9 rounded-lg bg-teal-50 text-teal-700 flex items-center justify-center hover:bg-teal-100 transition"
+                    title="Print A4">
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M17 17h2a2 2 0 0 0 2-2v-4a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h2m2 4h6a2 2 0 0 0 2-2v-4a2 2 0 0 0-2-2H9a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2zm8-12V5a2 2 0 0 0-2-2H9a2 2 0 0 0-2 2v4h10z" />
+                    </svg>
+                </button>
+
+                <button type="button" onclick="downloadLabWorkFromModal()"
+                    class="w-9 h-9 rounded-lg bg-blue-50 text-blue-700 flex items-center justify-center hover:bg-blue-100 transition"
+                    title="Download PDF">
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M4 16v1a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-1m-4-4l-4 4m0 0-4-4m4 4V4" />
+                    </svg>
+                </button>
+
+                <button type="button" onclick="openLabWorkInNewTab()"
+                    class="w-9 h-9 rounded-lg bg-violet-50 text-violet-700 flex items-center justify-center hover:bg-violet-100 transition"
+                    title="Open in New Tab">
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 3h7v7" />
+                        <path d="M10 14L21 3" />
+                        <path d="M21 14v7h-7" />
+                        <path d="M3 10V3h7" />
+                        <path d="M3 21h7v-7" />
+                    </svg>
+                </button>
+
+                <button type="button" onclick="closeModal('labwork-print-modal')"
+                    class="p-2 hover:bg-white/10 rounded-xl transition text-slate-400 hover:text-white" title="Close">
+                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <iframe id="labwork-print-frame" class="w-full h-full bg-white" title="Lab Work A4 Preview"></iframe>
+    </div>
+</div>
+
+{% include 'ext/labmodal.html' %}
+
+<!-- Modal: Progress Tracking (Provided by User) -->
+<div id="lab-modal" onclick="handleBackdropClick(event, 'lab-modal', 'l-modal-container')"
+    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md hidden opacity-0 transition-all duration-300">
+    <div class="bg-white rounded-[32px] w-full max-w-2xl shadow-2xl overflow-hidden transform scale-95 transition-all duration-300"
+        id="l-modal-container">
+        <div class="p-8 border-b border-slate-100 flex justify-between items-center">
+            <h2 id="m-patient-name" class="text-2xl font-extrabold text-slate-900">...</h2>
+            <button onclick="closeModal1('lab-modal', 'l-modal-container')"
+                class="p-2 hover:bg-slate-100 rounded-xl transition">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+            </button>
+        </div>
+        <div class="p-8 space-y-8">
+            <input type="hidden" id="active-order-id" name="order_id">
+            <div class="flex justify-between relative px-2">
+                <div class="absolute top-5 left-0 right-0 h-0.5 bg-slate-100 -z-10 mx-6"></div>
+                <!-- Status Buttons -->
+                <button type="button" hx-post="{% url 'clinic:lab_order_update' %}" hx-vals='{"status_node": "1"}'
+                    hx-include="#active-order-id" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}' hx-swap="none" hx-disabled-elt="this"
+                    onclick="updateStatusUI_Local(1); event.preventDefault();"
+                    class="flex flex-col items-center gap-2 group">
+                    <div id="node-1"
+                        class="w-10 h-10 rounded-full border-2 bg-white flex items-center justify-center text-xs font-bold">
+                        1</div>
+                    <span class="text-[9px] font-bold text-slate-400 uppercase">SEND</span>
+                </button>
+                <button type="button" hx-post="{% url 'clinic:lab_order_update' %}" hx-vals='{"status_node": "2"}'
+                    hx-include="#active-order-id" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}' hx-swap="none" hx-disabled-elt="this"
+                    onclick="updateStatusUI_Local(2); event.preventDefault();"
+                    class="flex flex-col items-center gap-2 group">
+                    <div id="node-2"
+                        class="w-10 h-10 rounded-full border-2 bg-white flex items-center justify-center text-xs font-bold">
+                        2</div>
+                    <span class="text-[9px] font-bold text-slate-400 uppercase">RECEIVED</span>
+                </button>
+                <button type="button" hx-post="{% url 'clinic:lab_order_update' %}" hx-vals='{"status_node": "3"}'
+                    hx-include="#active-order-id" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}' hx-swap="none" hx-disabled-elt="this"
+                    onclick="updateStatusUI_Local(3); event.preventDefault();"
+                    class="flex flex-col items-center gap-2 group">
+                    <div id="node-3"
+                        class="w-10 h-10 rounded-full border-2 bg-white flex items-center justify-center text-xs font-bold">
+                        3</div>
+                    <span class="text-[9px] font-bold text-slate-400 uppercase">INFORMED</span>
+                </button>
+                <button type="button" hx-post="{% url 'clinic:lab_order_update' %}" hx-vals='{"status_node": "4"}'
+                    hx-include="#active-order-id" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}' hx-swap="none" hx-disabled-elt="this"
+                    onclick="updateStatusUI_Local(4); event.preventDefault();"
+                    class="flex flex-col items-center gap-2 group">
+                    <div id="node-4"
+                        class="w-10 h-10 rounded-full border-2 bg-white flex items-center justify-center text-xs font-bold">
+                        4</div>
+                    <span class="text-[9px] font-bold text-slate-400 uppercase">QA</span>
+                </button>
+                <button type="button" hx-post="{% url 'clinic:lab_order_update' %}" hx-vals='{"status_node": "5"}'
+                    hx-include="#active-order-id" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}' hx-swap="none" hx-disabled-elt="this"
+                    onclick="updateStatusUI_Local(5); event.preventDefault();"
+                    class="flex flex-col items-center gap-2 group">
+                    <div id="node-5"
+                        class="w-10 h-10 rounded-full border-2 bg-white flex items-center justify-center text-xs font-bold">
+                        5</div>
+                    <span class="text-[9px] font-bold text-slate-400 uppercase">FINISHED</span>
+                </button>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                    <p class="text-[10px] text-slate-400 font-black uppercase">Lab</p>
+                    <p class="font-bold text-slate-800" id="m-lab-name">...</p>
+                </div>
+                <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                    <p class="text-[10px] text-slate-400 font-black uppercase">Work</p>
+                    <p class="font-bold text-blue-600" id="m-work-type">...</p>
+                </div>
+            </div>
+            <p id="m-tech-notes" class="text-slate-600 text-sm leading-relaxed italic border-l-4 border-blue-100 pl-4">
+                ...</p>
+        </div>
+    </div>
+</div>
+</div>
+
+<!-- Lab Details Table Modal -->
+<!-- Lab Details Table Modal -->
+<div id="lab-details-table-modal" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 hidden">
+
+    <div class="modal-backdrop absolute inset-0 bg-slate-900/60 backdrop-blur-md"
+        onclick="closeModal('lab-details-table-modal')"></div>
+
+    <div
+        class="modal-content bg-white rounded-[32px] w-full max-w-6xl shadow-2xl overflow-hidden relative z-10 max-h-[90vh] flex flex-col mx-auto">
+
+        <!-- Header -->
+        <div
+            class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 p-4 sm:p-8 border-b border-slate-200">
+
+            <div>
+                <h2 class="text-3xl font-extrabold text-slate-900">Lab Details</h2>
+                <p class="text-slate-500 mt-1 font-medium">Manage your laboratory information</p>
+            </div>
+
+            <div class="flex items-center gap-4 flex-wrap">
+
+                <button onclick="openAddLabDetailsModal()"
+                    class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-2xl shadow-xl shadow-blue-100 transition-all active:scale-95 flex items-center justify-center gap-2">
+
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="3">
+                        <line x1="12" y1="5" x2="12" y2="19" />
+                        <line x1="5" y1="12" x2="19" y2="12" />
+                    </svg>
+
+                    Add Lab Details
+
+                </button>
+
+                <button onclick="closeModal('lab-details-table-modal')"
+                    class="text-slate-400 hover:text-slate-600 transition">
+
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+
+                    </svg>
+
+                </button>
+
+            </div>
+
+        </div>
+
+        <!-- Table -->
+        <div class="overflow-x-auto overflow-y-auto flex-1">
+
+            <table class="w-full min-w-[700px]">
+
+                <thead class="bg-slate-50 border-b border-slate-200 sticky top-0">
+
+                    <tr>
+
+                        <th class="text-left py-4 px-6 text-xs font-black text-slate-500 uppercase tracking-wider">
+                            Lab Name
+                        </th>
+
+                        <th class="text-left py-4 px-6 text-xs font-black text-slate-500 uppercase tracking-wider">
+                            Address
+                        </th>
+
+                        <th class="text-left py-4 px-6 text-xs font-black text-slate-500 uppercase tracking-wider">
+                            Phone
+                        </th>
+
+                        <th class="text-left py-4 px-6 text-xs font-black text-slate-500 uppercase tracking-wider">
+                            Email
+                        </th>
+
+                        <th class="text-center py-4 px-6 text-xs font-black text-slate-500 uppercase tracking-wider">
+                            Actions
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody class="divide-y divide-slate-100" id="lab-details-table-body">
+                    {% include 'ext/lab_details_data.html' %}
+
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<!-- Lab Work Table Modal -->
+<div id="lab-work-table-modal" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 hidden">
+
+    <div class="modal-backdrop absolute inset-0 bg-slate-900/60 backdrop-blur-md"
+        onclick="closeModal('lab-work-table-modal')"></div>
+
+    <div
+        class="modal-content bg-white rounded-[32px] w-full max-w-6xl shadow-2xl overflow-hidden relative z-10 max-h-[90vh] flex flex-col mx-auto">
+
+        <!-- Header -->
+        <div
+            class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 p-4 sm:p-8 border-b border-slate-200">
+
+            <div>
+                <h2 class="text-3xl font-extrabold text-slate-900">Lab Work Items</h2>
+                <p class="text-slate-500 mt-1 font-medium">Manage your work items and pricing</p>
+            </div>
+
+            <div class="flex items-center gap-4 flex-wrap">
+
+                <button onclick="openAddLabWorkModal()"
+                    class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-6 rounded-2xl shadow-xl shadow-emerald-100 transition-all active:scale-95 flex items-center justify-center gap-2">
+
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="3">
+
+                        <line x1="12" y1="5" x2="12" y2="19" />
+                        <line x1="5" y1="12" x2="19" y2="12" />
+
+                    </svg>
+
+                    Add Lab Work
+
+                </button>
+
+                <button onclick="closeModal('lab-work-table-modal')"
+                    class="text-slate-400 hover:text-slate-600 transition">
+
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2">
+
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+
+                    </svg>
+
+                </button>
+
+            </div>
+
+        </div>
+
+        <!-- Table -->
+        <div class="overflow-x-auto overflow-y-auto flex-1">
+
+            <table class="w-full min-w-[600px]">
+
+                <thead class="bg-slate-50 border-b border-slate-200 sticky top-0">
+
+                    <tr>
+
+                        <th class="text-left py-4 px-6 text-xs font-black text-slate-500 uppercase tracking-wider">
+                            Work Item Name
+                        </th>
+
+                        <th class="text-left py-4 px-6 text-xs font-black text-slate-500 uppercase tracking-wider">
+                            Price
+                        </th>
+
+                        <th class="text-left py-4 px-6 text-xs font-black text-slate-500 uppercase tracking-wider">
+                            Category
+                        </th>
+
+                        <th class="text-center py-4 px-6 text-xs font-black text-slate-500 uppercase tracking-wider">
+                            Actions
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody class="divide-y divide-slate-100" id="lab-item-table-body">
+                    {% include 'ext/lab_item_data.html' %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Add/Edit Lab Details (Name, Address, Phone, Email) -->
+<div id="lab-details-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 hidden">
+    <div class="modal-backdrop absolute inset-0 bg-slate-900/60 backdrop-blur-md"
+        onclick="closeModal('lab-details-modal')"></div>
+    <div class="modal-content bg-white rounded-[32px] w-full max-w-lg shadow-2xl overflow-hidden p-8 relative z-10">
+        <div class="flex justify-between items-center mb-6">
+            <h2 id="lab-details-modal-title" class="text-2xl font-extrabold text-slate-900">Lab Details</h2>
+            <button onclick="closeModal('lab-details-modal')" class="text-slate-400 hover:text-slate-600 transition">
+                ✕
+            </button>
+        </div>
+        <form hx-post="{% url 'clinic:lab_create' %}" hx-headers='{"X-CSRFToken":"{{csrf_token}}"}'
+            hx-target="#lab-details-table-body" hx-swap="innerHTML">
+            <input type="hidden" id="ld-id" name="ld-id">
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Lab Name</label>
+                    <input type="text" id="ld-name" name="ld-name" placeholder="Enter Lab Name"
+                        class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Address</label>
+                    <input type="text" id="ld-address" name="ld-address" placeholder="Street Address, City, Zip"
+                        class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label
+                            class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Phone</label>
+                        <input type="tel" id="ld-phone" name="ld-phone" placeholder="(555) 000-0000"
+                            class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl">
+                    </div>
+                    <div>
+                        <label
+                            class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Email</label>
+                        <input type="email" id="ld-email" name="ld-email" placeholder="lab@example.com"
+                            class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl">
+                    </div>
+                </div>
+                <button type="submit" hx-disabled-elt="self"
+                    class="w-full mt-4 bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-2xl">
+                    Save Lab Details
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal 2: Lab Work (Name, Price) -->
+<div id="lab-work-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 hidden">
+    <div class="modal-backdrop absolute inset-0 bg-slate-900/60 backdrop-blur-md"
+        onclick="closeModal('lab-work-modal')"></div>
+    <div class="modal-content bg-white rounded-[32px] w-full max-w-md shadow-2xl overflow-hidden p-8 relative z-10">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-extrabold text-slate-900" id="lab-work-modal-title">Add Lab Work</h2>
+            <button onclick="closeModal('lab-work-modal')" class="text-slate-400 hover:text-slate-600 transition">
+                ✕
+            </button>
+        </div>
+        <form hx-post="{% url 'clinic:lab_work_crud' %}" hx-headers='{"X-CSRFToken":"{{csrf_token}}"}'
+            hx-target="#lab-item-table-body" hx-swap="innerHTML">
+            <input type="hidden" id="lw-id" name="lw-id" value="">
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Work Item
+                        Name</label>
+                    <input type="text" id="lw-name" name="lw-name" placeholder="e.g. Zirconia Crown, Impression"
+                        class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-emerald-100 focus:border-emerald-500 transition">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Price
+                        ($)</label>
+                    <input type="number" step="0.01" id="lw-price" name="lw-price" placeholder="0.00"
+                        class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-emerald-100 focus:border-emerald-500 transition">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Category</label>
+                    <select id="lw-category" name="lw-category"
+                        class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-emerald-100 focus:border-emerald-500 transition">
+                        <option value="Crown">Crown</option>
+                        <option value="Veneer">Veneer</option>
+                        <option value="Bridge">Bridge</option>
+                        <option value="Denture">Denture</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <button type="submit"
+                    class="w-full mt-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 rounded-2xl shadow-xl shadow-emerald-100 transition-all active:scale-95">
+                    Save Work Item
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openAddLabWorkModal() {
+        // Clear form for new entry
+        document.getElementById('lw-id').value = '';
+        document.getElementById('lw-name').value = '';
+        document.getElementById('lw-price').value = '';
+        document.getElementById('lw-category').value = 'Crown';
+        document.getElementById('lab-work-modal-title').innerText = 'Add Lab Work';
+        openModal('lab-work-modal');
+    }
+
+    function editLabWork(id, name, price, category) {
+        // Fill form with existing data
+        document.getElementById('lw-id').value = id;
+        document.getElementById('lw-name').value = name;
+        document.getElementById('lw-price').value = price;
+        document.getElementById('lw-category').value = category;
+        document.getElementById('lab-work-modal-title').innerText = 'Edit Lab Work';
+        openModal('lab-work-modal');
+    }
+    function openAddLabDetailsModal() {
+        // Clear form for new entry
+        openModal('lab-details-modal');
+        document.getElementById('ld-id').value = '';
+        document.getElementById('ld-name').value = '';
+        document.getElementById('ld-address').value = '';
+        document.getElementById('ld-phone').value = '';
+        document.getElementById('ld-email').value = '';
+        document.getElementById('lab-details-modal-title').innerText = 'Add Lab Details';
+
+    }
+
+    function editLabDetails(id, name, address, phone, email) {
+        // Fill form with existing data
+        document.getElementById('ld-id').value = id;
+        document.getElementById('ld-name').value = name;
+        document.getElementById('ld-address').value = address;
+        document.getElementById('ld-phone').value = phone;
+        document.getElementById('ld-email').value = email;
+        document.getElementById('lab-details-modal-title').innerText = 'Edit Lab Details';
+        openModal('lab-details-modal');
+    }
+
+    let activeLabPrintUrl = '';
+    let isLabPrintFrameReady = false;
+
+    function openLabWorkPrintModal(orderId) {
+        const frame = document.getElementById('labwork-print-frame');
+        if (!frame || !orderId) return;
+
+        isLabPrintFrameReady = false;
+        activeLabPrintUrl = "{% url 'clinic:lab_order_details' 0 %}".replace('/0/', '/' + encodeURIComponent(orderId) + '/');
+        frame.onload = function () {
+            isLabPrintFrameReady = true;
+        };
+        frame.src = activeLabPrintUrl;
+        openModal('labwork-print-modal');
+    }
+
+    function printLabWorkFromModal() {
+        const frame = document.getElementById('labwork-print-frame');
+        if (!frame || !frame.contentWindow) {
+            openLabWorkInNewTab();
+            return;
+        }
+
+        if (!isLabPrintFrameReady) {
+            return;
+        }
+
+        try {
+            // Prefer the page's own print pipeline (A4 clone logic).
+            if (typeof frame.contentWindow.printLabPreview === 'function') {
+                frame.contentWindow.printLabPreview();
+                return;
+            }
+
+            frame.contentWindow.focus();
+            frame.contentWindow.print();
+        } catch (e) {
+            openLabWorkInNewTab();
+        }
+    }
+
+    function downloadLabWorkFromModal() {
+        const frame = document.getElementById('labwork-print-frame');
+        if (!frame || !frame.contentWindow) {
+            openLabWorkInNewTab();
+            return;
+        }
+
+        if (!isLabPrintFrameReady) {
+            return;
+        }
+
+        try {
+            if (typeof frame.contentWindow.downloadLabPDF === 'function') {
+                frame.contentWindow.downloadLabPDF();
+                return;
+            }
+        } catch (e) {
+            // Fallback to print dialog if direct method call fails.
+        }
+
+        printLabWorkFromModal();
+    }
+
+    function openLabWorkInNewTab() {
+        if (!activeLabPrintUrl) return;
+        window.open(activeLabPrintUrl, '_blank');
+    }
+    /* ---------------- ADD NEW SELECT OPTION ---------------- */
+
+
+</script>
+
+
+<script>
+
+
+    // ─────────────────────────────────────────────────────────────
+    // 🪟 Open Modal + Set Active Case
+    // ─────────────────────────────────────────────────────────────
+    let activeCaseId = null;
+
+    function openLabModal(caseId) {
+        activeCaseId = caseId;
+        document.getElementById('active-order-id').value = caseId;
+
+        // Optional: Sync modal header from row data (if needed)
+        const row = document.getElementById(`row-${caseId}`);
+        if (row) {
+            const patient = row.querySelector('td:nth-child(2) span')?.textContent;
+            const lab = row.querySelector('td:nth-child(4) span')?.textContent;
+            const work = row.querySelector('td:nth-child(3) span')?.textContent;
+            const note = row.dataset.note || 'No technical notes provided.';
+
+            if (patient) document.getElementById('m-patient-name').textContent = patient;
+            if (lab) document.getElementById('m-lab-name').textContent = lab;
+            if (work) document.getElementById('m-work-type').textContent = work;
+            if (note) document.getElementById('m-tech-notes').textContent = note;
+        }
+
+        // Get current status from row or default to 1
+        const statusEl = document.getElementById(`status-${caseId}`);
+        const statusText = statusEl?.textContent?.trim() || '';
+        const statusMap = { "SEND": 1, "RECEIVED": 2, "INFORMED": 3, "QA": 4, "FINSHED": 5 };
+        const currentNode = statusMap[statusText] || 1;
+
+        // Update modal visuals to match current status
+        updateModalVisuals(currentNode);
+
+        // Show modal with animation
+        showModal('lab-modal', 'l-modal-container');
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // 🔘 Click Buttons 1-5 → Update UI Locally
+    // ─────────────────────────────────────────────────────────────
+    function updateStatusUI_Local(newNode) {
+        if (!activeCaseId) return;
+
+        // 1️⃣ Update Modal Workflow Nodes (1-5)
+        updateModalVisuals(newNode);
+
+        // 2️⃣ Update Table Row Status Text
+        const statusEl = document.getElementById(`status-${activeCaseId}`);
+        if (statusEl) {
+            const labels = { 1: "SEND", 2: "RECEIVED", 3: "INFORMED", 4: "QA", 5: "FINSHED" };
+            statusEl.textContent = labels[newNode] || 'Unknown';
+            statusEl.className = `px-2 py-0.5 rounded text-[10px] font-bold uppercase ${newNode === 5 ? 'bg-emerald-50 text-emerald-600' : 'bg-blue-50 text-blue-600'
+                }`;
+        }
+
+        // 3️⃣ Update Table Row Dots (●●●○○)
+        const dotsEl = document.getElementById(`dots-${activeCaseId}`);
+        if (dotsEl) {
+            dotsEl.innerHTML = [1, 2, 3, 4, 5].map(i =>
+                `<div class="dot ${i <= newNode ? 'dot-active' : 'dot-inactive'}"></div>`
+            ).join('');
+        }
+
+        // 4️⃣ Keep summary cards in sync
+        refreshWorkflowSummary();
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // 🎨 Update Modal Node Styling (Buttons 1-5)
+    // ─────────────────────────────────────────────────────────────
+    function updateModalVisuals(node) {
+        for (let i = 1; i <= 5; i++) {
+            const el = document.getElementById(`node-${i}`);
+            if (!el) continue;
+
+            if (i < node) {
+                // ✅ Completed: Blue filled
+                el.className = "w-10 h-10 rounded-full border-2 bg-blue-600 border-blue-600 text-white flex items-center justify-center text-xs font-bold transition-all";
+            } else if (i === node) {
+                // 🎯 Current: White + pulse
+                el.className = "w-10 h-10 rounded-full border-2 border-blue-600 bg-white text-blue-600 flex items-center justify-center text-xs font-black shadow-lg shadow-blue-100 node-pulse transition-all";
+            } else {
+                // ⬜ Upcoming: Gray
+                el.className = "w-10 h-10 rounded-full border-2 border-slate-100 bg-white text-slate-300 flex items-center justify-center text-xs font-bold transition-all";
+            }
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // 🚪 Modal Show/Hide Helpers (Required for Animation)
+    // ─────────────────────────────────────────────────────────────
+    function showModal(modalId, containerId) {
+        const m = document.getElementById(modalId);
+        const c = document.getElementById(containerId);
+        if (!m || !c) return;
+        m.classList.remove('hidden');
+        void m.offsetWidth; // reflow
+        m.classList.remove('opacity-0');
+        c.classList.remove('scale-95');
+        c.classList.add('scale-100');
+    }
+
+    function closeModal1(modalId, containerId) {
+        const m = document.getElementById(modalId);
+        const c = document.getElementById(containerId);
+        if (!m || !c) return;
+        m.classList.add('opacity-0');
+        c.classList.remove('scale-100');
+        c.classList.add('scale-95');
+        setTimeout(() => m.classList.add('hidden'), 300);
+    }
+
+    function handleBackdropClick(e, modalId, containerId) {
+        if (e.target.id === modalId) closeModal1(modalId, containerId);
+    }
+
+    function refreshWorkflowSummary() {
+        // Fetch total counts from API (all data, not just current page)
+        fetch('{% url "clinic:lab_work_counts" %}')
+            .then(response => response.json())
+            .then(data => {
+                const totalEl = document.getElementById('lab-count');
+                const sentEl = document.getElementById('count-sent');
+                const receivedEl = document.getElementById('count-received');
+                const designingEl = document.getElementById('count-designing');
+                const qaCheckEl = document.getElementById('count-qa-check');
+                const readyEl = document.getElementById('count-ready');
+
+                if (totalEl) totalEl.textContent = String(data.total);
+                if (sentEl) sentEl.textContent = String(data.counts['SEND'] || 0);
+                if (receivedEl) receivedEl.textContent = String(data.counts['RECEIVED'] || 0);
+                if (designingEl) designingEl.textContent = String(data.counts['INFORMED'] || 0);
+                if (qaCheckEl) qaCheckEl.textContent = String(data.counts['QA'] || 0);
+                if (readyEl) readyEl.textContent = String(data.counts['FINSHED'] || 0);
+            })
+            .catch(error => {
+                console.error('Error fetching lab work counts:', error);
+                // Fallback: count visible rows only
+                const body = document.getElementById('lab-orders-table-body');
+                if (!body) return;
+
+                const counts = {
+                    'SEND': 0,
+                    'RECEIVED': 0,
+                    'INFORMED': 0,
+                    'QA': 0,
+                    'FINSHED': 0
+                };
+
+                const rows = body.querySelectorAll('tr[id^="row-"]');
+                rows.forEach(row => {
+                    const statusEl = row.querySelector('[id^="status-"]');
+                    const status = statusEl ? statusEl.textContent.trim() : '';
+                    if (counts.hasOwnProperty(status)) {
+                        counts[status] += 1;
+                    }
+                });
+
+                const totalEl = document.getElementById('lab-count');
+                const sentEl = document.getElementById('count-sent');
+                const receivedEl = document.getElementById('count-received');
+                const designingEl = document.getElementById('count-designing');
+                const qaCheckEl = document.getElementById('count-qa-check');
+                const readyEl = document.getElementById('count-ready');
+
+                if (totalEl) totalEl.textContent = String(rows.length);
+                if (sentEl) sentEl.textContent = String(counts['SEND']);
+                if (receivedEl) receivedEl.textContent = String(counts['RECEIVED']);
+                if (designingEl) designingEl.textContent = String(counts['INFORMED']);
+                if (qaCheckEl) qaCheckEl.textContent = String(counts['QA']);
+                if (readyEl) readyEl.textContent = String(counts['FINSHED']);
+            });
+    }
+
+    document.addEventListener('DOMContentLoaded', refreshWorkflowSummary);
+    document.body.addEventListener('htmx:afterSwap', function (evt) {
+        if (evt.target && evt.target.id === 'lab-orders-table-body') {
+            refreshWorkflowSummary();
+        }
+    });
+
+    document.body.addEventListener('htmx:afterSettle', function () {
+        refreshWorkflowSummary();
+    });
+
+    // Important for partial loads: run once immediately when this script executes.
+    refreshWorkflowSummary();
+</script>

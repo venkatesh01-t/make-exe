@@ -1,0 +1,478 @@
+<div class="page-content">
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+    <div>
+      <h3 class="text-xl font-bold text-gray-800">Billing Calendar</h3>
+      <p class="text-sm text-gray-400">Create invoices, print A4 bills, and track payments</p>
+    </div>
+    <button type="button" onclick="openModal('createBillModal')" class="bg-gradient-to-r from-teal-500 to-teal-600 text-white px-5 py-2.5 rounded-xl text-sm font-semibold shadow-lg shadow-teal-200 hover:shadow-xl transition flex items-center gap-2 w-fit">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+      Create Invoice
+    </button>
+  </div>
+
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mb-6">
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+      <div class="flex items-center gap-3 mb-2">
+        <div class="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center">
+          <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0"/></svg>
+        </div>
+        <div>
+          <p class="text-2xl font-bold text-gray-800">₹{{ today_revenue_label }}</p>
+          <p class="text-xs text-gray-400">Today Revenue</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+      <div class="flex items-center gap-3 mb-2">
+        <div class="w-10 h-10 rounded-xl bg-teal-100 flex items-center justify-center">
+          <svg class="w-5 h-5 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0"/></svg>
+        </div>
+        <div>
+          <p class="text-2xl font-bold text-gray-800">₹{{ month_revenue_label }}</p>
+          <p class="text-xs text-gray-400">This Month Revenue</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+      <div class="flex items-center gap-3 mb-2">
+        <div class="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center">
+          <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0"/></svg>
+        </div>
+        <div>
+          <p class="text-2xl font-bold text-gray-800">₹{{ unpaid_total_label }}</p>
+          <p class="text-xs text-gray-400">Unpaid Total</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 sm:p-6 mb-6">
+    <div class="flex items-center justify-between mb-6">
+      <button type="button" onclick="changeBillingMonth(-1)" class="p-2 rounded-xl hover:bg-gray-100 transition">
+        <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+      </button>
+      <h3 id="billingCalendarMonth" class="text-lg font-bold text-gray-800"></h3>
+      <button type="button" id="billingCollapseBtn" onclick="toggleBillingCollapse()" class="p-2 rounded-xl hover:bg-gray-100 transition" title="Collapse/Expand calendar">
+        <svg class="chevron-icon w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/></svg>
+      </button>
+      <button type="button" onclick="changeBillingMonth(1)" class="p-2 rounded-xl hover:bg-gray-100 transition">
+        <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+      </button>
+    </div>
+    <div id="billingCalendarContainer">
+      <div class="grid grid-cols-7 gap-1 text-center mb-2">
+        <div class="text-xs font-semibold text-gray-400 py-2">Sun</div>
+        <div class="text-xs font-semibold text-gray-400 py-2">Mon</div>
+        <div class="text-xs font-semibold text-gray-400 py-2">Tue</div>
+        <div class="text-xs font-semibold text-gray-400 py-2">Wed</div>
+        <div class="text-xs font-semibold text-gray-400 py-2">Thu</div>
+        <div class="text-xs font-semibold text-gray-400 py-2">Fri</div>
+        <div class="text-xs font-semibold text-gray-400 py-2">Sat</div>
+      </div>
+      <div id="billingCalendarGrid" class="grid grid-cols-7 gap-1 text-center"></div>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6 mb-6">
+    <form id="billingFiltersForm" method="get"
+      hx-get="{% url 'clinic:billing_data' %}"
+      hx-target="#billingTableBody"
+      hx-trigger="change from:input, change from:select">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div>
+          <label class="text-xs text-gray-500 mb-1 block font-medium">Date</label>
+          <input name="date" id="filterBillingDate" type="date" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm">
+        </div>
+        <div>
+          <label class="text-xs text-gray-500 mb-1 block font-medium">Doctor</label>
+          <select name="doctor" id="filterBillingDoctor" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm">
+            <option value="all">All</option>
+            {% for doctor in doctors %}
+            <option value="{{ doctor.name }}">DR. {{ doctor.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="text-xs text-gray-500 mb-1 block font-medium">Status</label>
+          <select name="status" id="filterBillingStatus" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm">
+            <option value="all">All</option>
+            <option value="pending">Pending</option>
+            <option value="paid">Paid</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-xs text-gray-500 mb-1 block font-medium">Treatment</label>
+          <select name="treatment" id="filterBillingTreatment" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm">
+            <option value="all">All</option>
+            {% for item in treatment %}
+            <option value="{{ item.Treatment_name }}">{{ item.Treatment_name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden" id="billingTableWrap">
+    <div class="overflow-x-auto">
+      <table class="w-full min-w-[900px]">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-6 py-4">Invoice</th>
+            <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-6 py-4">Patient</th>
+            <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-6 py-4">Treatment</th>
+            <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-6 py-4">Doctor</th>
+            <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-6 py-4">Amount</th>
+            <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-6 py-4">Date</th>
+            <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-6 py-4">Status</th>
+            <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-6 py-4">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="billingTableBody"
+          hx-get="{% url 'clinic:billing_data' %}"
+          hx-target="#billingTableBody"
+          hx-swap="innerHTML"
+          class="divide-y divide-gray-100">
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div id="createBillModal" class="hidden fixed inset-0 z-[65] flex items-center justify-center p-3 sm:p-4" onclick="if (event.target === this) closeModal('createBillModal')">
+  <div class="modal-backdrop absolute inset-0 bg-black/50" onclick="closeModal('createBillModal')"></div>
+  <div class="modal-content bg-white rounded-3xl shadow-2xl w-full max-w-3xl relative z-10 max-h-[90vh] overflow-y-auto pointer-events-auto">
+    <div class="px-5 sm:px-7 py-4 border-b border-slate-100 flex items-center justify-between">
+      <div>
+        <h3 class="text-lg sm:text-xl font-black text-slate-900">Create Billing Invoice</h3>
+        <p class="text-xs text-slate-500 mt-1">Create invoice from today patient and track payment status</p>
+      </div>
+      <button type="button" onclick="closeModal('createBillModal')" class="p-2 rounded-xl hover:bg-slate-100 transition">
+        <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <form id="createBillForm"
+      hx-post="{% url 'clinic:billing_create' %}"
+      hx-target="#billingTableBody"
+      hx-swap="innerHTML"
+      hx-include="#billingFiltersForm"
+      hx-headers='{"X-CSRFToken":"{{ csrf_token }}"}'
+      class="p-5 sm:p-7 space-y-4">
+      {% csrf_token %}
+
+      <div>
+        <label class="text-xs text-gray-500 mb-1 block font-medium">Today Patient</label>
+        <select id="billDailyPatientSelect" name="daily_patient_id" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm" onchange="onBillingDailyPatientChange(this)">
+          <option value="">Select today patient</option>
+          {% for dp in today_patients %}
+          <option
+            value="{{ dp.id }}"
+            data-patient-id="{{ dp.patient_id }}"
+            data-patient-name="{{ dp.patient|escape }}"
+            data-doctor="{{ dp.doctor|default_if_none:''|escape }}"
+            data-treatment="{{ dp.treatments|default_if_none:''|escape }}">
+            {{ dp.patient }} | {{ dp.date|date:"Y-m-d H:i" }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <input type="hidden" id="billPatientId" name="patient_id" value="">
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="text-xs text-gray-500 mb-1 block font-medium">Patient Name</label>
+          <input id="billPatientName" type="text" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm bg-gray-50" readonly>
+        </div>
+        <div>
+          <label class="text-xs text-gray-500 mb-1 block font-medium">Bill Date</label>
+          <input id="billDate" name="bill_date" type="date" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm" required>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="text-xs text-gray-500 mb-1 block font-medium">Doctor</label>
+          <input id="billDoctor" name="doctor" type="text" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm" placeholder="Doctor name">
+        </div>
+        <div>
+          <label class="text-xs text-gray-500 mb-1 block font-medium">Treatment</label>
+          <input id="billTreatment" name="treatment" type="text" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm" placeholder="Treatment">
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="text-xs text-gray-500 mb-1 block font-medium">Amount</label>
+          <input name="amount" type="number" step="0.01" min="0.01" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm" placeholder="0.00" required>
+        </div>
+        <div>
+          <label class="text-xs text-gray-500 mb-1 block font-medium">Note</label>
+          <input name="note" type="text" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm" placeholder="Optional note">
+        </div>
+      </div>
+
+      <div class="pt-2 flex flex-col sm:flex-row gap-3 sm:justify-end">
+        <button type="button" onclick="closeModal('createBillModal')" class="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-white border border-slate-200 text-slate-600 font-bold hover:bg-slate-100">Cancel</button>
+        <button type="submit" class="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-teal-600 text-white font-bold hover:bg-teal-700">Save Invoice</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div id="billingPreviewModal" class="hidden fixed inset-0 z-[75] flex items-center justify-center p-3 sm:p-4" onclick="if (event.target === this) closeBillingPreviewModal()">
+  <div class="modal-backdrop absolute inset-0 bg-black/60" onclick="closeBillingPreviewModal()"></div>
+  <div class="modal-content bg-white rounded-3xl shadow-2xl w-full max-w-6xl relative z-10 h-[92vh] overflow-hidden flex flex-col pointer-events-auto">
+    <div class="px-5 sm:px-7 py-4 border-b border-slate-100 flex items-center justify-between gap-3">
+      <div class="min-w-0">
+        <h3 class="text-lg sm:text-xl font-black text-slate-900">Invoice Preview</h3>
+        <p class="text-xs text-slate-500">Preview, print, or download invoice as PDF</p>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button type="button" onclick="printBillingPreview()" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-teal-600 text-white hover:bg-teal-700 transition">
+          Print
+        </button>
+        <button type="button" onclick="downloadBillingPreviewPdf()" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-600 text-white hover:bg-blue-700 transition">
+          Download PDF
+        </button>
+        <button type="button" onclick="closeBillingPreviewModal()" class="p-2 rounded-xl hover:bg-slate-100 transition">
+          <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="flex-1 bg-slate-100">
+      <iframe id="billingPreviewFrame" title="Billing Invoice Preview" class="w-full h-full border-0" src="about:blank"></iframe>
+    </div>
+  </div>
+</div>
+
+<script>
+  var billingCurrentDate = new Date();
+  var billingCalendarData = {{ billing_calendar_data_json|safe }} || {};
+  var billingCalendarDates = {{ billing_calendar_dates_json|safe }} || [];
+  var billingPreviewUrlTemplate = "{% url 'clinic:billing_a4' 0 %}";
+  var billingCalendarCollapsed = false;
+  var billingCalendarCollapseAnimation = null;
+
+  function onBillingDailyPatientChange(selectEl) {
+    var option = selectEl.options[selectEl.selectedIndex];
+    if (!option) return;
+    var patientId = option.getAttribute('data-patient-id') || '';
+    var patientName = option.getAttribute('data-patient-name') || '';
+    var doctor = option.getAttribute('data-doctor') || '';
+    var treatment = option.getAttribute('data-treatment') || '';
+
+    var patientIdEl = document.getElementById('billPatientId');
+    var patientNameEl = document.getElementById('billPatientName');
+    var doctorEl = document.getElementById('billDoctor');
+    var treatmentEl = document.getElementById('billTreatment');
+
+    if (patientIdEl) patientIdEl.value = patientId;
+    if (patientNameEl) patientNameEl.value = patientName;
+    if (doctorEl) doctorEl.value = doctor;
+    if (treatmentEl) treatmentEl.value = treatment;
+  }
+
+  function renderBillingCalendar() {
+    var grid = document.getElementById('billingCalendarGrid');
+    var monthLabel = document.getElementById('billingCalendarMonth');
+    if (!grid || !monthLabel) return;
+
+    var year = billingCurrentDate.getFullYear();
+    var month = billingCurrentDate.getMonth();
+    var months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    monthLabel.textContent = months[month] + ' ' + year;
+
+    var firstDay = new Date(year, month, 1).getDay();
+    var daysInMonth = new Date(year, month + 1, 0).getDate();
+    var today = new Date();
+    var html = '';
+
+    for (var i = 0; i < firstDay; i++) {
+      html += '<div class="py-2 sm:py-3"></div>';
+    }
+
+    for (var day = 1; day <= daysInMonth; day++) {
+      var dateStr = year + '-' + String(month + 1).padStart(2, '0') + '-' + String(day).padStart(2, '0');
+      var isToday = day === today.getDate() && month === today.getMonth() && year === today.getFullYear();
+      var dayData = billingCalendarData[dateStr];
+      
+      var totalBills = dayData ? dayData.total : 0;
+      var paidCount = dayData ? dayData.paid : 0;
+      var pendingCount = dayData ? dayData.pending : 0;
+      
+      var cls = 'billing-calendar-day py-2 sm:py-3 text-sm rounded-xl transition cursor-pointer ';
+      if (isToday) {
+        cls += 'bg-teal-600 text-white font-bold';
+      } else if (totalBills > 0) {
+        cls += 'bg-teal-50 border border-teal-200';
+      } else {
+        cls += 'hover:bg-gray-50';
+      }
+
+      html += '<div class="' + cls + '" data-day="' + day + '">';
+      html += '<div class="font-semibold mb-1">' + day + '</div>';
+      
+      if (totalBills > 0) {
+        html += '<div class="text-xs font-bold text-gray-700 mb-1">' + totalBills + ' bill</div>';
+        if (paidCount > 0) {
+          html += '<div class="inline-block bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs font-semibold mr-1">✓ ' + paidCount + '</div>';
+        }
+        if (pendingCount > 0) {
+          html += '<div class="inline-block bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded text-xs font-semibold">◐ ' + pendingCount + '</div>';
+        }
+      }
+      
+      html += '</div>';
+    }
+
+    grid.innerHTML = html;
+    grid.querySelectorAll('.billing-calendar-day').forEach(function (cell) {
+      cell.addEventListener('click', function () {
+        var day = this.dataset.day;
+        var dateStr = year + '-' + String(month + 1).padStart(2, '0') + '-' + String(day).padStart(2, '0');
+        var input = document.getElementById('filterBillingDate');
+        if (input) {
+          input.value = dateStr;
+          input.dispatchEvent(new Event('change'));
+        }
+      });
+    });
+  }
+
+  function changeBillingMonth(dir) {
+    billingCurrentDate.setMonth(billingCurrentDate.getMonth() + dir);
+    renderBillingCalendar();
+  }
+
+  function toggleBillingCollapse() {
+    var container = document.getElementById('billingCalendarContainer');
+    var btn = document.getElementById('billingCollapseBtn');
+    if (!container || !btn) return;
+
+    var icon = btn.querySelector('.chevron-icon');
+    if (billingCalendarCollapseAnimation) {
+      billingCalendarCollapseAnimation.cancel();
+      billingCalendarCollapseAnimation = null;
+    }
+
+    container.classList.remove('hidden');
+    container.style.overflow = 'hidden';
+
+    var shouldCollapse = !billingCalendarCollapsed;
+    var startFrame = shouldCollapse
+      ? { maxHeight: container.scrollHeight + 'px', opacity: '1', transform: 'translateY(0)' }
+      : { maxHeight: '0px', opacity: '0', transform: 'translateY(-8px)' };
+    var endFrame = shouldCollapse
+      ? { maxHeight: '0px', opacity: '0', transform: 'translateY(-8px)' }
+      : { maxHeight: container.scrollHeight + 'px', opacity: '1', transform: 'translateY(0)' };
+
+    billingCalendarCollapseAnimation = container.animate([startFrame, endFrame], {
+      duration: 350,
+      easing: 'cubic-bezier(0.4, 0, 0.2, 1)',
+      fill: 'forwards'
+    });
+
+    billingCalendarCollapsed = shouldCollapse;
+    if (icon) {
+      icon.classList.toggle('rotate-180', shouldCollapse);
+    }
+
+    billingCalendarCollapseAnimation.onfinish = function() {
+      billingCalendarCollapseAnimation = null;
+      container.style.overflow = '';
+      container.style.maxHeight = '';
+      container.style.opacity = '';
+      container.style.transform = '';
+
+      if (billingCalendarCollapsed) {
+        container.classList.add('hidden');
+      }
+    };
+  }
+
+  (function initBillingPage() {
+    renderBillingCalendar();
+    
+    // Set date filter to today's date
+    var filterDateEl = document.getElementById('filterBillingDate');
+    if (filterDateEl) {
+      var today = new Date().toISOString().split('T')[0];
+      filterDateEl.value = today;
+    }
+    
+    var billDateEl = document.getElementById('billDate');
+    if (billDateEl && !billDateEl.value) {
+      billDateEl.value = new Date().toISOString().split('T')[0];
+    }
+  })();
+
+  function openBillingPreviewModal(invoiceId) {
+    if (!invoiceId) return;
+
+    var modal = document.getElementById('billingPreviewModal');
+    var frame = document.getElementById('billingPreviewFrame');
+    if (!modal || !frame) return;
+
+    var url = billingPreviewUrlTemplate.replace('/0/', '/' + encodeURIComponent(invoiceId) + '/');
+    frame.src = url;
+
+    modal.classList.remove('hidden');
+    if (typeof window.syncBodyScrollLock === 'function') {
+      window.syncBodyScrollLock();
+    } else {
+      document.body.style.overflow = 'hidden';
+    }
+
+    requestAnimationFrame(function () {
+      var backdrop = modal.querySelector('.modal-backdrop');
+      var content = modal.querySelector('.modal-content');
+      if (backdrop) backdrop.classList.add('modal-visible');
+      if (content) content.classList.add('modal-visible');
+    });
+  }
+
+  function closeBillingPreviewModal() {
+    var modal = document.getElementById('billingPreviewModal');
+    var frame = document.getElementById('billingPreviewFrame');
+    if (!modal) return;
+
+    var backdrop = modal.querySelector('.modal-backdrop');
+    var content = modal.querySelector('.modal-content');
+    if (backdrop) backdrop.classList.remove('modal-visible');
+    if (content) content.classList.remove('modal-visible');
+
+    setTimeout(function () {
+      modal.classList.add('hidden');
+      if (frame) frame.src = 'about:blank';
+
+      if (typeof window.syncBodyScrollLock === 'function') {
+        window.syncBodyScrollLock();
+      } else {
+        document.body.style.overflow = '';
+      }
+    }, 120);
+  }
+
+  function printBillingPreview() {
+    var frame = document.getElementById('billingPreviewFrame');
+    if (!frame || !frame.contentWindow) return;
+    frame.contentWindow.focus();
+    frame.contentWindow.print();
+  }
+
+  function downloadBillingPreviewPdf() {
+    // Uses browser print dialog from preview; user can choose "Save as PDF".
+    printBillingPreview();
+  }
+
+  window.openBillingPreviewModal = openBillingPreviewModal;
+  window.closeBillingPreviewModal = closeBillingPreviewModal;
+  window.printBillingPreview = printBillingPreview;
+  window.downloadBillingPreviewPdf = downloadBillingPreviewPdf;
+</script>

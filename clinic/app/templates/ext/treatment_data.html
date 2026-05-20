@@ -1,0 +1,26 @@
+{% for i in treatment %}
+  <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 card-hover relative">
+    <div class="w-12 h-12 rounded-xl bg-teal-100 flex items-center justify-center mb-4 text-teal-600 font-bold text-lg">
+      {{ i.Treatment_name|first }}
+    </div>
+    <h4 class="font-bold text-gray-800 mb-1">{{ i.Treatment_name }}</h4>
+    <p class="text-xs text-gray-400 mb-3">{{ i.Description }}</p>
+    <div class="flex items-center justify-between">
+      <span class="text-xl font-bold text-teal-600">₹{{ i.Price }}</span>
+      <span class="text-xs bg-teal-50 text-teal-700 px-2 py-1 rounded-lg font-medium">{{ i.Duration }}</span>
+    </div>
+
+    <!-- Edit/Delete Buttons -->
+    <div class="absolute top-2 right-2 flex gap-2">
+      <!-- Edit Button -->
+        <button type="button" onclick="openEditModal({{ i.id }}, '{{ i.Treatment_name }}', '{{ i.Description }}', {{ i.Price }}, '{{ i.Duration }}')">
+          ✎
+        </button>
+
+        <!-- Delete Button -->
+        <button type="button" onclick="openDeleteModal({{ i.id }}, '{{ i.Treatment_name }}')">
+          🗑️
+        </button>
+    </div>
+  </div>
+{% endfor %}

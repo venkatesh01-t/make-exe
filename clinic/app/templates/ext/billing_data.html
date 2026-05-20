@@ -1,0 +1,90 @@
+{% if invoices %}
+{% for invoice in invoices %}
+<tr class="table-row">
+  <td class="px-6 py-4">
+    <p class="text-sm font-semibold text-teal-600">{{ invoice.invoice_number }}</p>
+  </td>
+  <td class="px-6 py-4">
+    <p class="text-sm font-semibold text-gray-800">{{ invoice.patient | upper }}</p>
+  </td>
+  <td class="px-6 py-4 text-sm text-gray-600">{{ invoice.treatment|default:'N/A' }}</td>
+  <td class="px-6 py-4 text-sm text-gray-600">Dr. {{ invoice.doctor|default:'N/A' }}</td>
+  <td class="px-6 py-4 text-sm font-bold text-gray-800">₹{{ invoice.amount }}</td>
+  <td class="px-6 py-4 text-sm text-gray-600">{{ invoice.bill_date|date:'M d, Y h:i A' }}</td>
+  <td class="px-6 py-4">
+    {% if invoice.status == 'paid' %}
+    <span class="badge bg-green-100 text-green-700">Paid</span>
+    {% else %}
+    <span class="badge bg-amber-100 text-amber-700">Pending</span>
+    {% endif %}
+  </td>
+  <td class="px-6 py-4">
+    <div class="flex items-center gap-2">
+      <button
+        type="button"
+        onclick="openBillingPreviewModal({{ invoice.id }})"
+        class="px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition">
+        A4 Bill
+      </button>
+
+      {% if invoice.status != 'paid' %}
+      <button
+        type="button"
+        hx-post="{% url 'clinic:billing_mark_paid' invoice.id %}"
+        hx-target="#billingTableBody"
+        hx-swap="innerHTML"
+        hx-include="#billingFiltersForm"
+        hx-headers='{"X-CSRFToken":"{{ csrf_token }}"}'
+        class="px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-700 transition">
+        Mark Paid
+      </button>
+      {% endif %}
+    </div>
+  </td>
+</tr>
+{% endfor %}
+
+{% if has_previous or has_next %}
+<tr>
+  <td colspan="8" class="px-5 sm:px-6 py-4 border-t border-gray-100">
+    <div class="flex flex-col sm:flex-row items-center justify-between gap-3">
+      <p class="text-sm text-gray-500">
+        Showing {{ per_page }} of {{ total_count }} invoices for selected date
+      </p>
+      <div class="flex items-center gap-1">
+        {% if has_previous %}
+        <button
+          hx-get="{% url 'clinic:billing_data' %}?page={{ previous_page_number }}"
+          hx-target="#billingTableBody"
+          hx-swap="innerHTML"
+          hx-include="#billingFiltersForm"
+          class="px-3 py-1.5 rounded-lg text-sm text-gray-500 hover:bg-gray-100">
+          Prev
+        </button>
+        {% endif %}
+
+        <span class="px-3 py-1.5 rounded-lg text-sm bg-teal-500 text-white font-medium">{{ current_page }}</span>
+
+        {% if has_next %}
+        <button
+          hx-get="{% url 'clinic:billing_data' %}?page={{ next_page_number }}"
+          hx-target="#billingTableBody"
+          hx-swap="innerHTML"
+          hx-include="#billingFiltersForm"
+          class="px-3 py-1.5 rounded-lg text-sm text-gray-500 hover:bg-gray-100">
+          Next
+        </button>
+        {% endif %}
+      </div>
+    </div>
+  </td>
+</tr>
+{% endif %}
+
+{% else %}
+<tr>
+  <td colspan="8" class="px-5 sm:px-6 py-10 border-t border-gray-100 text-center">
+    <p class="text-sm text-gray-500">No billing records found.</p>
+  </td>
+</tr>
+{% endif %}

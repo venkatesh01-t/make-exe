@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>500 - Server Error | {% if clinic %}{{ clinic.clinic_name }}{% else %}DentaCare Pro{% endif %}</title>
+    {% load static %}
+    <script src="{% static 'vendor/tailwindcss/tailwind.js' %}"></script>
+    <script src="{% static 'vendor/gsap/gsap.min.js' %}"></script>
+    <link href="{% static 'vendor/fontawesome/all.min.css' %}" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        html, body { width: 100%; height: 100%; overflow: hidden; }
+
+        body {
+            background: linear-gradient(135deg, #1f1013 0%, #3d1a22 25%, #5a1f2f 50%, #3d1a22 75%, #1f1013 100%);
+            background-size: 400% 400%;
+            animation: gradientShift 20s ease infinite;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            position: relative;
+            min-height: 100vh;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Advanced Background */
+        .scene-background {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: 0;
+        }
+
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.6;
+        }
+
+        .orb-1 { width: 600px; height: 600px; top: -200px; left: -200px; background: radial-gradient(circle, rgba(239, 68, 68, 0.4), transparent); animation: float 15s ease-in-out infinite; }
+        .orb-2 { width: 500px; height: 500px; bottom: -100px; right: -100px; background: radial-gradient(circle, rgba(220, 38, 38, 0.3), transparent); animation: float 20s ease-in-out infinite reverse; animation-delay: 3s; }
+        .orb-3 { width: 400px; height: 400px; top: 50%; left: 50%; transform: translate(-50%, -50%); background: radial-gradient(circle, rgba(179, 25, 66, 0.2), transparent); animation: float 18s ease-in-out infinite; animation-delay: 6s; }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0); }
+            25% { transform: translate(30px, -30px); }
+            50% { transform: translate(-20px, 20px); }
+            75% { transform: translate(20px, 30px); }
+        }
+
+        /* Grid Background */
+        .grid-bg {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(0deg, transparent 24%, rgba(239, 68, 68, .05) 25%, rgba(239, 68, 68, .05) 26%, transparent 27%, transparent 74%, rgba(239, 68, 68, .05) 75%, rgba(239, 68, 68, .05) 76%, transparent 77%, transparent),
+                linear-gradient(90deg, transparent 24%, rgba(239, 68, 68, .05) 25%, rgba(239, 68, 68, .05) 26%, transparent 27%, transparent 74%, rgba(239, 68, 68, .05) 75%, rgba(239, 68, 68, .05) 76%, transparent 77%, transparent);
+            background-size: 100px 100px;
+            opacity: 0.5;
+        }
+
+        /* Main Container */
+        .container-main {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        /* Clinic Info Overlay */
+        .clinic-header {
+            position: fixed;
+            top: 40px;
+            left: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            animation: slideUpDelay 0.8s ease-out 0.1s both;
+        }
+
+        .clinic-logo-header {
+            height: 80px;
+            width: auto;
+            border-radius: 12px;
+            filter: drop-shadow(0 4px 12px rgba(239, 68, 68, 0.3));
+            object-fit: contain;
+        }
+
+        .clinic-header-text {
+            display: none;
+        }
+
+        .content-box {
+            display: flex;
+            align-items: center;
+            gap: 60px;
+            max-width: 1200px;
+            width: 100%;
+            animation: slideUp 0.8s ease-out;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(50px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Icon Container */
+        .icon-wrapper {
+            flex-shrink: 0;
+            width: 500px;
+            height: 500px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .error-icon {
+            font-size: 280px;
+            animation: bounce 2s ease-in-out infinite;
+            filter: drop-shadow(0 0 40px rgba(239, 68, 68, 0.6));
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-30px); }
+        }
+
+        /* Text Content */
+        .text-content {
+            flex: 1;
+            animation: slideUpDelay 0.8s ease-out 0.2s both;
+        }
+
+        @keyframes slideUpDelay {
+            from { opacity: 0; transform: translateY(50px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .error-code {
+            font-size: 280px;
+            font-weight: 900;
+            line-height: 1;
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 50%, #991b1b 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: -20px;
+        }
+
+        h1 {
+            color: white;
+            font-size: 48px;
+            margin-bottom: 16px;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .highlight { background: linear-gradient(135deg, #ef4444, #dc2626); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+
+        p {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 18px;
+            line-height: 1.6;
+            margin-bottom: 32px;
+        }
+
+        /* Button Styles */
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 32px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 14px 32px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            position: relative;
+            overflow: hidden;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+            box-shadow: 0 10px 30px rgba(239, 68, 68, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 20px 50px rgba(239, 68, 68, 0.6);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: #ef4444;
+            border: 2px solid rgba(239, 68, 68, 0.5);
+            backdrop-filter: blur(10px);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(239, 68, 68, 0.15);
+            border-color: rgba(239, 68, 68, 1);
+            transform: translateY(-3px);
+        }
+
+        /* Quick Links */
+        .quick-links {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+        }
+
+        .quick-link {
+            padding: 16px;
+            background: rgba(239, 68, 68, 0.05);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            border-radius: 12px;
+            color: rgba(255, 255, 255, 0.8);
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .quick-link:hover {
+            background: rgba(239, 68, 68, 0.15);
+            border-color: rgba(239, 68, 68, 0.4);
+            transform: translateY(-3px);
+            color: white;
+        }
+
+        .quick-link i { display: block; font-size: 24px; margin-bottom: 8px; }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .content-box {
+                flex-direction: column;
+                gap: 40px;
+            }
+
+            .icon-wrapper {
+                width: 300px;
+                height: 300px;
+            }
+
+            .error-icon {
+                font-size: 180px;
+            }
+
+            .text-content {
+                width: 100%;
+            }
+
+            .error-code {
+                font-size: 180px;
+            }
+
+            h1 {
+                font-size: 36px;
+            }
+
+            p {
+                font-size: 16px;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .content-box {
+                gap: 24px;
+            }
+
+            .icon-wrapper {
+                width: 200px;
+                height: 200px;
+            }
+
+            .error-icon {
+                font-size: 120px;
+            }
+
+            .error-code {
+                font-size: 120px;
+                margin-bottom: -5px;
+            }
+
+            h1 {
+                font-size: 28px;
+            }
+
+            p {
+                font-size: 14px;
+            }
+
+            .btn {
+                padding: 12px 24px;
+                font-size: 14px;
+            }
+
+            .quick-links {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Background Scene -->
+    <div class="scene-background">
+        <div class="grid-bg"></div>
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="container-main">
+        {% if clinic and clinic.logo %}
+        <div class="clinic-header">
+            <img src="{{ clinic.logo.url }}" alt="{{ clinic.clinic_name }}" class="clinic-logo-header">
+            <div class="clinic-header-text">
+                <h2>{{ clinic.clinic_name }}</h2>
+                {% if clinic.phone %}<p>{{ clinic.phone }}</p>{% endif %}
+            </div>
+        </div>
+        {% else %}
+        <div class="clinic-header" style="background: rgba(239, 68, 68, 0.1); padding: 12px 20px; border-radius: 12px; border: 1px solid rgba(239, 68, 68, 0.2);">
+            <i class="fas fa-hospital" style="font-size: 40px; color: rgba(239, 68, 68, 0.4); margin-right: 12px;\"></i>
+            <div style="text-align: left; color: rgba(255, 255, 255, 0.6); font-size: 12px;\">
+                <p style=\"margin: 0; font-weight: 600;\">Clinic Setup Required</p>
+                <p style=\"margin: 2px 0 0 0;\">Configure clinic in admin panel</p>
+            </div>
+        </div>
+        {% endif %}
+        <div class="content-box">
+            <!-- Icon -->
+            <div class="icon-wrapper">
+                <div class="error-icon">⚠️</div>
+            </div>
+
+            <!-- Text Content -->
+            <div class="text-content">
+                <div class="error-code">500</div>
+                <h1>System Error <span class="highlight">Occurred</span></h1>
+                <p>Our clinic system encountered an unexpected issue. Our technical team has been automatically notified and is working on a resolution right now.</p>
+
+                <div class="btn-group">
+                    <button onclick="location.reload()" class="btn btn-primary">
+                        <i class="fas fa-redo-alt"></i>
+                        <span>Try Again</span>
+                    </button>
+                    <a href="/" class="btn btn-secondary">
+                        <i class="fas fa-home"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </div>
+
+                <div class="quick-links">
+                    <a href="javascript:void(0)" onclick="alert('Support: support@dentacare.com')" class="quick-link">
+                        <i class="fas fa-phone"></i>
+                        Support
+                    </a>
+                    <a href="javascript:void(0)" onclick="alert('Report: errors@dentacare.com')" class="quick-link">
+                        <i class="fas fa-envelope"></i>
+                        Report
+                    </a>
+                    <a href="/" class="quick-link">
+                        <i class="fas fa-check-circle"></i>
+                        Status
+                    </a>
+                    <a href="/login/" class="quick-link">
+                        <i class="fas fa-sign-in-alt"></i>
+                        Login
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Particle effect
+        document.querySelectorAll('.btn, .quick-link').forEach(el => {
+            el.addEventListener('click', function(e) {
+                if (this.href === 'javascript:void(0)') e.preventDefault();
+                const rect = this.getBoundingClientRect();
+                for (let i = 0; i < 3; i++) {
+                    const particle = document.createElement('div');
+                    particle.style.position = 'fixed';
+                    particle.style.left = (rect.left + rect.width / 2) + 'px';
+                    particle.style.top = (rect.top + rect.height / 2) + 'px';
+                    particle.style.width = '6px';
+                    particle.style.height = '6px';
+                    particle.style.background = '#ef4444';
+                    particle.style.borderRadius = '50%';
+                    particle.style.pointerEvents = 'none';
+                    particle.style.zIndex = '9999';
+                    document.body.appendChild(particle);
+
+                    const angle = (Math.PI * 2 * i) / 3;
+                    const speed = 4;
+                    const vx = Math.cos(angle) * speed;
+                    const vy = Math.sin(angle) * speed;
+                    let x = rect.left + rect.width / 2;
+                    let y = rect.top + rect.height / 2;
+                    let life = 1;
+
+                    const tick = () => {
+                        x += vx;
+                        y += vy;
+                        life -= 0.03;
+                        particle.style.left = x + 'px';
+                        particle.style.top = y + 'px';
+                        particle.style.opacity = life;
+
+                        if (life > 0) requestAnimationFrame(tick);
+                        else particle.remove();
+                    };
+                    tick();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

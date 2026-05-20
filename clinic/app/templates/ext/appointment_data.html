@@ -1,0 +1,79 @@
+
+ {% load initials %}  
+{% for i in appoinment %}
+<tr class="table-row">
+            <td class="px-6 py-4">
+              <div class="flex items-center gap-3">
+                <div
+                  class="w-9 h-9 rounded-full bg-gradient-to-br from-teal-400 to-teal-600 flex items-center justify-center text-white text-xs font-bold">
+                  {{ i.name|initials}}</div>
+                <div>
+                  <p class="text-sm font-semibold text-gray-800">{{ i.name }}</p>
+                  <p class="text-xs text-gray-400">#PAT-{{ i.id }}</p>
+                </div>
+              </div>
+            </td>
+            <td class="px-6 py-4">
+              <p class="text-sm text-gray-800">{{ i.date }}</p>
+              <p class="text-xs text-gray-400">{{ i.time }}</p>
+            </td>
+            <td class="px-6 py-4 text-sm text-gray-600">{{ i.treatment }}</td>
+            <td class="px-6 py-4 text-sm text-gray-600">{{ i.doctor }}</td>
+            <td class="px-6 py-4"><span class="badge bg-green-100 text-green-700">{{ i.status }}</span></td>
+            <td class="px-6 py-4">
+              <div class="flex gap-2"><button
+                  onclick="openViewModal('{{ i.name }}', '{{ i.treatment }}', '{{ i.time }}', '{{ i.doctor }}')"
+                  class="w-8 h-8 rounded-lg bg-teal-50 text-teal-600 flex items-center justify-center hover:bg-teal-100"><svg
+                    class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg></button><button onclick="openEditModal('{{ i.id }}', '{{ i.name }}', '{{ i.treatment }}')"
+                  class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center hover:bg-amber-100"><svg
+                    class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg></button><button onclick="openDeleteModal('{{ i.id }}', '{{ i.name }}')"
+                  class="w-8 h-8 rounded-lg bg-red-50 text-red-600 flex items-center justify-center hover:bg-red-100"><svg
+                    class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg></button></div>
+            </td>
+          </tr>
+          {% endfor %}
+
+{% if page_obj.paginator.num_pages > 1 %}
+<tr>
+  <td colspan="6" class="px-5 sm:px-6 py-4 border-t border-gray-100">
+    <div class="flex flex-col sm:flex-row items-center justify-between gap-3">
+      <p class="text-sm text-gray-500">Showing {{ page_obj.start_index }}-{{ page_obj.end_index }} of {{ total_count }} appointments</p>
+      <div class="flex items-center gap-1">
+        {% if page_obj.has_previous %}
+          <button
+            hx-get="{% url 'clinic:appointments_data' %}?page={{ page_obj.previous_page_number }}{% if request.GET.date %}&date={{ request.GET.date|urlencode }}{% endif %}{% if request.GET.doctor %}&doctor={{ request.GET.doctor|urlencode }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status|urlencode }}{% endif %}{% if request.GET.treatment %}&treatment={{ request.GET.treatment|urlencode }}{% endif %}"
+            hx-target="#appointmentTableBody" hx-swap="innerHTML"
+            class="px-3 py-1.5 rounded-lg text-sm text-gray-500 hover:bg-gray-100">Prev</button>
+        {% endif %}
+        {% for num in page_obj.paginator.page_range %}
+          {% if num == page_obj.number %}
+            <button class="px-3 py-1.5 rounded-lg text-sm bg-teal-500 text-white font-medium">{{ num }}</button>
+          {% else %}
+            <button
+              hx-get="{% url 'clinic:appointments_data' %}?page={{ num }}{% if request.GET.date %}&date={{ request.GET.date|urlencode }}{% endif %}{% if request.GET.doctor %}&doctor={{ request.GET.doctor|urlencode }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status|urlencode }}{% endif %}{% if request.GET.treatment %}&treatment={{ request.GET.treatment|urlencode }}{% endif %}"
+              hx-target="#appointmentTableBody" hx-swap="innerHTML"
+              class="px-3 py-1.5 rounded-lg text-sm text-gray-500 hover:bg-gray-100">{{ num }}</button>
+          {% endif %}
+        {% endfor %}
+        {% if page_obj.has_next %}
+          <button
+            hx-get="{% url 'clinic:appointments_data' %}?page={{ page_obj.next_page_number }}{% if request.GET.date %}&date={{ request.GET.date|urlencode }}{% endif %}{% if request.GET.doctor %}&doctor={{ request.GET.doctor|urlencode }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status|urlencode }}{% endif %}{% if request.GET.treatment %}&treatment={{ request.GET.treatment|urlencode }}{% endif %}"
+            hx-target="#appointmentTableBody" hx-swap="innerHTML"
+            class="px-3 py-1.5 rounded-lg text-sm text-gray-500 hover:bg-gray-100">Next</button>
+        {% endif %}
+      </div>
+    </div>
+  </td>
+</tr>
+{% endif %}

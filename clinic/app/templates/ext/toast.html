@@ -1,0 +1,204 @@
+
+
+<style>
+:root {
+    --radius: 14px;
+    --shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+/* CONTAINER */
+#notification-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 99999;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* CARD */
+.notification {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 16px 18px;
+    border-radius: var(--radius);
+    color: #fff;
+    font-family: system-ui;
+    font-size: 14px;
+    backdrop-filter: blur(12px);
+    box-shadow: var(--shadow);
+    animation: slideIn 0.35s ease;
+    transition: all 0.3s ease;
+}
+
+/* ICON */
+.notif-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+}
+
+/* CONTENT */
+.notif-content {
+    flex: 1;
+}
+
+.notif-title {
+    font-weight: 700;
+    font-size: 13px;
+    text-transform: uppercase;
+    opacity: 0.9;
+}
+
+.notif-message {
+    font-size: 14px;
+    opacity: 0.95;
+}
+
+/* CLOSE */
+.notif-close {
+    border: none;
+    background: rgba(255,255,255,0.2);
+    color: white;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+/* PROGRESS */
+.notif-progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    background: rgba(255,255,255,0.5);
+    animation: shrink linear forwards;
+}
+
+/* ANIMATION */
+@keyframes slideIn {
+    from { transform: translateX(120%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes shrink {
+    from { width: 100%; }
+    to { width: 0%; }
+}
+</style>
+
+
+<!-- CONTAINER -->
+<div id="notification-container"></div>
+
+<!-- HTMX TARGET -->
+<div id="appointment-response" style="display:none;" hx-swap-oob="true"></div>
+
+<script>
+function showNotification(message, type = 'success', duration = 4000, closemodel) {
+
+    const container = document.getElementById('notification-container');
+
+    if (typeof closeModal === 'function' && closemodel) {
+        closeModal(closemodel);
+    }
+
+    const icons = {
+        success: '✓',
+        error: '✕',
+        warning: '⚠',
+        info: 'ℹ'
+    };
+
+    const titles = {
+        success: 'Success',
+        error: 'Error',
+        warning: 'Warning',
+        info: 'Info'
+    };
+
+    // 🎨 MODERN COLORS
+    const styles = {
+        success: { bg: 'linear-gradient(135deg,#22c55e,#15803d)', border:'#4ade80' },
+        error: { bg: 'linear-gradient(135deg,#ef4444,#b91c1c)', border:'#f87171' },
+        warning: { bg: 'linear-gradient(135deg,#f59e0b,#b45309)', border:'#facc15' },
+        info: { bg: 'linear-gradient(135deg,#3b82f6,#1d4ed8)', border:'#60a5fa' }
+    };
+
+    const style = styles[type] || styles.info;
+
+    const id = 'notif-' + Date.now();
+
+    const notif = document.createElement('div');
+    notif.className = 'notification';
+    notif.id = id;
+
+    // APPLY STYLE (NO CSS CONFLICT)
+    notif.style.background = style.bg;
+    notif.style.borderLeft = `5px solid ${style.border}`;
+    notif.style.boxShadow = `0 10px 25px ${style.border}55`;
+
+    notif.innerHTML = `
+        <span class="notif-icon">${icons[type]}</span>
+        <div class="notif-content">
+            <div class="notif-title">${titles[type]}</div>
+            <div class="notif-message">${message}</div>
+        </div>
+        <button class="notif-close" onclick="dismissNotification('${id}')">&times;</button>
+        <div class="notif-progress" style="animation-duration:${duration}ms"></div>
+    `;
+
+    container.appendChild(notif);
+
+    // AUTO REMOVE
+    let timeout = setTimeout(() => dismissNotification(id), duration);
+
+    notif.addEventListener('mouseenter', () => clearTimeout(timeout));
+    notif.addEventListener('mouseleave', () => {
+        timeout = setTimeout(() => dismissNotification(id), 1500);
+    });
+}
+
+// DISMISS
+function dismissNotification(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+
+    el.style.opacity = '0';
+    el.style.transform = 'translateX(120%)';
+
+    setTimeout(() => el.remove(), 300);
+}
+
+// HTMX SUPPORT
+document.body.addEventListener('htmx:afterSwap', function (event) {
+    if (event.detail.target.id === 'appointment-response') {
+
+        const data = event.detail.target.innerText.trim();
+
+        try {
+            const json = JSON.parse(data);
+            showNotification(json.message, json.status, json.duration, json.closemodel);
+        } catch {
+            if (data) showNotification(data);
+        }
+
+        event.detail.target.innerHTML = '';
+    }
+});
+
+// MANUAL TRIGGER
+document.body.addEventListener('showNotification', function (event) {
+    const d = event.detail;
+    showNotification(d.message, d.type, d.duration, d.closemodel);
+});
+</script>
+

@@ -1,0 +1,57 @@
+<div id="add-lab-modal"  class="fixed inset-0 z-50 flex items-center justify-center p-4 hidden">
+    <div class="modal-backdrop absolute inset-0 bg-slate-900/60 backdrop-blur-md" onclick="closeModal('add-lab-modal')">
+    </div>
+    <div class="modal-content bg-white rounded-[32px] w-full max-w-lg shadow-2xl overflow-hidden p-8 relative z-10">
+        <h2 class="text-2xl font-extrabold text-slate-900 mb-6">New Lab Order</h2>
+        <form hx-post="{% url 'clinic:lab_order_create' %}" 
+              
+              >
+            {% csrf_token %}
+            <div class="space-y-4">
+                <input type="hidden" id="in-patient-id" name="in-patient-id" value="0">
+                <input type="text" id="in-patient" name="in-patient" placeholder="Patient Name"
+                    class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none" required>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <select id="in-type" name="in-type"
+                            class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none">
+                            {% for i in labtest %}
+                            <option value="{{ i.test_name }}">{{ i.test_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <select id="in-lab" name="in-lab"
+                            class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none">
+                            {% for i in labdetails %}
+                            <option value="{{ i.lab_name }}">{{ i.lab_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <textarea id="in-notes" name="in-notes" placeholder="Notes..." rows="3"
+                    class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none"></textarea>
+                <button type="submit"
+                    class="w-full bg-blue-600 text-white font-bold py-4 rounded-2xl shadow-xl shadow-blue-100 transition active:scale-95">
+                    Add Case to List
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+<script>
+    function openLabOrderModalForPatient(patientId, patientName) {
+  const patientNameInput = document.getElementById('in-patient');
+  const patientIdInput = document.getElementById('in-patient-id');
+
+  if (patientNameInput) {
+    patientNameInput.value = patientName || '';
+  }
+
+  if (patientIdInput) {
+    patientIdInput.value = patientId || '0';
+  }
+
+  openModal('add-lab-modal');
+}
+</script>

@@ -1,0 +1,333 @@
+<!-- 
+    INSTRUCTIONS: 
+    This file is the main template for Inventory Management.
+    It requires Tailwind CSS and HTMX to be loaded in your base.html.
+    It uses a single endpoint {% url 'clinic:inventory_edit' %} for all POST actions.
+-->
+
+<style>
+    /* Transitions and Animations */
+    .animate-fade-in {
+        animation: fadeIn 0.4s ease-out;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Modal Backdrop and Content Animations */
+    .modal-backdrop {
+        background-color: rgba(15, 23, 42, 0.5);
+        backdrop-filter: blur(4px);
+    }
+
+    .modal-content-anim {
+        transform: scale(0.95);
+        opacity: 0;
+        transition: all 0.2s ease-out;
+    }
+
+    .modal-active .modal-content-anim {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    /* Custom Scrollbar */
+    .custom-scroll::-webkit-scrollbar {
+        width: 5px;
+        height: 5px;
+    }
+    .custom-scroll {
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior: contain;
+    }
+    .custom-scroll::-webkit-scrollbar-track { background: #f1f5f9; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+</style>
+<div>
+
+    <!-- Header Section -->
+    <div class="main-header flex flex-col xl:flex-row xl:items-start justify-between gap-6 mb-8">
+        <div>
+            <h1 class="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">Inventory Management</h1>
+            <p class="text-slate-500 mt-1 text-sm md:text-base">Track and manage medical supplies, medicine, and equipment.</p>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-3">
+            <button hx-get="{% url 'clinic:inventory_export_csv' %}"  class="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-white border border-slate-200 text-slate-700 font-semibold rounded-xl hover:bg-slate-50 transition shadow-sm text-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                Export CSV
+            </button>
+            <button onclick="openAddItemModal()" class="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-teal-600 text-white font-bold rounded-xl hover:bg-teal-700 transition shadow-lg shadow-teal-100 text-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                Add New Item
+            </button>
+        </div>
+    </div>
+
+    <!-- Stats Dashboard -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-8 md:mb-10">
+        <div class="bg-white p-5 md:p-6 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4 md:gap-5">
+            <div class="flex-shrink-0 w-12 h-12 md:w-14 md:h-14 bg-teal-50 rounded-2xl flex items-center justify-center text-teal-600">
+                <svg class="w-6 h-6 md:w-7 md:h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
+            </div>
+            <div>
+                <span class="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-widest block">Total Items</span>
+                <div class="text-xl md:text-2xl font-black text-slate-900">{{ inventory_items.count|default:"0" }}</div>
+            </div>
+        </div>
+
+        <div class="bg-white p-5 md:p-6 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4 md:gap-5">
+            <div class="flex-shrink-0 w-12 h-12 md:w-14 md:h-14 bg-amber-50 rounded-2xl flex items-center justify-center text-amber-600">
+                <svg class="w-6 h-6 md:w-7 md:h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+            </div>
+            <div>
+                <span class="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-widest block">Low Stock</span>
+                <div class="text-xl md:text-2xl font-black text-amber-600">{{ low_stock_count|default:"0" }}</div>
+            </div>
+        </div>
+
+        <div class="bg-white p-5 md:p-6 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4 md:gap-5 sm:col-span-2 lg:col-span-1">
+            <div class="flex-shrink-0 w-12 h-12 md:w-14 md:h-14 bg-rose-50 rounded-2xl flex items-center justify-center text-rose-600">
+                <svg class="w-6 h-6 md:w-7 md:h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+            </div>
+            <div>
+                <span class="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-widest block">Expiring</span>
+                <div class="text-xl md:text-2xl font-black text-rose-600">{{ expiring_count|default:"0" }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Inventory Table -->
+   
+</div>
+ <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+        <div class="overflow-x-auto custom-scroll">
+            <table class="w-full text-left border-collapse min-w-[800px] lg:min-w-0">
+                <thead>
+                    <tr class="bg-slate-50/50 text-slate-400 text-[11px] font-black uppercase tracking-widest border-b border-slate-100">
+                        <th class="px-6 md:px-8 py-5">Item Details</th>
+                        <th class="px-6 md:px-8 py-5">Category</th>
+                        <th class="px-6 md:px-8 py-5 text-center">Quantity</th>
+                        <th class="px-6 md:px-8 py-5">Expiry Date</th>
+                        <th class="px-6 md:px-8 py-5 text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="appointmentTableBody" class="divide-y divide-slate-50" hx-get="{% url 'clinic:inventory_paginated' %}" hx-trigger="load" hx-swap="innerHTML">
+                    <!-- Loading state -->
+                    <tr>
+                        <td colspan="5" class="text-center py-8">
+                            <div class="flex items-center justify-center gap-2">
+                                <div class="w-3 h-3 bg-teal-600 rounded-full animate-bounce"></div>
+                                <div class="w-3 h-3 bg-teal-600 rounded-full animate-bounce" style="animation-delay: 0.1s;"></div>
+                                <div class="w-3 h-3 bg-teal-600 rounded-full animate-bounce" style="animation-delay: 0.2s;"></div>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+<!-- ITEM MODAL (ADD/EDIT) -->
+<div id="itemModal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4">
+    <div class="fixed inset-0 modal-backdrop" onclick="closeInventoryModal('itemModal')"></div>
+    <div class="bg-white rounded-3xl md:rounded-[2rem] shadow-2xl w-full max-w-2xl relative z-10 overflow-hidden modal-content-anim max-h-[95vh] flex flex-col min-h-0" id="itemModalWrapper">
+        <div class="flex flex-col h-full min-h-0">
+            <!-- Header -->
+            <div class="px-6 md:px-10 py-5 md:py-6 border-b border-slate-100 flex items-center justify-between flex-shrink-0">
+                <div>
+                    <h3 class="text-xl md:text-2xl font-black text-slate-900" id="itemModalTitle">Inventory Item</h3>
+                    <p class="text-slate-400 text-[10px] font-black uppercase tracking-widest mt-0.5">Manage Stock Entry</p>
+                </div>
+                <button onclick="closeInventoryModal('itemModal')" class="p-2 md:p-2.5 rounded-2xl hover:bg-slate-50 text-slate-400 transition focus:outline-none">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+
+            <!-- HTMX Form -->
+            <form id="inventoryForm" 
+                  hx-post="{% url 'clinic:inventory_edit' %}" 
+                  hx-target="#appointmentTableBody" 
+                  hx-swap="innerHTML"
+                  hx-headers='{"X-CSRFToken":"{{csrf_token}}"}'
+                  class="p-6 md:p-10 space-y-6 md:space-y-8 overflow-y-auto custom-scroll flex-1 min-h-0">
+                
+                <input type="hidden" name="treatment_id" id="itemIdField">
+                <input type="hidden" name="action" id="itemActionField">
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+                    <div class="space-y-2">
+                        <label class="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Item Name *</label>
+                        <input type="text" name="name" id="itemNameField" required class="w-full bg-slate-50 border-2 border-slate-50 rounded-2xl px-5 py-3.5 md:py-4 text-sm font-bold focus:bg-white focus:border-teal-500 transition outline-none shadow-inner" placeholder="e.g. Paracetamol">
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Category *</label>
+                        <select name="category" id="itemCategoryField" required class="w-full bg-slate-50 border-2 border-slate-50 rounded-2xl px-5 py-3.5 md:py-4 text-sm font-bold focus:bg-white focus:border-teal-500 transition outline-none shadow-inner">
+                            <option value="Medicine">Medicine</option>
+                            <option value="Equipment">Equipment</option>
+                            <option value="Supplies">Supplies</option>
+                        </select>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Quantity *</label>
+                        <input type="number" name="qty" id="itemQtyField" required min="0" class="w-full bg-slate-50 border-2 border-slate-50 rounded-2xl px-5 py-3.5 md:py-4 text-sm font-bold focus:bg-white focus:border-teal-500 transition outline-none shadow-inner">
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Expiry Date</label>
+                        <input type="date" name="expiry" id="itemExpiryField" class="w-full bg-slate-50 border-2 border-slate-50 rounded-2xl px-5 py-3.5 md:py-4 text-sm font-bold focus:bg-white focus:border-teal-500 transition outline-none shadow-inner">
+                    </div>
+                </div>
+
+                <div class="space-y-2">
+                    <label class="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Notes</label>
+                    <textarea name="description" id="itemNotesField" rows="3" class="w-full bg-slate-50 border-2 border-slate-50 rounded-2xl px-5 py-4 text-sm font-bold focus:bg-white focus:border-teal-500 transition outline-none shadow-inner resize-none" placeholder="Enter additional details..."></textarea>
+                </div>
+
+                <!-- Footer Actions inside Form -->
+                <div class="flex items-center justify-end gap-3 md:gap-4 pt-6 border-t border-slate-100 bg-white sticky bottom-0">
+                    <button type="button" onclick="closeInventoryModal('itemModal')" class="px-6 md:px-8 py-3 md:py-4 rounded-2xl text-sm font-bold text-slate-400 hover:bg-slate-50 transition">Discard</button>
+                    <button type="submit" class="px-8 md:px-10 py-3 md:py-4 bg-teal-600 text-white text-sm font-black rounded-2xl shadow-xl shadow-teal-100 hover:bg-teal-700 transition-all">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- DELETE MODAL -->
+<div id="deleteModal" class="hidden fixed inset-0 z-[110] flex items-center justify-center p-4">
+    <div class="fixed inset-0 modal-backdrop" onclick="closeInventoryModal('deleteModal')"></div>
+    <div class="bg-white rounded-3xl w-full max-w-sm p-6 md:p-8 shadow-2xl relative z-10 text-center modal-content-anim" id="deleteModalWrapper">
+        <form id="deleteForm" 
+              hx-post="{% url 'clinic:inventory_edit' %}" 
+              hx-target="#appointmentTableBody" 
+              hx-swap="innerHTML"
+              hx-headers='{"X-CSRFToken":"{{csrf_token}}"}'
+              action="#">
+            
+            <input type="hidden" name="treatment_id" id="deleteRowId">
+            <input type="hidden" name="action" value="delete">
+
+            <div class="w-16 h-16 bg-rose-100 rounded-full flex items-center justify-center mx-auto mb-4 text-rose-500">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+            </div>
+            <h3 class="text-xl font-bold text-slate-900">Delete Item?</h3>
+            <p class="text-sm text-slate-500 mt-2 mb-8">
+                Are you sure you want to remove <span id="deleteItemName" class="font-bold text-slate-800 text-teal-600">this item</span>? This action cannot be undone.
+            </p>
+            <div class="flex gap-3">
+                <button type="button" onclick="closeInventoryModal('deleteModal')" class="flex-1 py-3 bg-slate-100 text-slate-700 font-bold rounded-xl hover:bg-slate-200 transition">Cancel</button>
+                <button type="submit" class="flex-1 py-3 bg-rose-600 text-white font-bold rounded-xl shadow-lg shadow-rose-200 hover:bg-rose-700 transition">Yes, Delete</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- INVENTORY EVENTS MODAL -->
+<div id="eventsModal" class="hidden fixed inset-0 z-[100] overflow-hidden">
+    <div class="fixed inset-0 modal-backdrop" onclick="closeInventoryModal('eventsModal')"></div>
+    <div class="fixed inset-0 flex items-end sm:items-center justify-center p-0 sm:p-4">
+        <div class="bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl w-full sm:max-w-5xl relative z-10 overflow-hidden modal-content-anim max-h-screen sm:max-h-[90vh] flex flex-col min-h-0" id="eventsModalWrapper">
+            <div class="flex flex-col h-full min-h-0">
+                <!-- Header -->
+                <div class="sticky top-0 z-20 px-4 sm:px-6 md:px-10 py-4 sm:py-5 md:py-6 border-b border-slate-100 bg-white flex items-center justify-between flex-shrink-0">
+                    <div class="flex-1 min-w-0">
+                        <h3 class="text-lg sm:text-xl md:text-2xl font-black text-slate-900">Event History</h3>
+                        <p class="text-slate-400 text-[9px] sm:text-[10px] font-black uppercase tracking-widest mt-0.5">Audit Trail & Modifications</p>
+                    </div>
+                    <button onclick="closeInventoryModal('eventsModal')" class="p-2 ml-2 rounded-2xl hover:bg-slate-50 text-slate-400 hover:text-slate-600 transition-all focus:outline-none flex-shrink-0">
+                        <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+
+                <!-- Events Content -->
+                <div id="eventsContent" class="p-4 sm:p-6 md:p-10 overflow-y-auto custom-scroll flex-1 min-h-0">
+                    <!-- Events will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+<script>
+    // Modal Helpers
+    function openInventoryModal(id) {
+        const modal = document.getElementById(id);
+        modal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+        setTimeout(() => { modal.classList.add('modal-active'); }, 10);
+    }
+
+    function closeInventoryModal(id) {
+        const modal = document.getElementById(id);
+        modal.classList.remove('modal-active');
+        document.body.style.overflow = '';
+        setTimeout(() => { modal.classList.add('hidden'); }, 200);
+    }
+
+    // Modal Operations
+    function openAddItemModal() {
+        document.getElementById('inventoryForm').reset();
+        document.getElementById('itemIdField').value = '';
+        document.getElementById('itemActionField').value = 'add';
+        document.getElementById('itemModalTitle').value = 'Add New Item';
+        openInventoryModal('itemModal');
+    }
+
+    function openEditItemModal(id, name, cat, qty, exp, notes) {
+        document.getElementById('itemIdField').value = id;
+        document.getElementById('itemActionField').value = 'edit';
+        document.getElementById('itemNameField').value = name;
+        document.getElementById('itemCategoryField').value = cat;
+        document.getElementById('itemQtyField').value = qty;
+        document.getElementById('itemExpiryField').value = exp;
+        document.getElementById('itemNotesField').value = notes;
+        document.getElementById('itemModalTitle').textContent = 'Edit Item';
+        openInventoryModal('itemModal');
+    }
+
+    function openDeleteModal(id, name) {
+        document.getElementById('deleteRowId').value = id;
+        document.getElementById('deleteItemName').textContent = name;
+        openInventoryModal('deleteModal');
+    }
+
+    // Open Inventory Events Modal
+    function openInventoryEventsModal(eventUrl) {
+        const modal = document.getElementById('eventsModal');
+        const eventsContent = document.getElementById('eventsContent');
+        
+        // Show loading state
+        eventsContent.innerHTML = '<div class="py-8 text-center"><div class="inline-block animate-spin"><svg class="w-8 h-8 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg></div><p class="text-slate-500 mt-4">Loading event history...</p></div>';
+        
+        // Fetch events via fetch API
+        fetch(eventUrl)
+            .then(response => {
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                return response.text();
+            })
+            .then(html => {
+                eventsContent.innerHTML = html;
+                openInventoryModal('eventsModal');
+            })
+            .catch(error => {
+                console.error('Error loading events:', error);
+                eventsContent.innerHTML = `<div class="py-8 text-center text-rose-600"><p>Failed to load event history</p><p class="text-sm text-slate-400 mt-2">${error.message}</p></div>`;
+                openInventoryModal('eventsModal');
+            });
+    }
+
+    // Local Quantity Adjustment
+    function changeQuantity(btn, amount) {
+        const span = btn.parentElement.querySelector('span');
+        let current = parseInt(span.textContent) || 0;
+        let newValue = Math.max(0, current + amount);
+        span.textContent = newValue;
+    }
+
+    // HTMX Modal Auto-Close Listener
+    document.addEventListener('showNotification', function(evt) {
+        const closeId = evt.detail.closemodel;
+        if (closeId) { closeInventoryModal(closeId); }
+    });
+</script>

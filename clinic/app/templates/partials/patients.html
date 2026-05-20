@@ -1,0 +1,2000 @@
+
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+      <div>
+        <h3 class="text-xl font-bold text-gray-800">Patient Management</h3>
+        <p class="text-sm text-gray-400">View and manage all patient records</p>
+      </div>
+      <button
+        class="bg-gradient-to-r from-teal-500 to-teal-600 text-white px-5 py-2.5 rounded-xl text-sm font-semibold shadow-lg shadow-teal-200 hover:shadow-xl transition flex items-center gap-2 w-fit"
+        onclick="openModal('patientModal')">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+        </svg>Add Patient
+      </button>
+    </div>
+
+    <!-- Filters -->
+    <form id="filterForm" class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-5 mb-6">
+      <div class="flex flex-col sm:flex-row gap-3">
+        <div class="flex-1">
+          <div
+            class="flex items-center gap-2 bg-gray-50 rounded-xl px-4 py-2.5 focus-within:ring-2 focus-within:ring-teal-200 focus-within:bg-white border border-gray-200 transition">
+            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input
+              id="patientsSearch"
+              name="q"
+              value="{{ q|default_if_none:'' }}"
+              hx-get="{% url 'clinic:patients_table_body' %}"
+              hx-target="#patientsTableBody"
+              hx-swap="innerHTML"
+              hx-trigger="keyup changed delay:150ms"
+              hx-include="#filterForm input, #filterForm select"
+              type="text"
+              placeholder="Search by name, phone, or ID..."
+              class="bg-transparent border-none text-sm text-gray-600 placeholder-gray-400 w-full focus:outline-none">
+          </div>
+        </div>
+
+        <select id="patientsGender" name="gender"
+          hx-get="{% url 'clinic:patients_table_body' %}"
+          hx-target="#patientsTableBody"
+          hx-swap="innerHTML"
+          hx-trigger="change"
+          hx-include="#filterForm input, #filterForm select"
+          class="text-sm border border-gray-200 rounded-xl px-3 py-2.5 text-gray-600 bg-white">
+          <option value="">All Gender</option>
+          <option value="Male" {% if gender == 'Male' %}selected{% endif %}>Male</option>
+          <option value="Female" {% if gender == 'Female' %}selected{% endif %}>Female</option>
+        </select>
+
+        <select id="patientsStatus" name="status"
+          hx-get="{% url 'clinic:patients_table_body' %}"
+          hx-target="#patientsTableBody"
+          hx-swap="innerHTML"
+          hx-trigger="change"
+          hx-include="#filterForm input, #filterForm select"
+          class="text-sm border border-gray-200 rounded-xl px-3 py-2.5 text-gray-600 bg-white">
+          <option value="">All Status</option>
+          <option value="Active" {% if status == 'Active' %}selected{% endif %}>Active</option>
+          <option value="Inactive" {% if status == 'Inactive' %}selected{% endif %}>Inactive</option>
+        </select>
+      </div>
+    </form>
+
+    <!-- Patients Table -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="text-left px-5 sm:px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                Patient</th>
+              <th
+                class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden sm:table-cell">
+                Phone</th>
+              <th
+                class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">
+                Age/Gender</th>
+              <th
+                class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden lg:table-cell">
+                Last Visit</th>
+              <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+              <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+            </tr>
+          </thead>
+          <tbody 
+           id="patientsTableBody"
+       hx-get="{% url 'clinic:patients_table_body' %}"
+       hx-trigger="load"
+       hx-swap="innerHTML"
+       class="divide-y divide-gray-50">
+
+            <!-- Row 3: Robert Wilson -->
+              {% include 'ext/patients_data.html' %}
+          </tbody>
+        </table>
+      </div>
+      <div
+        class="px-5 sm:px-6 py-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-3">
+        <!-- pagination info moved into the table rows; controls also appear there -->
+        <div class="flex items-center gap-1">
+
+  
+
+</div>
+      </div>
+    </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- ==================== ADD PATIENT MODAL ==================== -->
+<div id="patientModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+  <div class="modal-backdrop absolute inset-0" onclick="closeModal('patientModal')"></div>
+  <div class="modal-content bg-white rounded-2xl shadow-2xl w-full max-w-lg relative z-10 max-h-[90vh] overflow-y-auto">
+    <div
+      class="px-6 py-4 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white rounded-t-2xl">
+      <h3 class="text-lg font-bold text-gray-800">Add New Patient</h3>
+      <button class="p-2 rounded-xl hover:bg-gray-100 transition" onclick="closeModal('patientModal')"><svg
+          class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg></button>
+    </div>
+    <form hx-post="{% url 'clinic:add_patient' %}" hx-target="#patientsTableBody" hx-swap="innerHTML" hx-headers='{"X-CSRFTOKEN":"{{csrf_token}}"}'>
+    <div class="p-6 space-y-4">
+      <div class="grid grid-cols-2 gap-4">
+        <div><label class="block text-sm font-medium text-gray-700 mb-1">First Name <span
+              class="text-red-500">*</span></label><input type="text" placeholder="John" required name="first_name"
+            class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-800 transition"></div>
+        <div><label class="block text-sm font-medium text-gray-700 mb-1">Last Name <span
+              class="text-red-500">*</span></label><input type="text" placeholder="Doe"  name="last_name"
+            class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-800 transition"></div>
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div><label class="block text-sm font-medium text-gray-700 mb-1">Date of Birth <span
+              class="text-red-500">*</span></label><input type="date"required name="dob"
+            class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-800 transition"></div>
+        <div>
+  <label class="block text-sm font-medium text-gray-700 mb-1">
+    Gender <span class="text-red-500">*</span>
+  </label>
+  <select 
+    name="gender" 
+    required
+    class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-800 transition bg-white"
+  >
+    <option value="">Select</option>
+    <option value="Male">Male</option>
+    <option value="Female">Female</option>
+  </select>
+</div>
+</div>
+<div>
+  <label class="block text-sm font-medium text-gray-700 mb-1">
+    Phone <span class="text-red-500">*</span>
+  </label>
+  <input 
+    type="text" 
+    name="phone" 
+    placeholder="123456789012" 
+    required
+    maxlength="12"
+    oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0,12);"
+    class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-800 transition"
+  >
+</div>
+      <div><label class="block text-sm font-medium text-gray-700 mb-1">Email</label><input type="email" name="email"
+          placeholder="john@example.com"
+          class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-800 transition"></div>
+      <div><label class="block text-sm font-medium text-gray-700 mb-1">Medical Notes</label><textarea rows="2" name="medical_notes"
+          placeholder="Allergies, conditions..."
+          class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-800 transition resize-none"></textarea>
+      </div>
+    </div>
+    <div
+      class="px-6 py-4 border-t border-gray-100 flex items-center justify-end gap-3 sticky bottom-0 bg-white rounded-b-2xl">
+      <button type="button" class="px-5 py-2.5 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-100 transition"
+        onclick="closeModal('patientModal')">Cancel</button>
+      <button type="submit"
+        class="bg-gradient-to-r from-teal-500 to-teal-600 text-white px-5 py-2.5 rounded-xl text-sm font-semibold shadow-lg shadow-teal-200 hover:shadow-xl transition"
+        >Save Patient</button>
+    </div>
+    </form>
+  </div>
+</div>
+
+<!-- ==================== VIEW PATIENT MODAL ==================== -->
+<div id="viewPatientModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+  <div class="modal-backdrop absolute inset-0" onclick="closeModal('viewPatientModal')"></div>
+  <div class="modal-content bg-white rounded-2xl shadow-2xl w-full max-w-lg relative z-10 max-h-[90vh] overflow-y-auto">
+    <div
+      class="px-6 py-4 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white rounded-t-2xl">
+      <h3 class="text-lg font-bold text-gray-800">Patient Details</h3>
+      <button class="p-2 rounded-xl hover:bg-gray-100 transition" onclick="closeModal('viewPatientModal')"><svg
+          class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg></button>
+    </div>
+    <div class="p-6 space-y-4">
+      <!-- Patient header -->
+      <div class="flex items-center gap-4 p-4 bg-gradient-to-r from-teal-50 to-cyan-50 rounded-xl">
+        <div
+          class="w-14 h-14 rounded-full bg-gradient-to-br from-teal-400 to-teal-600 flex items-center justify-center text-white font-bold text-lg shadow-md"
+          id="viewPatientInitials">--</div>
+        <div>
+          <p id="viewPatientName" class="text-lg font-bold text-gray-800">--</p>
+          <p id="viewPatientId" class="text-sm text-gray-500">--</p>
+        </div>
+        <span id="viewPatientStatusBadge" class="ml-auto badge bg-green-100 text-green-700">Active</span>
+      </div>
+      <!-- Info grid -->
+      <div class="grid grid-cols-2 gap-4">
+        <div class="p-4 bg-gray-50 rounded-xl">
+          <p class="text-xs text-gray-500 uppercase font-bold mb-1">Phone</p>
+          <p id="viewPatientPhone" class="text-sm font-medium text-gray-800">--</p>
+        </div>
+        <div class="p-4 bg-gray-50 rounded-xl">
+          <p class="text-xs text-gray-500 uppercase font-bold mb-1">Email</p>
+          <p id="viewPatientEmail" class="text-sm font-medium text-gray-800">--</p>
+        </div>
+        <div class="p-4 bg-gray-50 rounded-xl">
+          <p class="text-xs text-gray-500 uppercase font-bold mb-1">Age</p>
+          <p id="viewPatientAge" class="text-sm font-medium text-gray-800">--</p>
+        </div>
+        <div class="p-4 bg-gray-50 rounded-xl">
+          <p class="text-xs text-gray-500 uppercase font-bold mb-1">Gender</p>
+          <p id="viewPatientGender" class="text-sm font-medium text-gray-800">--</p>
+        </div>
+      </div>
+      <div class="p-4 bg-gray-50 rounded-xl">
+        <p class="text-xs text-gray-500 uppercase font-bold mb-1">Last Visit</p>
+        <p id="viewPatientLastVisit" class="text-sm font-medium text-gray-800">--</p>
+      </div>
+      <div class="p-4 bg-gray-50 rounded-xl">
+        <p class="text-xs text-gray-500 uppercase font-bold mb-1">Medical Notes</p>
+        <p id="viewPatientNotes" class="text-sm font-medium text-gray-800">--</p>
+      </div>
+    </div>
+    <div
+      class="px-6 py-4 border-t border-gray-100 flex items-center justify-end gap-3 sticky bottom-0 bg-white rounded-b-2xl">
+      <button class="w-full py-3 bg-gray-800 text-white rounded-xl font-bold hover:bg-gray-900 transition"
+        onclick="closeModal('viewPatientModal')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== EDIT PATIENT MODAL ==================== -->
+<div id="editPatientModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+  <div class="modal-backdrop absolute inset-0" onclick="closeModal('editPatientModal')"></div>
+  <div class="modal-content bg-white rounded-2xl shadow-2xl w-full max-w-lg relative z-10 max-h-[90vh] overflow-y-auto">
+    <div
+      class="px-6 py-4 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white rounded-t-2xl">
+      <h3 class="text-lg font-bold text-gray-800">Edit Patient</h3>
+      <button class="p-2 rounded-xl hover:bg-gray-100 transition" onclick="closeModal('editPatientModal')"><svg
+          class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg></button>
+    </div>
+    <form  id="editPatientForm" hx-post="{% url 'clinic:edit_patient' %}" hx-target="#patientsTableBody"
+       hx-swap="innerHTML"
+       hx-headers='{"X-CSRFTOKEN":"{{csrf_token}}"}'>
+      <input type="hidden" id="editPatientRowId"  name="patient_id" value="">
+      <div class="p-6 space-y-4">
+        <div class="grid grid-cols-2 gap-4">
+          <div><label class="block text-sm font-medium text-gray-700 mb-1">First Name <span 
+                class="text-red-500">*</span></label><input type="text" id="editPatientFirstName" name="first_name"
+              class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-800 transition" required>
+          </div>
+          <div><label class="block text-sm font-medium text-gray-700 mb-1">Last Name <span
+                class="text-red-500">*</span></label><input type="text" id="editPatientLastName" name="last_name"
+              class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-800 transition" >
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+        <div><label class="block text-sm font-medium text-gray-700 mb-1">Date of Birth <span
+              class="text-red-500">*</span></label><input type="date"required name="dob" id="editPatientDob"
+            class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-800 transition"></div>
+        <div>
+  <label class="block text-sm font-medium text-gray-700 mb-1">
+    Gender <span class="text-red-500">*</span>
+  </label>
+  <select id="editPatientGender"
+    name="gender" 
+    required
+    class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-800 transition bg-white"
+  >
+    <option value="">Select</option>
+    <option value="Male">Male</option>
+    <option value="Female">Female</option>
+  </select>
+</div>
+</div>
+        <div><label class="block text-sm font-medium text-gray-700 mb-1">Phone <span
+              class="text-red-500">*</span></label><input type="tel" id="editPatientPhone" name="phone" placeholder="123456789012" maxlength="12" required
+            oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0,12);"
+            class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-800 transition" required>
+        </div>
+        <div><label class="block text-sm font-medium text-gray-700 mb-1">Email</label><input type="email"
+            id="editPatientEmailInput" name="email" placeholder="example@domain.com"
+            class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-800 transition"></div>
+        
+        <div><label class="block text-sm font-medium text-gray-700 mb-1">Medical Notes</label><textarea
+            id="editPatientNotes" rows="2" name='medical_notes'
+            class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-800 transition resize-none "></textarea>
+        </div>
+      </div>
+      <div
+        class="px-6 py-4 border-t border-gray-100 flex items-center justify-end gap-3 sticky bottom-0 bg-white rounded-b-2xl">
+        <button type="button"
+          class="px-5 py-2.5 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-100 transition"
+          onclick="closeModal('editPatientModal')">Cancel</button>
+        <button type="submit"
+          class="bg-gradient-to-r from-teal-500 to-teal-600 text-white px-5 py-2.5 rounded-xl text-sm font-semibold shadow-lg shadow-teal-200 hover:shadow-xl transition">Save
+          Changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ==================== DELETE PATIENT MODAL ==================== -->
+<div id="deletePatientModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+  <div class="modal-backdrop absolute inset-0" onclick="closeModal('deletePatientModal')"></div>
+  <div class="modal-content bg-white rounded-2xl shadow-2xl w-full max-w-sm relative z-10 p-6 text-center">
+    <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4 text-red-500">
+      <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+      </svg>
+    </div>
+    <form hx-post="{% url 'clinic:delete_patient' %}"  hx-target="#patientsTableBody" hx-swap="innerHTML" hx-headers='{"X-CSRFTOKEN":"{{csrf_token}}"}'>
+        
+    <h3 class="text-xl font-bold text-gray-900">Delete Patient?</h3>
+    <p class="text-sm text-gray-500 mt-2 mb-6">Are you sure you want to remove <span id="deletePatientName"
+        class="font-bold text-gray-800">this patient</span>? This action cannot be undone.</p>
+    <div class="flex gap-3">
+      <button type="button" onclick="closeModal('deletePatientModal')"
+        class="flex-1 py-2.5 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200 transition">Cancel</button>
+        
+        <button onclick="confirmDeletePatient()"  
+        class="flex-1 py-2.5 bg-red-600 text-white font-bold rounded-xl shadow-lg shadow-red-200 hover:bg-red-700 transition">Yes,
+        Delete</button>
+        <input name="patient_id" value="" id="confirmDeleteButton" type="hidden">
+      </form>
+      
+    </div>
+  </div>
+</div>
+
+<div id="todayPatientConfirmModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+  <div class="modal-backdrop absolute inset-0" onclick="closeModal('todayPatientConfirmModal')"></div>
+  <div class="modal-content bg-white rounded-2xl shadow-2xl w-full max-w-sm relative z-10 p-6 text-center">
+    <div class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4 text-purple-600">
+      <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M12 12a4 4 0 100-8 4 4 0 000 8zm0 2c-4.418 0-8 2.239-8 5v1h16v-1c0-2.761-3.582-5-8-5z" />
+      </svg>
+    </div>
+    <h3 class="text-xl font-bold text-gray-900">Add To Today Patients?</h3>
+    <p class="text-sm text-gray-500 mt-2 mb-6">Do you want to add <span id="todayPatientConfirmName"
+        class="font-bold text-gray-800">this patient</span> to today's list?</p>
+    <div class="flex gap-3">
+      <button type="button" onclick="closeModal('todayPatientConfirmModal')"
+        class="flex-1 py-2.5 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200 transition">No</button>
+      <button type="button" onclick="confirmTodayPatientBook()"
+        class="flex-1 py-2.5 bg-purple-600 text-white font-bold rounded-xl shadow-lg shadow-purple-200 hover:bg-purple-700 transition">Yes</button>
+    </div>
+    <input type="hidden" id="todayPatientConfirmId" value="">
+  </div>
+</div>
+
+<!-- ==================== PATIENT HISTORY MODAL ==================== -->
+<div  id="patientHistoryModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4" onclick="if (event.target === this) closeModal('patientHistoryModal')">
+  <div class="modal-backdrop absolute inset-0 bg-black/50" onclick="closeModal('patientHistoryModal')"></div>
+  <div class="modal-content bg-white rounded-3xl shadow-2xl w-full max-w-5xl relative z-10 max-h-[92vh] overflow-hidden flex flex-col pointer-events-auto ">
+    <!-- Header -->
+    <div  class="px-5 sm:px-7 py-4 border-b border-slate-100 bg-gradient-to-r from-indigo-50 via-blue-50 to-cyan-50 flex items-center justify-between">
+      <div>
+        <h3 class="text-lg sm:text-xl font-black text-slate-900" id="patientHistoryTitle">Patient Medical History</h3>
+        <p class="text-xs text-slate-500 mt-1">Complete patient visits, prescriptions, and lab work records</p>
+      </div>
+      <button type="button" onclick="closeModal('patientHistoryModal')" class="p-2 rounded-xl hover:bg-slate-100 transition">
+        <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+
+    <!-- Tabs Navigation with Enhanced Styling -->
+    <div class="border-b border-slate-200 bg-white px-5 sm:px-7 py-0 flex gap-0">
+      <button data-tab-btn="visited" onclick="switchPatientHistoryTab('visited')" class="tab-nav-btn active flex items-center gap-2 px-5 sm:px-6 py-4 border-b-2 border-indigo-600 text-indigo-600 font-bold text-sm transition hover:bg-indigo-50">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+        <span>Visit History</span>
+      </button>
+      
+      <button data-tab-btn="labwork" onclick="switchPatientHistoryTab('labwork')" class="tab-nav-btn flex items-center gap-2 px-5 sm:px-6 py-4 border-b-2 border-transparent text-slate-600 font-bold text-sm transition hover:bg-slate-50">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+        </svg>
+        <span>Lab Work</span>
+      </button>
+      
+      <button data-tab-btn="prescriptions" onclick="switchPatientHistoryTab('prescriptions')" class="tab-nav-btn flex items-center gap-2 px-5 sm:px-6 py-4 border-b-2 border-transparent text-slate-600 font-bold text-sm transition hover:bg-slate-50">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+        </svg>
+        <span>Prescriptions</span>
+      </button>
+      
+      <button data-tab-btn="fileupload" onclick="switchPatientHistoryTab('fileupload')" class="tab-nav-btn flex items-center gap-2 px-5 sm:px-6 py-4 border-b-2 border-transparent text-slate-600 font-bold text-sm transition hover:bg-slate-50">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+        <span>Patient Files</span>
+      </button>
+    </div>
+
+    <!-- Content Area with Tab Contents -->
+    <div class="flex-1 overflow-y-auto">
+      <!-- Visited History Tab -->
+      <div data-tab-content="visited" class="p-5 sm:p-7 space-y-4" id="visitedHistoryContainer">
+        <div class="text-center py-12 text-slate-400">
+          <svg class="w-12 h-12 mx-auto mb-3 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          Loading visit history...
+        </div>
+      </div>
+
+      <!-- Lab Work Tab -->
+      <div data-tab-content="labwork" class="hidden p-5 sm:p-7 space-y-4" id="labworkHistoryContainer">
+        <div class="text-center py-12 text-slate-400">
+          <svg class="w-12 h-12 mx-auto mb-3 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+          </svg>
+          Loading lab work history...
+        </div>
+      </div>
+
+      <!-- Prescriptions Tab -->
+      <div data-tab-content="prescriptions" class="hidden p-5 sm:p-7 space-y-4" id="prescriptionsHistoryContainer">
+        <div class="text-center py-12 text-slate-400">
+          <svg class="w-12 h-12 mx-auto mb-3 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+          </svg>
+          Loading prescriptions...
+        </div>
+      </div>
+
+      <!-- File Upload Tab - Stored Files Only -->
+      <div data-tab-content="fileupload" class="hidden p-5 sm:p-7 space-y-4" id="fileUploadContainer">
+        <div id="patientFilesLoadingState" class="text-center py-8">
+          <svg class="w-12 h-12 mx-auto mb-3 text-blue-300 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <p class="text-sm text-slate-500">Loading patient files...</p>
+        </div>
+        
+        <div id="patientFilesListContainer" class="hidden space-y-5"></div>
+        
+        <div id="patientFilesEmptyState" class="hidden text-center py-8">
+          <svg class="w-12 h-12 mx-auto mb-3 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          <p class="text-sm text-slate-500">No files found for this patient</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="px-5 sm:px-7 py-4 border-t border-slate-100 bg-slate-50 flex flex-col sm:flex-row gap-3 sm:justify-end">
+      <button type="button" onclick="closeModal('patientHistoryModal')" class="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-white border border-slate-200 text-slate-600 font-bold hover:bg-slate-100 transition">Close</button>
+    </div>
+  </div >
+</div>
+
+<!-- ==================== STORED FILE PREVIEW MODAL ==================== -->
+<div id="storedFilePreviewModal" class="hidden fixed inset-0 z-[70] flex items-center justify-center p-3 sm:p-4" onclick="if (event.target === this) closeStoredFilePreviewModal()">
+  <div class="modal-backdrop absolute inset-0 bg-slate-900/70" onclick="closeStoredFilePreviewModal()"></div>
+  <div class="modal-content bg-white rounded-3xl shadow-2xl w-full max-w-6xl relative z-10 max-h-[94vh] overflow-hidden flex flex-col pointer-events-auto">
+    <div class="px-5 sm:px-7 py-4 border-b border-slate-100 flex items-center justify-between">
+      <div class="min-w-0">
+        <h3 class="text-base sm:text-lg font-black text-slate-900">Stored File Preview</h3>
+        <p id="storedFilePreviewName" class="text-xs text-slate-500 truncate">-</p>
+      </div>
+      <div class="flex items-center gap-2">
+        <button id="storedFilePreviewPrevBtn" type="button" onclick="previewPreviousStoredImage()" class="hidden px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 disabled:opacity-40" title="Previous image">Prev</button>
+        <button id="storedFilePreviewNextBtn" type="button" onclick="previewNextStoredImage()" class="hidden px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 disabled:opacity-40" title="Next image">Next</button>
+        <span id="storedFilePreviewImageCounter" class="hidden text-xs font-bold text-slate-500"></span>
+        <a id="storedFilePreviewOpenLink" href="#" target="_blank" rel="noopener" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-50 text-blue-700 hover:bg-blue-100">Open New Tab</a>
+        <button type="button" onclick="closeStoredFilePreviewModal()" class="p-2 rounded-xl hover:bg-slate-100 transition">
+          <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <div id="storedFilePreviewBody" class="flex-1 overflow-auto bg-slate-100 p-3 sm:p-4"></div>
+  </div>
+</div>
+
+<!-- ==================== PRESCRIPTION DETAILS MODAL ==================== -->
+<div id="prescriptionDetailsModal" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-3 sm:p-4">
+  <div class="modal-backdrop absolute inset-0 bg-black/50" onclick="closeModal('prescriptionDetailsModal')"></div>
+  <div class="modal-content bg-white rounded-3xl shadow-2xl w-full max-w-2xl relative z-10 max-h-[85vh] overflow-y-auto">
+    <div class="sticky top-0 px-6 sm:px-8 py-4 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-indigo-50 flex items-center justify-between">
+      <h3 class="text-2xl font-bold text-gray-900">Prescription Details</h3>
+      <button type="button" onclick="closeModal('prescriptionDetailsModal')" class="p-2 rounded-xl hover:bg-white transition">
+        <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+    <div class="p-6 sm:p-8" id="prescriptionDetailsContent">
+      <div class="text-center py-8 text-gray-400">Loading prescription...</div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== LAB WORK DETAILS MODAL ==================== -->
+<div id="labworkDetailsModal" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-3 sm:p-4">
+  <div class="modal-backdrop absolute inset-0 bg-black/50" onclick="closeModal('labworkDetailsModal')"></div>
+  <div class="modal-content bg-white rounded-3xl shadow-2xl w-full max-w-2xl relative z-10">
+    <div class="px-6 sm:px-8 py-4 border-b border-gray-100 bg-gradient-to-r from-purple-50 to-pink-50 flex items-center justify-between">
+      <h3 class="text-2xl font-bold text-gray-900">Lab Work Details</h3>
+      <button type="button" onclick="closeModal('labworkDetailsModal')" class="p-2 rounded-xl hover:bg-white transition">
+        <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+    <div class="p-6 sm:p-8" id="labworkDetailsContent">
+      <div class="text-center py-8 text-gray-400">Loading lab work details...</div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ============ VIEW PATIENT ============
+  function openViewPatientModal(name, id, phone, age, gender, lastVisit, status, email, notes) {
+    var initials = name.split(' ').map(function (n) { return n[0]; }).join('');
+    document.getElementById('viewPatientInitials').textContent = initials;
+    document.getElementById('viewPatientName').textContent = name;
+    document.getElementById('viewPatientId').textContent = 'ID: ' + id;
+    document.getElementById('viewPatientPhone').textContent = phone;
+    document.getElementById('viewPatientEmail').textContent = email || '—';
+    document.getElementById('viewPatientAge').textContent = age + ' years';
+    document.getElementById('viewPatientGender').textContent = gender;
+    document.getElementById('viewPatientLastVisit').textContent = lastVisit;
+    document.getElementById('viewPatientNotes').textContent = notes || 'No notes available';
+    var badge = document.getElementById('viewPatientStatusBadge');
+    badge.textContent = status;
+    if (status === 'Active') {
+      badge.className = 'ml-auto badge bg-green-100 text-green-700';
+    } else {
+      badge.className = 'ml-auto badge bg-gray-100 text-gray-600';
+    }
+    openModal('viewPatientModal');
+  }
+  
+  // ============ EDIT PATIENT ============
+  function openEditPatientModal(rowId, firstName, lastName, phone, email, gender, dob, notes,patientId) {
+    
+    // Replace the placeholder with the actual patient ID
+    
+    console.log("Editing patient ID:", patientId);
+    document.getElementById('editPatientRowId').value = patientId; // Set the patient ID in the form's value for submission
+    document.getElementById('editPatientRowId').value = patientId;
+    document.getElementById('editPatientFirstName').value = firstName;
+    document.getElementById('editPatientLastName').value = lastName;
+    document.getElementById('editPatientPhone').value = phone;
+    document.getElementById('editPatientEmailInput').value = email || '';
+    document.getElementById('editPatientDob').value = dob || '';
+    document.getElementById('editPatientGender').value = gender;
+    document.getElementById('editPatientNotes').value = notes || '';
+    openModal('editPatientModal');
+  }
+
+  function savePatientEdit(e) {
+    e.preventDefault();
+    var rowId = document.getElementById('editPatientRowId').value;
+    var row = document.getElementById(rowId);
+    if (row) {
+      var firstName = document.getElementById('editPatientFirstName').value;
+      var lastName = document.getElementById('editPatientLastName').value;
+      var fullName = firstName + ' ' + lastName;
+      var nameEl = row.querySelector('.text-sm.font-semibold');
+      if (nameEl) nameEl.textContent = fullName;
+      // Update initials
+      var initialsEl = row.querySelector('.w-9.h-9');
+      if (initialsEl) initialsEl.textContent = firstName[0] + lastName[0];
+    }
+    closeModal('editPatientModal');
+    if (typeof showNotification === 'function') {
+      showNotification('Patient updated successfully!', 'success', 4000);
+    }
+  }
+
+  // ============ DELETE PATIENT ============
+  var patientRowToDelete = null;
+
+  function openDeletePatientModal(rowId, name, patientId) {
+    patientRowToDelete = rowId;
+    document.getElementById('deletePatientName').textContent = name;
+    document.getElementById('confirmDeleteButton').value = patientId; // Set the patient ID in the button's value for submission
+    openModal('deletePatientModal');
+  }
+
+  function confirmDeletePatient() {
+    if (patientRowToDelete) {
+      var row = document.getElementById(patientRowToDelete);
+      if (row) {
+        row.style.transition = 'all 0.5s ease';
+        row.style.transform = 'translateX(50px)';
+        row.style.opacity = '0';
+        setTimeout(function () { row.remove(); }, 500);
+      }
+    }
+    
+  }
+
+  function openTodayPatientConfirm(patientId, patientName) {
+    document.getElementById('todayPatientConfirmId').value = patientId || '';
+    document.getElementById('todayPatientConfirmName').textContent = patientName || 'this patient';
+    openModal('todayPatientConfirmModal');
+  }
+
+  function confirmTodayPatientBook() {
+    var patientId = document.getElementById('todayPatientConfirmId').value;
+    if (!patientId) return;
+
+    var url = "{% url 'clinic:today_patient_book' 0 %}".replace('/0/', '/' + encodeURIComponent(patientId) + '/');
+
+    htmx.ajax('POST', url, {
+      target: '#patientsTableBody',
+      swap: 'innerHTML',
+      headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+    });
+
+    
+  }
+
+  // ============ PATIENT HISTORY MODAL ============
+  var patientHistoryState = {
+    activeTab: 'visited',
+    patientId: null,
+    patientName: null
+  };
+
+  function openPatientHistoryModal(patientId, patientName) {
+    patientHistoryState.patientId = patientId;
+    patientHistoryState.patientName = patientName;
+    patientHistoryState.activeTab = 'visited';
+    
+    document.getElementById('patientHistoryTitle').textContent = patientName || 'Patient';
+    
+    switchPatientHistoryTab('visited');
+    openModal('patientHistoryModal');
+  }
+
+  function switchPatientHistoryTab(tabName) {
+    patientHistoryState.activeTab = tabName;
+    
+    // Update tab buttons - slider style active tab
+    document.querySelectorAll('[data-tab-btn]').forEach(btn => {
+      if (btn.getAttribute('data-tab-btn') === tabName) {
+        btn.classList.add('border-b-2', 'border-indigo-600', 'text-indigo-600');
+        btn.classList.remove('border-transparent', 'text-slate-600');
+        btn.classList.add('bg-indigo-50');
+      } else {
+        btn.classList.add('border-transparent', 'text-slate-600');
+        btn.classList.remove('border-b-2', 'border-indigo-600', 'text-indigo-600', 'bg-indigo-50');
+      }
+    });
+    
+    // Update tab content
+    document.querySelectorAll('[data-tab-content]').forEach(content => {
+      if (content.getAttribute('data-tab-content') === tabName) {
+        content.classList.remove('hidden');
+      } else {
+        content.classList.add('hidden');
+      }
+    });
+
+    if (tabName === 'visited') {
+      loadPatientVisitedHistory();
+    } else if (tabName === 'labwork') {
+      loadPatientLabWorkHistory();
+    } else if (tabName === 'prescriptions') {
+      loadPatientPrescriptionsHistory();
+    } else if (tabName === 'fileupload') {
+      initializePatientHistoryFileUpload();
+      // Auto-load stored files when tab is clicked
+      loadPatientHistoryStoredFiles();
+    }
+  }
+
+  function loadPatientVisitedHistory() {
+    const container = document.getElementById('visitedHistoryContainer');
+    if (!container) return;
+    
+    container.innerHTML = '<div class="text-center py-8 text-gray-400">Loading visited history...</div>';
+    
+    const patientId = patientHistoryState.patientId;
+    if (!patientId) {
+      container.innerHTML = '<div class="text-center py-8 text-red-400">Patient ID not found</div>';
+      return;
+    }
+
+    fetch(`/api/patient/${patientId}/daily-visits/`)
+      .then(res => res.json())
+      .then(data => {
+        if (!data || !Array.isArray(data)) {
+          container.innerHTML = '<div class="text-center py-8 text-gray-400">No visit history found</div>';
+          return;
+        }
+
+        if (data.length === 0) {
+          container.innerHTML = '<div class="text-center py-8 text-gray-400">No visits recorded yet</div>';
+          return;
+        }
+
+        let html = '<div class="space-y-3">';
+        data.forEach(visit => {
+          const canShowPrescriptionButton = String(visit.status || '').toLowerCase() === 'confirmed';
+          const visitDate = new Date(visit.date).toLocaleDateString('en-US', {
+            weekday: 'short',
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          });
+
+          html += `
+            <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200 p-4 hover:shadow-md transition">
+              <div class="flex items-start justify-between gap-3">
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2 mb-2">
+                    <span class="text-xs font-bold bg-blue-100 text-blue-700 px-2 py-1 rounded">VISIT</span>
+                    <span class="text-xs text-gray-500">${visitDate}</span>
+                  </div>
+                  <p class="text-sm font-semibold text-gray-800 mb-1">Dr. ${visit.doctor || 'N/A'}</p>
+                  <p class="text-xs text-gray-600 mb-2"><strong>Treatment:</strong> ${visit.treatment || 'N/A'}</p>
+                  <p class="text-xs text-gray-600"><strong>Status:</strong> <span class="inline-block px-2 py-0.5 rounded text-[11px] font-bold ${
+                    visit.status === 'confirmed' ? 'bg-green-100 text-green-700' :
+                    visit.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
+                    'bg-red-100 text-red-700'
+                  }">${visit.status || 'N/A'}</span></p>
+                </div>
+                ${canShowPrescriptionButton ? `<button onclick="loadVisitPrescription(${visit.id})" class="px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 transition whitespace-nowrap">View Rx</button>` : ''}
+              </div>
+            </div>
+          `;
+        });
+        html += '</div>';
+        container.innerHTML = html;
+      })
+      .catch(err => {
+        console.error('Error loading visit history:', err);
+        container.innerHTML = '<div class="text-center py-8 text-red-400">Error loading visit history</div>';
+      });
+  }
+
+  function loadPatientLabWorkHistory() {
+    const container = document.getElementById('labworkHistoryContainer');
+    if (!container) return;
+    
+    container.innerHTML = '<div class="text-center py-8 text-gray-400">Loading lab work history...</div>';
+    
+    const patientId = patientHistoryState.patientId;
+    if (!patientId) {
+      container.innerHTML = '<div class="text-center py-8 text-red-400">Patient ID not found</div>';
+      return;
+    }
+
+    fetch(`/api/patient/${patientId}/labwork/`)
+      .then(res => res.json())
+      .then(data => {
+        if (!data || !Array.isArray(data)) {
+          container.innerHTML = '<div class="text-center py-8 text-gray-400">No lab work found</div>';
+          return;
+        }
+
+        if (data.length === 0) {
+          container.innerHTML = '<div class="text-center py-8 text-gray-400">No lab work recorded yet</div>';
+          return;
+        }
+
+        let html = '<div class="space-y-3">';
+        data.forEach(lab => {
+          const sentDate = new Date(lab.date_sent).toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric'
+          });
+
+          html += `
+            <div class="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl border border-purple-200 p-4 hover:shadow-md transition">
+              <div class="flex items-start justify-between gap-3">
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2 mb-2">
+                    <span class="text-xs font-bold bg-purple-100 text-purple-700 px-2 py-1 rounded">LAB WORK</span>
+                    <span class="text-xs text-gray-500">${sentDate}</span>
+                  </div>
+                  <p class="text-sm font-semibold text-gray-800 mb-2">${lab.lab_name || 'N/A'}</p>
+                  <div class="flex flex-wrap gap-2 text-xs">
+                    <span class="text-gray-600"><strong>Type:</strong> ${lab.work_type || 'N/A'}</span>
+                    <span class="text-gray-600"><strong>ID:</strong> #${lab.id}</span>
+                  </div>
+                  <p class="text-xs mt-2"><strong>Status:</strong> <span class="inline-block px-2 py-0.5 rounded text-[11px] font-bold ${
+                    lab.workflow_status === 'completed' ? 'bg-green-100 text-green-700' :
+                    lab.workflow_status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
+                    lab.workflow_status === 'processing' ? 'bg-blue-100 text-blue-700' :
+                    'bg-orange-100 text-orange-700'
+                  }">${lab.workflow_status || 'N/A'}</span></p>
+                </div>
+                <button onclick="loadLabWorkDetails(${lab.id})" class="px-3 py-1.5 rounded-lg bg-purple-600 text-white text-xs font-bold hover:bg-purple-700 transition whitespace-nowrap">Details</button>
+              </div>
+            </div>
+          `;
+        });
+        html += '</div>';
+        container.innerHTML = html;
+      })
+      .catch(err => {
+        console.error('Error loading lab work history:', err);
+        container.innerHTML = '<div class="text-center py-8 text-red-400">Error loading lab work</div>';
+      });
+  }
+
+  function loadVisitPrescription(dailyPatientId) {
+    const detailsModal = document.getElementById('prescriptionDetailsModal');
+    if (!detailsModal) return;
+
+    const detailsContent = document.getElementById('prescriptionDetailsContent');
+    detailsContent.innerHTML = '<div class="text-center py-8 text-gray-400">Loading prescription...</div>';
+
+    fetch(`/api/daily-patient/${dailyPatientId}/prescription/`)
+      .then(res => res.json())
+      .then(data => {
+        if (!data || !data.id) {
+          detailsContent.innerHTML = '<div class="text-center py-8 text-gray-400">No prescription found for this visit</div>';
+          return;
+        }
+
+        let html = `
+          <div class="space-y-4">
+            <div class="bg-blue-50 border border-blue-200 rounded-xl p-4">
+              <p class="text-xs text-gray-500 mb-1">Visit Date</p>
+              <p class="text-lg font-bold text-gray-800">${data.visit_date || 'N/A'}</p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div class="bg-gray-50 border border-gray-200 rounded-xl p-3">
+                <p class="text-xs text-gray-500 mb-1">Chief Complaint</p>
+                <p class="text-sm font-semibold text-gray-800">${data.chief_complaint || 'N/A'}</p>
+              </div>
+              <div class="bg-gray-50 border border-gray-200 rounded-xl p-3">
+                <p class="text-xs text-gray-500 mb-1">Diagnosis</p>
+                <p class="text-sm font-semibold text-gray-800">${data.diagnosis || 'N/A'}</p>
+              </div>
+            </div>
+
+            ${data.medicines && data.medicines.length > 0 ? `
+              <div class="border-t border-gray-200 pt-3">
+                <h4 class="text-sm font-bold text-gray-800 mb-2">Medicines</h4>
+                <div class="space-y-2">
+                  ${data.medicines.map(med => `
+                    <div class="bg-green-50 border border-green-200 rounded-lg p-2">
+                      <p class="text-xs font-bold text-gray-800">${med.drug_name || 'N/A'}</p>
+                      <p class="text-[11px] text-gray-600">${med.dosage || 'N/A'} • ${med.frequency || 'N/A'} • ${med.duration || 'N/A'}</p>
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
+            ` : ''}
+
+            ${data.treatments && data.treatments.length > 0 ? `
+              <div class="border-t border-gray-200 pt-3">
+                <h4 class="text-sm font-bold text-gray-800 mb-2">Treatments</h4>
+                <div class="flex flex-wrap gap-2">
+                  ${data.treatments.map(tx => `
+                    <span class="bg-indigo-100 text-indigo-700 text-xs font-bold px-2 py-1 rounded">${tx.treatment_name || 'N/A'}</span>
+                  `).join('')}
+                </div>
+              </div>
+            ` : ''}
+
+            ${data.advice ? `
+              <div class="bg-amber-50 border border-amber-200 rounded-xl p-3">
+                <p class="text-xs text-gray-500 mb-1">Advice</p>
+                <p class="text-sm text-gray-800">${data.advice}</p>
+              </div>
+            ` : ''}
+          </div>
+        `;
+        detailsContent.innerHTML = html;
+        openModal('prescriptionDetailsModal');
+      })
+      .catch(err => {
+        console.error('Error loading prescription:', err);
+        detailsContent.innerHTML = '<div class="text-center py-8 text-red-400">Error loading prescription</div>';
+      });
+  }
+
+  function loadLabWorkDetails(labWorkId) {
+    const detailsModal = document.getElementById('labworkDetailsModal');
+    if (!detailsModal) return;
+
+    const detailsContent = document.getElementById('labworkDetailsContent');
+    detailsContent.innerHTML = '<div class="text-center py-8 text-gray-400">Loading lab work details...</div>';
+
+    fetch(`/api/labwork/${labWorkId}/`)
+      .then(res => res.json())
+      .then(data => {
+        if (!data || !data.id) {
+          detailsContent.innerHTML = '<div class="text-center py-8 text-gray-400">Lab work not found</div>';
+          return;
+        }
+
+        const sentDate = new Date(data.date_sent).toLocaleDateString('en-US', {
+          weekday: 'short',
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric'
+        });
+
+        let html = `
+          <div class="space-y-4">
+            <div class="grid grid-cols-2 gap-3">
+              <div class="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                <p class="text-xs text-gray-500 mb-1">Lab ID</p>
+                <p class="text-2xl font-bold text-blue-600">#${data.id}</p>
+              </div>
+              <div class="bg-purple-50 border border-purple-200 rounded-xl p-4">
+                <p class="text-xs text-gray-500 mb-1">Status</p>
+                <p class="text-sm font-bold ${
+                  data.workflow_status === 'completed' ? 'text-green-600' :
+                  data.workflow_status === 'pending' ? 'text-yellow-600' :
+                  data.workflow_status === 'processing' ? 'text-blue-600' :
+                  'text-orange-600'
+                }">${data.workflow_status || 'N/A'}</p>
+              </div>
+            </div>
+
+            <div class="bg-gray-50 border border-gray-200 rounded-xl p-4 space-y-2">
+              <div class="flex justify-between">
+                <span class="text-xs text-gray-500">Lab Name:</span>
+                <span class="text-sm font-semibold text-gray-800">${data.lab_name || 'N/A'}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-xs text-gray-500">Work Type:</span>
+                <span class="text-sm font-semibold text-gray-800">${data.work_type || 'N/A'}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-xs text-gray-500">Date Sent:</span>
+                <span class="text-sm font-semibold text-gray-800">${sentDate}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-xs text-gray-500">Notes:</span>
+                <span class="text-sm text-gray-800">${data.note || 'N/A'}</span>
+              </div>
+            </div>
+          </div>
+        `;
+        detailsContent.innerHTML = html;
+        openModal('labworkDetailsModal');
+      })
+      .catch(err => {
+        console.error('Error loading lab work details:', err);
+        detailsContent.innerHTML = '<div class="text-center py-8 text-red-400">Error loading lab work details</div>';
+      });
+  }
+
+  function loadPatientPrescriptionsHistory() {
+    const container = document.getElementById('prescriptionsHistoryContainer');
+    if (!container) return;
+    
+    container.innerHTML = '<div class="text-center py-8 text-slate-400"><svg class="w-12 h-12 mx-auto mb-3 text-slate-300 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>Loading prescriptions...</div>';
+    
+    const patientId = patientHistoryState.patientId;
+    if (!patientId) {
+      container.innerHTML = '<div class="text-center py-8 text-red-400">Patient ID not found</div>';
+      return;
+    }
+
+    // Combined fetch to get all daily patient visits with prescriptions
+    fetch(`/api/patient/${patientId}/daily-visits/`)
+      .then(res => res.json())
+      .then(visitData => {
+        if (!visitData || !Array.isArray(visitData) || visitData.length === 0) {
+          container.innerHTML = '<div class="text-center py-8 text-slate-400">No prescriptions found</div>';
+          return;
+        }
+
+        let prescriptionsHtml = '<div class="space-y-3">';
+        let hasPrescriptions = false;
+
+        // Fetch prescription details for each visit
+        const prescriptionPromises = visitData.map(visit => 
+          fetch(`/api/daily-patient/${visit.id}/prescription/`)
+            .then(res => res.json())
+            .catch(err => null)
+        );
+
+        Promise.all(prescriptionPromises)
+          .then(prescriptions => {
+            prescriptions.forEach((prescription, index) => {
+              if (!prescription || !prescription.id) return;
+              hasPrescriptions = true;
+
+              const visitDate = new Date(visitData[index].date).toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric'
+              });
+
+              prescriptionsHtml += `
+                <div class="bg-gradient-to-r from-emerald-50 to-cyan-50 rounded-xl border border-emerald-200 p-4 hover:shadow-md transition">
+                  <div class="flex items-start justify-between gap-3">
+                    <div class="flex-1 min-w-0">
+                      <div class="flex items-center gap-2 mb-2">
+                        <span class="text-xs font-bold bg-emerald-100 text-emerald-700 px-2 py-1 rounded">PRESCRIPTION</span>
+                        <span class="text-xs text-slate-500">${visitDate}</span>
+                      </div>
+                      <p class="text-sm font-semibold text-slate-800 mb-2"><strong>Chief Complaint:</strong> ${prescription.chief_complaint || 'N/A'}</p>
+                      <p class="text-xs text-slate-600 mb-2"><strong>Diagnosis:</strong> ${prescription.diagnosis || 'N/A'}</p>
+                      ${prescription.medicines && prescription.medicines.length > 0 ? `
+                        <div class="mb-2">
+                          <p class="text-xs font-bold text-slate-700 mb-1">Medicines:</p>
+                          <div class="flex flex-wrap gap-1">
+                            ${prescription.medicines.map(med => `<span class="inline-block bg-green-100 text-green-700 text-[11px] font-bold px-2 py-0.5 rounded">${med.drug_name || 'N/A'}</span>`).join('')}
+                          </div>
+                        </div>
+                      ` : ''}
+                    </div>
+                    <button onclick="loadVisitPrescription(${visitData[index].id})" class="px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition whitespace-nowrap">Full Rx</button>
+                  </div>
+                </div>
+              `;
+            });
+
+            if (!hasPrescriptions) {
+              container.innerHTML = '<div class="text-center py-8 text-slate-400">No prescriptions found</div>';
+            } else {
+              prescriptionsHtml += '</div>';
+              container.innerHTML = prescriptionsHtml;
+            }
+          })
+          .catch(err => {
+            console.error('Error loading prescriptions:', err);
+            container.innerHTML = '<div class="text-center py-8 text-red-400">Error loading prescriptions</div>';
+          });
+      })
+      .catch(err => {
+        console.error('Error loading visits:', err);
+        container.innerHTML = '<div class="text-center py-8 text-red-400">Error loading prescriptions</div>';
+      });
+  }
+
+  // ============ FILE UPLOAD IN PATIENT HISTORY ============
+  // File viewer mode - no upload functionality, only viewing stored files
+
+  function initializePatientHistoryFileUpload() {
+    const patientId = patientHistoryState.patientId;
+    if (!patientId) {
+      if (typeof showNotification === 'function') {
+        showNotification('Patient ID not found', 'error', 3000);
+      }
+      return;
+    }
+    // Tab is now ready - stored files can be loaded by clicking "View Stored Files" button
+  }
+
+  // ============ STORED FILE PREVIEW ============
+  var storedImageGallery = [];
+  var storedImageGalleryIndex = -1;
+  var activeStoredFileObjectUrl = null;
+  var imageEditorState = null;
+
+  function loadPatientHistoryStoredFiles() {
+    const patientId = patientHistoryState.patientId;
+    if (!patientId) {
+      document.getElementById('patientFilesLoadingState').classList.add('hidden');
+      document.getElementById('patientFilesEmptyState').classList.remove('hidden');
+      return;
+    }
+
+    // Show loading state
+    document.getElementById('patientFilesLoadingState').classList.remove('hidden');
+    document.getElementById('patientFilesListContainer').classList.add('hidden');
+    document.getElementById('patientFilesEmptyState').classList.add('hidden');
+
+    // Fetch files for the patient from API
+    fetch(`/api/patient/${patientId}/uploads/`)
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.uploads && Array.isArray(data.uploads) && data.uploads.length > 0) {
+          renderPatientFilesList(data.uploads);
+        } else {
+          // Show empty state
+          document.getElementById('patientFilesLoadingState').classList.add('hidden');
+          document.getElementById('patientFilesListContainer').classList.add('hidden');
+          document.getElementById('patientFilesEmptyState').classList.remove('hidden');
+        }
+      })
+      .catch(err => {
+        console.error('Error loading stored files:', err);
+        document.getElementById('patientFilesLoadingState').classList.add('hidden');
+        document.getElementById('patientFilesListContainer').classList.add('hidden');
+        document.getElementById('patientFilesEmptyState').classList.remove('hidden');
+      });
+  }
+
+  function renderPatientFilesList(uploads) {
+    const container = document.getElementById('patientFilesListContainer');
+    container.innerHTML = '';
+    storedImageGallery = uploads;
+
+    const fileTypeIcons = {
+      'image': '🖼️',
+      'pdf': '📄',
+      'video': '🎥',
+      'docx': '📋'
+    };
+
+    const fileTypeColors = {
+      'image': 'from-blue-50 to-blue-100 border-blue-200',
+      'pdf': 'from-red-50 to-red-100 border-red-200',
+      'video': 'from-purple-50 to-purple-100 border-purple-200',
+      'docx': 'from-green-50 to-green-100 border-green-200'
+    };
+
+    const normalized = uploads.map((file, idx) => ({
+      ...file,
+      __idx: idx,
+      __type: getFileTypeFromItem(file),
+    }));
+
+    const imageFiles = normalized.filter(item => item.__type === 'image');
+    const pdfFiles = normalized.filter(item => item.__type === 'pdf');
+    const otherFiles = normalized.filter(item => item.__type !== 'image' && item.__type !== 'pdf');
+
+    function escapeHtml(value) {
+      return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function formatDate(value) {
+      if (!value) return 'Unknown date';
+      return new Date(value).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      });
+    }
+
+    function formatSize(sizeBytes) {
+      const size = Number(sizeBytes || 0);
+      if (!size) return '0 B';
+      if (size >= 1024 * 1024 * 1024) return `${(size / (1024 * 1024 * 1024)).toFixed(2)} GB`;
+      if (size >= 1024 * 1024) return `${(size / (1024 * 1024)).toFixed(2)} MB`;
+      if (size >= 1024) return `${(size / 1024).toFixed(1)} KB`;
+      return `${size} B`;
+    }
+
+    function buildPreviewBlock(file) {
+      const fileUrl = escapeHtml(file.file || '');
+      if (file.__type === 'image') {
+        return `<img src="${fileUrl}" alt="${escapeHtml(file.original_name)}" class="w-full h-36 object-cover">`;
+      }
+      if (file.__type === 'pdf') {
+        return `
+          <div class="h-36 bg-gradient-to-br from-rose-50 to-red-50 flex flex-col items-center justify-center text-red-700">
+            <svg class="w-9 h-9 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 3h7l5 5v13a1 1 0 01-1 1H7a1 1 0 01-1-1V4a1 1 0 011-1z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 3v5h5" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 15h8M8 18h5" />
+            </svg>
+            <p class="font-bold text-sm">PDF Document</p>
+            <p class="text-[11px] text-rose-500 mt-1">Click to preview</p>
+          </div>
+        `;
+      }
+      if (file.__type === 'video') {
+        return `<video src="${fileUrl}" class="w-full h-36 object-cover bg-black" controls preload="metadata"></video>`;
+      }
+      if (file.__type === 'docx') {
+        return `
+          <div class="h-36 bg-gradient-to-br from-blue-50 to-indigo-50 flex flex-col items-center justify-center text-blue-700">
+            <svg class="w-9 h-9 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+            </svg>
+            <p class="font-bold text-sm">Document</p>
+            <p class="text-[11px] text-blue-500 mt-1">Click to preview</p>
+          </div>
+        `;
+      }
+      return `
+        <div class="h-36 bg-gradient-to-br from-slate-50 to-slate-100 flex flex-col items-center justify-center text-slate-600">
+          <svg class="w-9 h-9 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4v.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <p class="font-bold text-sm">${escapeHtml((file.__type || 'file').toUpperCase())}</p>
+          <p class="text-[11px] text-slate-500 mt-1">Click to preview</p>
+        </div>
+      `;
+    }
+
+    function buildFileCard(file) {
+      const fileUrl = escapeHtml(file.file || '');
+      const name = escapeHtml(file.original_name || 'Untitled file');
+      const typeLabel = escapeHtml((file.__type || 'unknown').toUpperCase());
+      const date = escapeHtml(formatDate(file.created_at));
+      const size = escapeHtml(formatSize(file.size_bytes));
+      const uploader = escapeHtml(file.uploader_username || 'Unknown');
+
+      return `
+        <div class="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+          <div class="flex items-start justify-between gap-3">
+            <div class="min-w-0 flex-1">
+              <p class="text-sm font-bold text-slate-800 truncate" title="${name}">${name}</p>
+              <p class="text-[11px] text-slate-500 mt-1">${typeLabel} • ${size} • ${date}</p>
+              <p class="text-[11px] text-slate-400 mt-0.5">By ${uploader}</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <button type="button" class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 flex items-center justify-center" onclick="openPatientStoredFilePreview(${file.__idx})" title="Preview file">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+              </button>
+              <a href="${fileUrl}" download="${name}" class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-100 flex items-center justify-center" title="Download file">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-1" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v10m0 0-4-4m4 4 4-4" />
+                </svg>
+              </a>
+            </div>
+          </div>
+          <button type="button" class="block w-full mt-3 rounded-xl overflow-hidden border border-slate-100 bg-slate-50 hover:ring-2 hover:ring-blue-200 transition text-left" onclick="openPatientStoredFilePreview(${file.__idx})">
+            ${buildPreviewBlock(file)}
+          </button>
+        </div>
+      `;
+    }
+
+    function buildSection(title, dotClass, titleClass, files) {
+      if (!files.length) return '';
+      return `
+        <section class="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+          <div class="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full ${dotClass}"></span>
+              <h5 class="text-sm font-black ${titleClass} uppercase tracking-wider">${title}</h5>
+            </div>
+          </div>
+          <div class="p-3 grid grid-cols-1 md:grid-cols-2 gap-3">
+            ${files.map(buildFileCard).join('')}
+          </div>
+        </section>
+      `;
+    }
+
+    const sectionsHtml = [
+      buildSection('Images', 'bg-emerald-500', 'text-emerald-700', imageFiles),
+      buildSection('PDF Documents', 'bg-rose-500', 'text-rose-700', pdfFiles),
+      buildSection('Other Files', 'bg-slate-500', 'text-slate-700', otherFiles),
+    ].join('');
+
+    container.innerHTML = sectionsHtml || '<div class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center"><p class="text-sm text-slate-500">No files uploaded for this patient yet.</p></div>';
+
+    // Show file list and hide loading state
+    document.getElementById('patientFilesLoadingState').classList.add('hidden');
+    document.getElementById('patientFilesListContainer').classList.remove('hidden');
+    document.getElementById('patientFilesEmptyState').classList.add('hidden');
+  }
+
+  function openPatientStoredFilePreview(index) {
+    // First, load all files if not already loaded
+    if (storedImageGallery.length === 0) {
+      fetch(`/api/patient/${patientHistoryState.patientId}/uploads/`)
+        .then(res => res.json())
+        .then(data => {
+          if (data && data.uploads) {
+            storedImageGallery = data.uploads;
+            displayFilePreview(index);
+          } else {
+            if (typeof showNotification === 'function') {
+              showNotification('No files found for preview', 'warning', 2500);
+            }
+          }
+        })
+        .catch(err => {
+          console.error('Error loading files:', err);
+          if (typeof showNotification === 'function') {
+            showNotification('Unable to load file preview', 'error', 2500);
+          }
+        });
+    } else {
+      displayFilePreview(index);
+    }
+  }
+
+  function displayFilePreview(index) {
+    if (!storedImageGallery || storedImageGallery.length === 0) return;
+    
+    const itemIndex = Math.max(0, Math.min(index, storedImageGallery.length - 1));
+    const item = storedImageGallery[itemIndex];
+    
+    if (!item) return;
+    
+    storedImageGalleryIndex = itemIndex;
+    
+    const safeName = item.original_name || 'Stored file';
+    const safeMime = item.mime_type || '-';
+    
+    // Set up navigation buttons
+    const prevBtn = document.getElementById('storedFilePreviewPrevBtn');
+    const nextBtn = document.getElementById('storedFilePreviewNextBtn');
+    const counter = document.getElementById('storedFilePreviewImageCounter');
+    
+    if (storedImageGallery.length > 1) {
+      prevBtn.classList.remove('hidden');
+      nextBtn.classList.remove('hidden');
+      counter.classList.remove('hidden');
+      counter.textContent = `${itemIndex + 1} / ${storedImageGallery.length}`;
+      
+      prevBtn.disabled = itemIndex === 0;
+      nextBtn.disabled = itemIndex === storedImageGallery.length - 1;
+    } else {
+      prevBtn.classList.add('hidden');
+      nextBtn.classList.add('hidden');
+      counter.classList.add('hidden');
+    }
+    
+    // Set up metadata and open link
+    const link = document.getElementById('storedFilePreviewOpenLink');
+    const safeUrl = item.file || '';
+    link.href = safeUrl;
+    link.target = '_blank';
+    
+    // Render content based on file type
+    const body = document.getElementById('storedFilePreviewBody');
+    body.innerHTML = '';
+    body.style.display = 'block';
+    body.style.alignItems = '';
+    body.style.justifyContent = '';
+    
+    const mimeType = item.mime_type || '';
+    const fileType = getFileTypeFromItem(item);
+    document.getElementById('storedFilePreviewName').textContent = `${safeName} • ${fileType.toUpperCase()} • ${safeMime}`;
+    
+    if (fileType === 'image' || mimeType.startsWith('image/')) {
+      body.innerHTML = `
+        <div class="h-full min-h-[60vh] bg-white rounded-2xl border border-slate-200 overflow-hidden flex flex-col">
+          <div class="bg-gradient-to-r from-slate-800 to-slate-900 px-4 py-3 border-b border-slate-700 flex flex-wrap gap-3 items-center overflow-x-auto">
+            <div class="flex gap-1 items-center">
+              <button type="button" id="imageEditorToolPencil" onclick="imageEditorSetTool('pencil')" class="imageEditorToolBtn p-2 rounded-lg hover:bg-slate-700 transition" title="Pencil (P)">
+                <svg class="w-5 h-5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4v16h10V4M7 4l2-2h6l2 2"/></svg>
+              </button>
+              <button type="button" id="imageEditorToolMarker" onclick="imageEditorSetTool('marker')" class="imageEditorToolBtn p-2 rounded-lg hover:bg-slate-700 transition" title="Marker (M)">
+                <svg class="w-5 h-5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 4H5a2 2 0 00-2 2v14a2 2 0 002 2h4m0-18v18m0-18L9 2m6 20h4a2 2 0 002-2V6a2 2 0 00-2-2h-4m0 18v-18m0 18l6 2"/></svg>
+              </button>
+              <button type="button" id="imageEditorToolEraser" onclick="imageEditorSetTool('eraser')" class="imageEditorToolBtn p-2 rounded-lg hover:bg-slate-700 transition" title="Eraser (E)">
+                <svg class="w-5 h-5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+              </button>
+              <button type="button" id="imageEditorToolRect" onclick="imageEditorSetTool('rect')" class="imageEditorToolBtn p-2 rounded-lg hover:bg-slate-700 transition" title="Rectangle (R)">
+                <svg class="w-5 h-5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
+              </button>
+              <button type="button" id="imageEditorToolCircle" onclick="imageEditorSetTool('circle')" class="imageEditorToolBtn p-2 rounded-lg hover:bg-slate-700 transition" title="Circle (C)">
+                <svg class="w-5 h-5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
+              </button>
+              <button type="button" id="imageEditorToolArrow" onclick="imageEditorSetTool('arrow')" class="imageEditorToolBtn p-2 rounded-lg hover:bg-slate-700 transition" title="Arrow (A)">
+                <svg class="w-5 h-5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+              </button>
+              <button type="button" id="imageEditorToolText" onclick="imageEditorSetTool('text')" class="imageEditorToolBtn p-2 rounded-lg hover:bg-slate-700 transition" title="Text (T)">
+                <svg class="w-5 h-5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h14a2 2 0 012 2M12 3v18"/></svg>
+              </button>
+              <button type="button" id="imageEditorToolPan" onclick="imageEditorSetTool('pan')" class="imageEditorToolBtn p-2 rounded-lg hover:bg-slate-700 transition" title="Pan (Space)">
+                <svg class="w-5 h-5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+              </button>
+            </div>
+            <div class="w-px h-6 bg-slate-700"></div>
+            <div class="flex gap-2 items-center">
+              <input id="imageEditorColor" type="color" value="#2563eb" onchange="imageEditorSetColor(this.value)" class="w-8 h-8 rounded border border-slate-600">
+              <select id="imageEditorSize" onchange="imageEditorSetSize(this.value)" class="text-xs rounded border border-slate-600 px-2 py-1 bg-slate-700 text-slate-300">
+                <option value="2">Small</option>
+                <option value="5" selected>Medium</option>
+                <option value="10">Large</option>
+              </select>
+            </div>
+            <div class="w-px h-6 bg-slate-700"></div>
+            <div class="flex gap-1 items-center">
+              <button type="button" onclick="imageEditorUndo()" class="p-2 rounded-lg hover:bg-slate-700 transition" title="Undo (Ctrl/Cmd+Z)"><svg class="w-5 h-5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v3"/></svg></button>
+              <button type="button" onclick="imageEditorRedo()" class="p-2 rounded-lg hover:bg-slate-700 transition" title="Redo (Ctrl/Cmd+Y)"><svg class="w-5 h-5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 10H11a8 8 0 00-8 8v3"/></svg></button>
+              <button type="button" onclick="imageEditorClear()" class="p-2 rounded-lg hover:bg-red-700/30 transition" title="Clear"><svg class="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7"/></svg></button>
+            </div>
+            <div class="w-px h-6 bg-slate-700"></div>
+            <div class="flex gap-1 items-center">
+              <button type="button" onclick="imageEditorZoomOut()" class="p-2 rounded-lg hover:bg-slate-700 transition" title="Zoom Out">-</button>
+              <button type="button" onclick="imageEditorZoomIn()" class="p-2 rounded-lg hover:bg-slate-700 transition" title="Zoom In">+</button>
+              <button type="button" onclick="imageEditorFit()" class="p-2 rounded-lg hover:bg-slate-700 transition" title="Fit">Fit</button>
+              <button type="button" onclick="imageEditorResetZoom()" class="p-2 rounded-lg hover:bg-slate-700 transition" title="1:1">1:1</button>
+            </div>
+            <div class="w-px h-6 bg-slate-700"></div>
+            <div class="flex gap-1 items-center">
+              <button type="button" onclick="imageEditorDownload('png')" class="p-2 rounded-lg hover:bg-emerald-700/30 transition text-emerald-400" title="PNG">PNG</button>
+              <button type="button" onclick="imageEditorDownload('jpg')" class="p-2 rounded-lg hover:bg-amber-700/30 transition text-amber-400" title="JPG">JPG</button>
+            </div>
+          </div>
+          <div id="imageEditorViewport" class="flex-1 min-h-[58vh] bg-slate-900/90 relative overflow-hidden cursor-crosshair">
+            <canvas id="imageEditorCanvas" class="absolute inset-0 w-full h-full"></canvas>
+          </div>
+        </div>
+      `;
+      setTimeout(() => initializeImageEditor(safeUrl, safeName), 0);
+    } else if (fileType === 'pdf' || mimeType === 'application/pdf') {
+      body.innerHTML = `<div class="w-full h-[78vh] rounded-2xl bg-white border border-slate-200 flex items-center justify-center text-slate-500 text-sm">Loading PDF preview...</div>`;
+      fetch(safeUrl, { credentials: 'same-origin' })
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Failed to load PDF');
+          }
+          return response.blob();
+        })
+        .then(blob => {
+          if (!blob || (blob.type && !blob.type.includes('pdf'))) {
+            throw new Error('File is not a valid PDF');
+          }
+          activeStoredFileObjectUrl = URL.createObjectURL(blob);
+          body.innerHTML = `<iframe src="${activeStoredFileObjectUrl}" class="w-full h-[78vh] rounded-2xl bg-white border border-slate-200" title="PDF Preview"></iframe>`;
+        })
+        .catch(() => {
+          body.innerHTML = `
+            <div class="h-full min-h-[60vh] flex flex-col items-center justify-center text-center bg-white rounded-2xl border border-slate-200 p-6">
+              <p class="text-base font-bold text-slate-800">PDF preview blocked by browser security.</p>
+              <p class="text-sm text-slate-500 mt-2">Use the button below to open the PDF directly.</p>
+              <a href="${safeUrl}" class="mt-4 px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-bold hover:bg-blue-700">Open PDF</a>
+            </div>
+          `;
+        });
+    } else if (fileType === 'video' || mimeType.startsWith('video/')) {
+      body.innerHTML = `<div class="h-full min-h-[60vh] bg-black rounded-2xl overflow-hidden"><video src="${safeUrl}" controls class="w-full h-[78vh] object-contain"></video></div>`;
+    } else {
+      body.innerHTML = `
+        <div class="h-full min-h-[60vh] flex flex-col items-center justify-center text-center bg-white rounded-2xl border border-slate-200 p-6">
+          <p class="text-base font-bold text-slate-800">DOCX Preview</p>
+          <p class="text-sm text-slate-500 mt-2">Some browsers cannot render DOCX inline.</p>
+          <p class="text-xs text-slate-400 mt-1">Use Open New Tab to view or download.</p>
+          <a href="${safeUrl}" target="_blank" rel="noopener" class="mt-4 px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-bold hover:bg-blue-700">Open DOCX</a>
+        </div>
+      `;
+    }
+    
+    openModal('storedFilePreviewModal');
+  }
+
+  function previewNextStoredImage() {
+    if (storedImageGalleryIndex < storedImageGallery.length - 1) {
+      displayFilePreview(storedImageGalleryIndex + 1);
+    }
+  }
+
+  function previewPreviousStoredImage() {
+    if (storedImageGalleryIndex > 0) {
+      displayFilePreview(storedImageGalleryIndex - 1);
+    }
+  }
+
+  function closeStoredFilePreviewModal() {
+    const body = document.getElementById('storedFilePreviewBody');
+    if (body) body.innerHTML = '';
+    if (activeStoredFileObjectUrl) {
+      URL.revokeObjectURL(activeStoredFileObjectUrl);
+      activeStoredFileObjectUrl = null;
+    }
+
+    if (imageEditorState && imageEditorState.keydownHandler && imageEditorState.keyupHandler) {
+      window.removeEventListener('keydown', imageEditorState.keydownHandler);
+      window.removeEventListener('keyup', imageEditorState.keyupHandler);
+    }
+    imageEditorState = null;
+    storedImageGallery = [];
+    storedImageGalleryIndex = -1;
+    closeModal('storedFilePreviewModal');
+  }
+
+  function initializeImageEditor(imageUrl, fileName) {
+    const canvas = document.getElementById('imageEditorCanvas');
+    const viewport = document.getElementById('imageEditorViewport');
+    if (!canvas || !viewport) return;
+
+    const ctx = canvas.getContext('2d');
+    const image = new Image();
+    image.onload = function() {
+      const layer = document.createElement('canvas');
+      layer.width = image.naturalWidth;
+      layer.height = image.naturalHeight;
+      const layerCtx = layer.getContext('2d');
+
+      imageEditorState = {
+        fileName: fileName || 'edited-image',
+        image,
+        canvas,
+        ctx,
+        viewport,
+        layer,
+        layerCtx,
+        tool: 'pencil',
+        color: '#2563eb',
+        size: 5,
+        zoom: 1,
+        offsetX: 0,
+        offsetY: 0,
+        isDrawing: false,
+        isPanning: false,
+        lastPoint: null,
+        shapeStart: null,
+        shapeCurrent: null,
+        panStart: null,
+        history: [],
+        redo: [],
+      };
+
+      imageEditorResize();
+      imageEditorFit();
+      imageEditorPushHistory();
+      imageEditorSetTool('pencil');
+
+      canvas.onpointerdown = imageEditorPointerDown;
+      canvas.onpointermove = imageEditorPointerMove;
+      canvas.onpointerup = imageEditorPointerUp;
+      canvas.onpointerleave = imageEditorPointerUp;
+      viewport.onwheel = function(event) {
+        event.preventDefault();
+        if (!imageEditorState) return;
+        if (event.deltaY < 0) imageEditorZoomIn();
+        else imageEditorZoomOut();
+      };
+      window.addEventListener('resize', imageEditorResize);
+
+      const handleImageEditorKeydown = (e) => {
+        if (!imageEditorState) return;
+
+        const isMeta = e.ctrlKey || e.metaKey;
+        if (e.key.toLowerCase() === 'p') imageEditorSetTool('pencil');
+        if (e.key.toLowerCase() === 'm') imageEditorSetTool('marker');
+        if (e.key.toLowerCase() === 'e') imageEditorSetTool('eraser');
+        if (e.key.toLowerCase() === 'r') imageEditorSetTool('rect');
+        if (e.key.toLowerCase() === 'c') imageEditorSetTool('circle');
+        if (e.key.toLowerCase() === 'a') imageEditorSetTool('arrow');
+        if (e.key.toLowerCase() === 't') imageEditorSetTool('text');
+        if (e.code === 'Space') {
+          e.preventDefault();
+          imageEditorSetTool('pan');
+        }
+
+        if (isMeta && (e.key === 'z' || e.key === 'Z')) {
+          e.preventDefault();
+          if (e.shiftKey) imageEditorRedo();
+          else imageEditorUndo();
+        }
+        if (isMeta && (e.key === 'y' || e.key === 'Y')) {
+          e.preventDefault();
+          imageEditorRedo();
+        }
+        if (e.key === 'Delete') {
+          e.preventDefault();
+          if (confirm('Clear all drawings?')) imageEditorClear();
+        }
+
+        if (e.key === '+' || e.key === '=') {
+          e.preventDefault();
+          imageEditorZoomIn();
+        }
+        if (e.key === '-') {
+          e.preventDefault();
+          imageEditorZoomOut();
+        }
+        if (e.key === '0') {
+          e.preventDefault();
+          imageEditorResetZoom();
+        }
+        if (isMeta && e.key === '0') {
+          e.preventDefault();
+          imageEditorFit();
+        }
+      };
+
+      const handleImageEditorKeyup = (e) => {
+        if (!imageEditorState) return;
+        if (e.code === 'Space' && imageEditorState.tool === 'pan') {
+          imageEditorSetTool('pencil');
+        }
+      };
+
+      window.addEventListener('keydown', handleImageEditorKeydown);
+      window.addEventListener('keyup', handleImageEditorKeyup);
+      imageEditorState.keydownHandler = handleImageEditorKeydown;
+      imageEditorState.keyupHandler = handleImageEditorKeyup;
+    };
+    image.src = imageUrl;
+  }
+
+  function imageEditorResize() {
+    if (!imageEditorState) return;
+    const rect = imageEditorState.viewport.getBoundingClientRect();
+    imageEditorState.canvas.width = Math.max(300, Math.floor(rect.width));
+    imageEditorState.canvas.height = Math.max(300, Math.floor(rect.height));
+    imageEditorRender();
+  }
+
+  function imageEditorSetTool(tool) {
+    if (!imageEditorState) return;
+    imageEditorState.tool = tool;
+    imageEditorState.viewport.style.cursor = tool === 'pan' ? 'grab' : 'crosshair';
+    document.querySelectorAll('.imageEditorToolBtn').forEach(btn => {
+      btn.classList.remove('bg-blue-600', 'text-white');
+    });
+    const activeBtn = document.getElementById(`imageEditorTool${tool.charAt(0).toUpperCase() + tool.slice(1)}`);
+    if (activeBtn) {
+      activeBtn.classList.add('bg-blue-600', 'text-white');
+    }
+  }
+
+  function imageEditorSetColor(color) {
+    if (!imageEditorState) return;
+    imageEditorState.color = color || '#2563eb';
+  }
+
+  function imageEditorSetSize(size) {
+    if (!imageEditorState) return;
+    const parsed = Number(size);
+    imageEditorState.size = Number.isFinite(parsed) ? parsed : 5;
+  }
+
+  function imageEditorToImagePoint(event) {
+    const st = imageEditorState;
+    const rect = st.canvas.getBoundingClientRect();
+    const x = (event.clientX - rect.left - st.offsetX) / st.zoom;
+    const y = (event.clientY - rect.top - st.offsetY) / st.zoom;
+    return { x, y };
+  }
+
+  function imageEditorDrawLine(from, to, opts = {}) {
+    const st = imageEditorState;
+    if (!st) return;
+    const ctx = st.layerCtx;
+    ctx.save();
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.lineWidth = opts.width || st.size;
+    if (opts.erase) {
+      ctx.globalCompositeOperation = 'destination-out';
+      ctx.strokeStyle = 'rgba(0,0,0,1)';
+    } else {
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.strokeStyle = opts.color || st.color;
+      ctx.globalAlpha = opts.alpha || 1;
+    }
+    ctx.beginPath();
+    ctx.moveTo(from.x, from.y);
+    ctx.lineTo(to.x, to.y);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function imageEditorPointerDown(event) {
+    if (!imageEditorState) return;
+    const st = imageEditorState;
+    const point = imageEditorToImagePoint(event);
+
+    if (st.tool === 'pan') {
+      st.isPanning = true;
+      st.panStart = { x: event.clientX, y: event.clientY, ox: st.offsetX, oy: st.offsetY };
+      st.viewport.style.cursor = 'grabbing';
+      return;
+    }
+
+    if (st.tool === 'text') {
+      const value = prompt('Enter text');
+      if (!value) return;
+      st.layerCtx.save();
+      st.layerCtx.fillStyle = st.color;
+      st.layerCtx.font = `${Math.max(14, st.size * 5)}px Arial`;
+      st.layerCtx.fillText(value, point.x, point.y);
+      st.layerCtx.restore();
+      imageEditorPushHistory();
+      imageEditorRender();
+      return;
+    }
+
+    st.isDrawing = true;
+    st.lastPoint = point;
+    if (['rect', 'circle', 'arrow'].includes(st.tool)) {
+      st.shapeStart = point;
+      st.shapeCurrent = point;
+    }
+  }
+
+  function imageEditorPointerMove(event) {
+    if (!imageEditorState) return;
+    const st = imageEditorState;
+
+    if (st.isPanning && st.panStart) {
+      st.offsetX = st.panStart.ox + (event.clientX - st.panStart.x);
+      st.offsetY = st.panStart.oy + (event.clientY - st.panStart.y);
+      imageEditorRender();
+      return;
+    }
+
+    if (!st.isDrawing) return;
+    const point = imageEditorToImagePoint(event);
+
+    if (st.tool === 'pencil') {
+      imageEditorDrawLine(st.lastPoint, point, { color: st.color, width: st.size, alpha: 1 });
+      st.lastPoint = point;
+      imageEditorRender();
+      return;
+    }
+    if (st.tool === 'marker') {
+      imageEditorDrawLine(st.lastPoint, point, { color: st.color, width: st.size * 2, alpha: 0.35 });
+      st.lastPoint = point;
+      imageEditorRender();
+      return;
+    }
+    if (st.tool === 'eraser') {
+      imageEditorDrawLine(st.lastPoint, point, { width: st.size * 2.5, erase: true });
+      st.lastPoint = point;
+      imageEditorRender();
+      return;
+    }
+    if (['rect', 'circle', 'arrow'].includes(st.tool)) {
+      st.shapeCurrent = point;
+      imageEditorRender();
+    }
+  }
+
+  function imageEditorCommitShape() {
+    const st = imageEditorState;
+    if (!st || !st.shapeStart || !st.shapeCurrent) return;
+    const a = st.shapeStart;
+    const b = st.shapeCurrent;
+    const ctx = st.layerCtx;
+    ctx.save();
+    ctx.strokeStyle = st.color;
+    ctx.lineWidth = st.size;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+
+    if (st.tool === 'rect') {
+      ctx.strokeRect(a.x, a.y, b.x - a.x, b.y - a.y);
+    } else if (st.tool === 'circle') {
+      const rx = (b.x - a.x) / 2;
+      const ry = (b.y - a.y) / 2;
+      const cx = a.x + rx;
+      const cy = a.y + ry;
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, Math.abs(rx), Math.abs(ry), 0, 0, Math.PI * 2);
+      ctx.stroke();
+    } else if (st.tool === 'arrow') {
+      const head = 12 + st.size;
+      const angle = Math.atan2(b.y - a.y, b.x - a.x);
+      ctx.beginPath();
+      ctx.moveTo(a.x, a.y);
+      ctx.lineTo(b.x, b.y);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(b.x, b.y);
+      ctx.lineTo(b.x - head * Math.cos(angle - Math.PI / 6), b.y - head * Math.sin(angle - Math.PI / 6));
+      ctx.lineTo(b.x - head * Math.cos(angle + Math.PI / 6), b.y - head * Math.sin(angle + Math.PI / 6));
+      ctx.closePath();
+      ctx.fillStyle = st.color;
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  function imageEditorPointerUp() {
+    if (!imageEditorState) return;
+    const st = imageEditorState;
+
+    if (st.isPanning) {
+      st.isPanning = false;
+      st.panStart = null;
+      st.viewport.style.cursor = st.tool === 'pan' ? 'grab' : 'crosshair';
+      return;
+    }
+
+    if (!st.isDrawing) return;
+    st.isDrawing = false;
+    if (['rect', 'circle', 'arrow'].includes(st.tool)) {
+      imageEditorCommitShape();
+      st.shapeStart = null;
+      st.shapeCurrent = null;
+    }
+    imageEditorPushHistory();
+    imageEditorRender();
+  }
+
+  function imageEditorRenderPreviewShape(ctx, st) {
+    if (!st.shapeStart || !st.shapeCurrent) return;
+    const a = st.shapeStart;
+    const b = st.shapeCurrent;
+    ctx.save();
+    ctx.strokeStyle = st.color;
+    ctx.lineWidth = st.size;
+    ctx.setLineDash([6, 4]);
+    if (st.tool === 'rect') {
+      ctx.strokeRect(a.x, a.y, b.x - a.x, b.y - a.y);
+    } else if (st.tool === 'circle') {
+      const rx = (b.x - a.x) / 2;
+      const ry = (b.y - a.y) / 2;
+      const cx = a.x + rx;
+      const cy = a.y + ry;
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, Math.abs(rx), Math.abs(ry), 0, 0, Math.PI * 2);
+      ctx.stroke();
+    } else if (st.tool === 'arrow') {
+      ctx.beginPath();
+      ctx.moveTo(a.x, a.y);
+      ctx.lineTo(b.x, b.y);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function imageEditorRender() {
+    const st = imageEditorState;
+    if (!st) return;
+    const { ctx, canvas, image, layer } = st;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#0f172a';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.save();
+    ctx.translate(st.offsetX, st.offsetY);
+    ctx.scale(st.zoom, st.zoom);
+    ctx.drawImage(image, 0, 0);
+    ctx.drawImage(layer, 0, 0);
+    if (st.isDrawing && ['rect', 'circle', 'arrow'].includes(st.tool)) {
+      imageEditorRenderPreviewShape(ctx, st);
+    }
+    ctx.restore();
+  }
+
+  function imageEditorFit() {
+    const st = imageEditorState;
+    if (!st) return;
+    const fitZoom = Math.min(st.canvas.width / st.image.naturalWidth, st.canvas.height / st.image.naturalHeight);
+    st.zoom = Math.max(0.05, fitZoom);
+    st.offsetX = (st.canvas.width - st.image.naturalWidth * st.zoom) / 2;
+    st.offsetY = (st.canvas.height - st.image.naturalHeight * st.zoom) / 2;
+    imageEditorRender();
+  }
+
+  function imageEditorResetZoom() {
+    const st = imageEditorState;
+    if (!st) return;
+    st.zoom = 1;
+    st.offsetX = 20;
+    st.offsetY = 20;
+    imageEditorRender();
+  }
+
+  function imageEditorZoomIn() {
+    const st = imageEditorState;
+    if (!st) return;
+    st.zoom = Math.min(8, st.zoom * 1.2);
+    imageEditorRender();
+  }
+
+  function imageEditorZoomOut() {
+    const st = imageEditorState;
+    if (!st) return;
+    st.zoom = Math.max(0.1, st.zoom / 1.2);
+    imageEditorRender();
+  }
+
+  function imageEditorPushHistory() {
+    const st = imageEditorState;
+    if (!st) return;
+    const snap = st.layer.toDataURL('image/png');
+    st.history.push(snap);
+    if (st.history.length > 40) st.history.shift();
+    st.redo = [];
+  }
+
+  function imageEditorRestoreSnapshot(snapshot) {
+    const st = imageEditorState;
+    if (!st || !snapshot) return;
+    const img = new Image();
+    img.onload = function() {
+      st.layerCtx.clearRect(0, 0, st.layer.width, st.layer.height);
+      st.layerCtx.drawImage(img, 0, 0);
+      imageEditorRender();
+    };
+    img.src = snapshot;
+  }
+
+  function imageEditorUndo() {
+    const st = imageEditorState;
+    if (!st || st.history.length <= 1) return;
+    const current = st.history.pop();
+    st.redo.push(current);
+    imageEditorRestoreSnapshot(st.history[st.history.length - 1]);
+  }
+
+  function imageEditorRedo() {
+    const st = imageEditorState;
+    if (!st || !st.redo.length) return;
+    const snapshot = st.redo.pop();
+    st.history.push(snapshot);
+    imageEditorRestoreSnapshot(snapshot);
+  }
+
+  function imageEditorClear() {
+    const st = imageEditorState;
+    if (!st) return;
+    st.layerCtx.clearRect(0, 0, st.layer.width, st.layer.height);
+    imageEditorPushHistory();
+    imageEditorRender();
+  }
+
+  function imageEditorDownload(format) {
+    const st = imageEditorState;
+    if (!st) return;
+
+    const exportCanvas = document.createElement('canvas');
+    exportCanvas.width = st.image.naturalWidth;
+    exportCanvas.height = st.image.naturalHeight;
+    const exportCtx = exportCanvas.getContext('2d');
+    exportCtx.fillStyle = '#ffffff';
+    exportCtx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
+    exportCtx.drawImage(st.image, 0, 0);
+    exportCtx.drawImage(st.layer, 0, 0);
+
+    const isJpg = (format || '').toLowerCase() === 'jpg';
+    const mime = isJpg ? 'image/jpeg' : 'image/png';
+    const ext = isJpg ? 'jpg' : 'png';
+    const dataUrl = exportCanvas.toDataURL(mime, isJpg ? 0.92 : 1.0);
+
+    const base = (st.fileName || 'edited-image').replace(/\.[^.]+$/, '');
+    const link = document.createElement('a');
+    link.href = dataUrl;
+    link.download = `${base}-edited.${ext}`;
+    link.click();
+  }
+
+  // Keep inline onclick handlers resolvable.
+  window.imageEditorSetTool = imageEditorSetTool;
+  window.imageEditorSetColor = imageEditorSetColor;
+  window.imageEditorSetSize = imageEditorSetSize;
+  window.imageEditorUndo = imageEditorUndo;
+  window.imageEditorRedo = imageEditorRedo;
+  window.imageEditorClear = imageEditorClear;
+  window.imageEditorZoomIn = imageEditorZoomIn;
+  window.imageEditorZoomOut = imageEditorZoomOut;
+  window.imageEditorFit = imageEditorFit;
+  window.imageEditorResetZoom = imageEditorResetZoom;
+  window.imageEditorDownload = imageEditorDownload;
+
+  function getFileTypeFromName(fileName) {
+    const name = (fileName || '').toLowerCase();
+    const ext = name.includes('.') ? name.slice(name.lastIndexOf('.')) : '';
+    if (['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.svg'].includes(ext)) return 'image';
+    if (['.mp4', '.mov', '.avi', '.mkv', '.webm'].includes(ext)) return 'video';
+    if (ext === '.pdf') return 'pdf';
+    if (ext === '.docx' || ext === '.doc') return 'docx';
+    return 'unknown';
+  }
+
+  function getFileTypeFromItem(item) {
+    const byDbType = (item.file_type || '').toLowerCase();
+    if (['image', 'pdf', 'video', 'docx'].includes(byDbType)) return byDbType;
+    const byMime = getFileTypeFromMime(item.mime_type || '');
+    if (byMime !== 'unknown') return byMime;
+    return getFileTypeFromName(item.original_name || '');
+  }
+
+  function getFileTypeFromMime(mimeType) {
+    if (!mimeType) return 'unknown';
+    if (mimeType.startsWith('image/')) return 'image';
+    if (mimeType.startsWith('video/')) return 'video';
+    if (mimeType === 'application/pdf') return 'pdf';
+    if (mimeType.includes('word') || mimeType.includes('docx')) return 'docx';
+    return 'unknown';
+  }
+</script>

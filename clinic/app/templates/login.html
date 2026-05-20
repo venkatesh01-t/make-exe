@@ -1,0 +1,588 @@
+
+<!-- 
+        <h2 class="text-2xl mb-4">Login</h2>
+
+        {% if error %}
+            <p class="text-red-500 mb-3">{{ error }}</p>
+        {% endif %}
+
+        <form hx-post="{% url 'clinic:htmx_login' %}"
+              hx-target="#mainContent"
+        hx-swap="innerHTML transition:true" hx-push-url="false"
+        hx-on::after-request="setActivePage(this, 'Settings', 'Home / Settings')" onclick="closeSidebarMobile()"> -->
+{% include "ext/toast.html" %}
+<!doctype html >
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>DentaCare Pro – Dental Clinic Management System</title>
+    {% load static %}
+    <script src="{% static 'vendor/tailwindcss/tailwind.js' %}"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            animation: {
+              blob: 'blob 7s infinite ease-in-out',
+              'tooth-float': 'tooth-float 3s ease-in-out infinite',
+              sparkle: 'sparkle 2s ease-in-out infinite',
+              'logo-pulse': 'logo-pulse 2s ease-in-out infinite',
+              'text-shimmer': 'text-shimmer 3s linear infinite',
+              'field-slide-in': 'field-slide-in 0.5s ease-out forwards',
+              shake: 'shake 0.3s ease-in-out',
+              'check-pop': 'check-pop 0.3s ease-out',
+              'success-pop': 'success-pop 0.5s ease-out forwards',
+              'success-bounce': 'success-bounce 1s ease-in-out infinite',
+              'spin-slow': 'spin-slow 2s linear infinite',
+              progress: 'progress 2s ease-in-out forwards',
+            },
+            keyframes: {
+              blob: {
+                '0%, 100%': { transform: 'translate(0, 0) scale(1)' },
+                '33%': { transform: 'translate(30px, -50px) scale(1.1)' },
+                '66%': { transform: 'translate(-20px, 20px) scale(0.9)' },
+              },
+              'tooth-float': {
+                '0%, 100%': { transform: 'translateY(0) rotate(0deg)' },
+                '50%': { transform: 'translateY(-8px) rotate(5deg)' },
+              },
+              sparkle: {
+                '0%, 100%': { opacity: '0', transform: 'scale(0) rotate(0deg)' },
+                '50%': { opacity: '1', transform: 'scale(1) rotate(180deg)' },
+              },
+              'logo-pulse': {
+                '0%, 100%': { boxShadow: '0 0 0 0 rgba(255,255,255,0.4)' },
+                '50%': { boxShadow: '0 0 0 8px rgba(255,255,255,0)' },
+              },
+              'text-shimmer': {
+                '0%': { backgroundPosition: '-200% 0' },
+                '100%': { backgroundPosition: '200% 0' },
+              },
+              'field-slide-in': {
+                '0%': { opacity: '0', transform: 'translateX(20px)' },
+                '100%': { opacity: '1', transform: 'translateX(0)' },
+              },
+              shake: {
+                '0%, 100%': { transform: 'translateX(0)' },
+                '25%': { transform: 'translateX(-5px)' },
+                '75%': { transform: 'translateX(5px)' },
+              },
+              'check-pop': {
+                '0%': { transform: 'scale(0)' },
+                '50%': { transform: 'scale(1.3)' },
+                '100%': { transform: 'scale(1)' },
+              },
+              'success-pop': {
+                '0%': { opacity: '0', transform: 'scale(0.8)' },
+                '50%': { transform: 'scale(1.02)' },
+                '100%': { opacity: '1', transform: 'scale(1)' },
+              },
+              'success-bounce': {
+                '0%, 100%': { transform: 'scale(1)' },
+                '50%': { transform: 'scale(1.1)' },
+              },
+              'spin-slow': {
+                from: { transform: 'rotate(0deg)' },
+                to: { transform: 'rotate(360deg)' },
+              },
+              progress: {
+                from: { width: '0%' },
+                to: { width: '100%' },
+              },
+            },
+          },
+        },
+      }
+    </script>
+    <style>
+      .animation-delay-1000 { animation-delay: 1s; }
+      .animation-delay-2000 { animation-delay: 2s; }
+      .animation-delay-3000 { animation-delay: 3s; }
+      .animation-delay-4000 { animation-delay: 4s; }
+      
+      .group:hover .group-hover\:animate-tooth-bounce {
+        animation: tooth-bounce 0.5s ease-in-out;
+      }
+      
+      @keyframes tooth-bounce {
+        0%, 100% { transform: translateY(0) scale(1); }
+        25% { transform: translateY(-3px) scale(1.1); }
+        50% { transform: translateY(0) scale(1); }
+        75% { transform: translateY(-2px) scale(1.05); }
+      }
+      
+      @keyframes slide-in-badge {
+        0% { opacity: 0; transform: translateX(-20px); }
+        100% { opacity: 1; transform: translateX(0); }
+      }
+      .animate-slide-in-badge {
+        animation: slide-in-badge 0.5s ease-out forwards;
+      }
+      
+      /* Panel slide animations */
+      .panel-left, .panel-right {
+        transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      .panel-hidden-left {
+        transform: translateX(-100%);
+        opacity: 0;
+      }
+      .panel-hidden-right {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+      .panel-visible {
+        transform: translateX(0);
+        opacity: 1;
+      }
+      
+      /* Form field animations */
+      .form-field {
+        opacity: 0;
+        transform: translateX(15px);
+      }
+
+      .field-appear {
+        animation: field-slide-in 0.5s ease-out forwards;
+      }
+      
+      /* Tooth icon bounce on button hover */
+      .btn-tooth-icon {
+        transition: transform 0.3s ease;
+      }
+      .submit-btn:hover .btn-tooth-icon {
+        animation: tooth-bounce 0.5s ease-in-out;
+        transform: scale(1.25);
+      }
+      
+      /* Shimmer effect on button */
+      .btn-shimmer {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(to right, transparent, rgba(255,255,255,0.2), transparent);
+        transform: translateX(-100%);
+        transition: transform 0.7s;
+      }
+      .submit-btn:hover .btn-shimmer {
+        transform: translateX(100%);
+      }
+
+      /* Custom scrollbar for mobile */
+      ::-webkit-scrollbar {
+        width: 4px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 10px;
+      }
+    </style>
+  </head>
+  <body class="min-h-screen flex flex-col lg:flex-row font-sans relative bg-[#f0f7ff] overflow-x-hidden overflow-y-auto lg:overflow-hidden">
+    
+    <!-- Global Background & Animations -->
+    <div class="fixed inset-0 pointer-events-none overflow-hidden z-0">
+      <!-- Animated Blobs -->
+      <div class="absolute -top-32 -left-32 w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] rounded-full bg-cyan-200 opacity-30 blur-3xl animate-blob"></div>
+      <div class="absolute -bottom-32 -right-32 w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] rounded-full bg-blue-300 opacity-30 blur-3xl animate-blob animation-delay-2000"></div>
+      
+      <!-- Floating Elements for Mobile/Global Background -->
+      <div class="absolute top-10 right-10 sm:hidden opacity-20 animate-tooth-float">
+        <svg class="w-12 h-12 text-blue-400" viewBox="0 0 64 64" fill="currentColor">
+          <path d="M43.5 6C39.4 6 35.8 8 33 11.1 30.2 8 26.6 6 22.5 6 14 6 7 13.5 7 22.8c0 5.5 1.8 10.6 4.2 14.8L18 55c.6 2.2 2.5 3 4 1.8l4-3.2c1.5-1.2 3.5-1.2 5 0l2 1.6c1.3 1 2.6 1 3.8 0l2-1.6c1.5-1.2 3.5-1.2 5 0l4 3.2c1.5 1.2 3.4.4 4-1.8l6.8-17.4C61.2 33.4 57 6 43.5 6z"/>
+        </svg>
+      </div>
+      <div class="absolute bottom-20 left-10 sm:hidden opacity-20 animate-tooth-float animation-delay-2000">
+        <svg class="w-10 h-10 text-cyan-400" viewBox="0 0 64 64" fill="currentColor">
+          <path d="M43.5 6C39.4 6 35.8 8 33 11.1 30.2 8 26.6 6 22.5 6 14 6 7 13.5 7 22.8c0 5.5 1.8 10.6 4.2 14.8L18 55c.6 2.2 2.5 3 4 1.8l4-3.2c1.5-1.2 3.5-1.2 5 0l2 1.6c1.3 1 2.6 1 3.8 0l2-1.6c1.5-1.2 3.5-1.2 5 0l4 3.2c1.5 1.2 3.4.4 4-1.8l6.8-17.4C61.2 33.4 57 6 43.5 6z"/>
+        </svg>
+      </div>
+      <div class="absolute top-1/2 left-1/4 sm:hidden opacity-10 animate-sparkle">
+        <svg class="w-6 h-6 text-blue-500" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 0L14.59 9.41L24 12L14.59 14.59L12 24L9.41 14.59L0 12L9.41 9.41L12 0Z"/>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Left Panel (Desktop Only Content) -->
+    <div id="left-panel" class="panel-left panel-hidden-left hidden lg:flex lg:w-1/2 relative overflow-hidden bg-gradient-to-br from-cyan-600 via-blue-600 to-indigo-700 flex-col justify-between p-12 z-10">
+      <div class="absolute inset-0 opacity-10" style="background-image: radial-gradient(circle at 20px 20px, white 1.5px, transparent 0); background-size: 40px 40px;"></div>
+
+      <!-- Floating tooth icons for desktop -->
+      <div class="absolute top-24 right-20 w-16 h-16 bg-white/10 backdrop-blur rounded-2xl flex items-center justify-center shadow-lg animate-tooth-float">
+        <svg class="w-8 h-8 text-white" viewBox="0 0 64 64" fill="currentColor">
+          <path d="M43.5 6C39.4 6 35.8 8 33 11.1 30.2 8 26.6 6 22.5 6 14 6 7 13.5 7 22.8c0 5.5 1.8 10.6 4.2 14.8L18 55c.6 2.2 2.5 3 4 1.8l4-3.2c1.5-1.2 3.5-1.2 5 0l2 1.6c1.3 1 2.6 1 3.8 0l2-1.6c1.5-1.2 3.5-1.2 5 0l4 3.2c1.5 1.2 3.4.4 4-1.8l6.8-17.4C61.2 33.4 57 6 43.5 6z"/>
+        </svg>
+      </div>
+
+      <!-- Logo -->
+      <div class="relative z-10 flex items-center gap-3">
+        <div class="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center shadow-lg animate-logo-pulse">
+          <svg class="w-7 h-7 text-white" viewBox="0 0 64 64" fill="currentColor">
+            <path d="M43.5 6C39.4 6 35.8 8 33 11.1 30.2 8 26.6 6 22.5 6 14 6 7 13.5 7 22.8c0 5.5 1.8 10.6 4.2 14.8L18 55c.6 2.2 2.5 3 4 1.8l4-3.2c1.5-1.2 3.5-1.2 5 0l2 1.6c1.3 1 2.6 1 3.8 0l2-1.6c1.5-1.2 3.5-1.2 5 0l4 3.2c1.5 1.2 3.4.4 4-1.8l6.8-17.4C61.2 33.4 57 6 43.5 6z"/>
+          </svg>
+        </div>
+        <div>
+          <p class="text-white font-bold text-xl tracking-tight">DentaCare Pro</p>
+          <p class="text-cyan-200 text-xs font-medium tracking-wider uppercase">Management System</p>
+        </div>
+      </div>
+
+      <!-- Center content -->
+      <div class="relative z-10 space-y-8">
+        <div class="space-y-4">
+          <div class="inline-flex items-center gap-2 bg-white/15 backdrop-blur px-4 py-2 rounded-full text-white text-sm font-medium animate-slide-in-badge">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            Trusted by 2,000+ clinics worldwide
+          </div>
+          <h1 class="text-5xl font-extrabold text-white leading-tight">
+            Your Clinic,<br />
+            <span class="text-cyan-300 animate-text-shimmer bg-gradient-to-r from-cyan-300 via-white to-cyan-300 bg-clip-text bg-[length:200%_100%]">Perfectly</span><br />
+            Managed.
+          </h1>
+          <p class="text-blue-100 text-lg leading-relaxed max-w-sm">
+            Streamline appointments, patient records, billing, and more — all in one powerful platform.
+          </p>
+        </div>
+
+        <!-- Feature pills -->
+        <div class="flex flex-wrap gap-3" id="desktop-feature-pills">
+          <span class="feature-pill opacity-0 bg-white/15 backdrop-blur text-white text-sm px-4 py-2 rounded-full font-medium border border-white/20 transition-all hover:bg-white/25 hover:scale-105 cursor-default">
+            📅 Smart Scheduling
+          </span>
+          <span class="feature-pill opacity-0 bg-white/15 backdrop-blur text-white text-sm px-4 py-2 rounded-full font-medium border border-white/20 transition-all hover:bg-white/25 hover:scale-105 cursor-default">
+            🦷 Patient Records
+          </span>
+          <span class="feature-pill opacity-0 bg-white/15 backdrop-blur text-white text-sm px-4 py-2 rounded-full font-medium border border-white/20 transition-all hover:bg-white/25 hover:scale-105 cursor-default">
+            💳 Easy Billing
+          </span>
+        </div>
+      </div>
+
+      <!-- Stats bar -->
+      <div class="relative z-10 grid grid-cols-3 gap-4">
+        <div class="stat-card opacity-0 bg-white/10 backdrop-blur rounded-2xl p-4 border border-white/20 text-center hover:bg-white/15 transition-all cursor-default">
+          <p class="text-white text-2xl font-bold">50K+</p>
+          <p class="text-blue-200 text-xs mt-1">Patients</p>
+        </div>
+        <div class="stat-card opacity-0 bg-white/10 backdrop-blur rounded-2xl p-4 border border-white/20 text-center hover:bg-white/15 transition-all cursor-default">
+          <p class="text-white text-2xl font-bold">99.9%</p>
+          <p class="text-blue-200 text-xs mt-1">Uptime</p>
+        </div>
+        <div class="stat-card opacity-0 bg-white/10 backdrop-blur rounded-2xl p-4 border border-white/20 text-center hover:bg-white/15 transition-all cursor-default">
+          <p class="text-white text-2xl font-bold">4.9★</p>
+          <p class="text-blue-200 text-xs mt-1">Rating</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Panel - Login Form -->
+    <div id="right-panel" class="panel-right panel-hidden-right w-full lg:w-1/2 flex items-center justify-center p-4 sm:p-10 relative z-20 min-h-screen">
+      <div class="w-full max-w-md">
+
+        <!-- Mobile logo -->
+        <div class="lg:hidden flex items-center gap-3 mb-8 animate-field-slide-in">
+          <div id="mobile-logo" class="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg">
+            <svg class="w-6 h-6 text-white" viewBox="0 0 64 64" fill="currentColor">
+              <path d="M43.5 6C39.4 6 35.8 8 33 11.1 30.2 8 26.6 6 22.5 6 14 6 7 13.5 7 22.8c0 5.5 1.8 10.6 4.2 14.8L18 55c.6 2.2 2.5 3 4 1.8l4-3.2c1.5-1.2 3.5-1.2 5 0l2 1.6c1.3 1 2.6 1 3.8 0l2-1.6c1.5-1.2 3.5-1.2 5 0l4 3.2c1.5 1.2 3.4.4 4-1.8l6.8-17.4C61.2 33.4 57 6 43.5 6z"/>
+            </svg>
+          </div>
+          <div>
+            <p class="text-slate-800 font-bold text-lg tracking-tight">DentaCare Pro</p>
+          </div>
+        </div>
+
+        <!-- Success state -->
+        <div id="success-state" class="hidden bg-white rounded-3xl shadow-2xl shadow-blue-100 p-8 sm:p-10 text-center border border-blue-50 space-y-6 animate-success-pop">
+          <div id="success-icon" class="w-20 h-20 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center mx-auto shadow-lg animate-success-bounce">
+            <svg class="w-10 h-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+          <div>
+            <h2 class="text-2xl font-bold text-slate-800">Welcome Back!</h2>
+            <p class="text-slate-500 mt-2">Logged in as <span id="success-role" class="font-semibold text-blue-600">Administrator</span></p>
+            <p id="success-email" class="text-slate-400 text-sm mt-1"></p>
+          </div>
+          <div class="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+            <div id="progress-bar" class="h-full bg-gradient-to-r from-cyan-500 to-blue-600 rounded-full animate-progress"></div>
+          </div>
+          <p class="text-slate-400 text-sm flex items-center justify-center gap-2">
+            <svg class="w-4 h-4 text-blue-500 animate-spin-slow" viewBox="0 0 64 64" fill="currentColor">
+              <path d="M43.5 6C39.4 6 35.8 8 33 11.1 30.2 8 26.6 6 22.5 6 14 6 7 13.5 7 22.8c0 5.5 1.8 10.6 4.2 14.8L18 55c.6 2.2 2.5 3 4 1.8l4-3.2c1.5-1.2 3.5-1.2 5 0l2 1.6c1.3 1 2.6 1 3.8 0l2-1.6c1.5-1.2 3.5-1.2 5 0l4 3.2c1.5 1.2 3.4.4 4-1.8l6.8-17.4C61.2 33.4 57 6 43.5 6z"/>
+            </svg>
+            Redirecting...
+          </p>
+        </div>
+
+        <!-- Login Form Container -->
+        <div id="login-form-container" class="bg-white/95 backdrop-blur-sm sm:bg-white rounded-3xl shadow-2xl shadow-blue-100 p-6 sm:p-10 border border-blue-50 transition-all duration-700 opacity-0 transform translate-y-8">
+          <!-- Header -->
+          <div class="mb-8">
+            <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-800 tracking-tight flex items-center gap-2">
+              Sign In
+              <svg class="w-6 h-6 sm:w-7 h-7 text-cyan-500 animate-tooth-float" viewBox="0 0 64 64" fill="currentColor">
+                <path d="M43.5 6C39.4 6 35.8 8 33 11.1 30.2 8 26.6 6 22.5 6 14 6 7 13.5 7 22.8c0 5.5 1.8 10.6 4.2 14.8L18 55c.6 2.2 2.5 3 4 1.8l4-3.2c1.5-1.2 3.5-1.2 5 0l2 1.6c1.3 1 2.6 1 3.8 0l2-1.6c1.5-1.2 3.5-1.2 5 0l4 3.2c1.5 1.2 3.4.4 4-1.8l6.8-17.4C61.2 33.4 57 6 43.5 6z"/>
+              </svg>
+            </h2>
+            <p class="text-slate-400 mt-1 text-sm">Access your dental clinic dashboard</p>
+          </div>
+
+          <!-- Role Selector -->
+          <div class="mb-6 form-field">
+            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Login As</label>
+            <div class="flex flex-col sm:grid sm:grid-cols-3 gap-2 bg-slate-100 rounded-2xl p-1.5">
+              <button onclick="setRole('admin')" id="btn-admin" class="role-btn py-2.5 px-2 rounded-xl text-[10px] sm:text-xs font-semibold transition-all duration-300 bg-gradient-to-br from-cyan-500 to-blue-600 text-white shadow-md">
+                Admin
+              </button>
+              <button onclick="setRole('dentist')" id="btn-dentist" class="role-btn py-2.5 px-2 rounded-xl text-[10px] sm:text-xs font-semibold transition-all duration-300 text-slate-500 hover:bg-slate-200">
+                Dentist
+              </button>
+              <button onclick="setRole('receptionist')" id="btn-receptionist" class="role-btn py-2.5 px-2 rounded-xl text-[10px] sm:text-xs font-semibold transition-all duration-300 text-slate-500 hover:bg-slate-200">
+                Staff
+              </button>
+            </div>
+          </div>
+{% load static %}
+<script src="{% static 'vendor/htmx/htmx-1.9.10.min.js' %}"></script>
+
+
+          <form id="login-form" 
+      hx-post="{% url 'clinic:htmx_login' %}"
+      hx-headers='{"X-CSRFTOKEN":"{{csrf_token}}"}'
+      novalidate 
+      class="space-y-5">
+            <!-- Email -->{% csrf_token %}
+            <div class="form-field">
+              <label class="block text-sm font-semibold text-slate-700 mb-1.5">Email Address</label>
+              <div class="relative group">
+                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <svg id="email-icon" class="w-5 h-5 text-slate-400 group-focus-within:text-blue-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <input
+                  type="email"
+                  id="email"
+                  name="email"
+                  oninput="clearError('email')"
+                  placeholder="doctor@dentaclinic.com"
+                  class="w-full pl-11 pr-4 py-3.5 rounded-xl border-2 text-slate-800 placeholder-slate-300 text-sm transition-all duration-200 outline-none bg-slate-50 focus:bg-white border-slate-200 focus:border-blue-400 focus:ring-4 focus:ring-blue-50"
+                />
+              </div>
+              <p id="email-error" class="hidden mt-1.5 text-xs text-red-500 flex items-center gap-1 animate-shake">
+                <span id="email-error-text"></span>
+              </p>
+            </div>
+<script>
+  // Listen for the custom event from Django to show the error UI
+  document.body.addEventListener('loginFailed', function(evt) {
+    const errorContainer = document.getElementById('email-error');
+    const emailInput = document.getElementById('email');
+    
+    // Show the error message
+    errorContainer.classList.remove('hidden');
+    emailInput.classList.replace('border-slate-200', 'border-red-300');
+    
+    // Reset the button state
+    isLoading = false;
+    const btn = document.getElementById('submit-btn');
+    btn.disabled = false;
+    document.getElementById('submit-content').innerHTML = `
+      <span>Sign In to Dashboard</span>
+      <svg class="btn-tooth-icon w-5 h-5 text-white" viewBox="0 0 64 64" fill="currentColor">
+        <path d="M43.5 6C39.4 6 35.8 8 33 11.1 30.2 8 26.6 6 22.5 6 14 6 7 13.5 7 22.8c0 5.5 1.8 10.6 4.2 14.8L18 55c.6 2.2 2.5 3 4 1.8l4-3.2c1.5-1.2 3.5-1.2 5 0l2 1.6c1.3 1 2.6 1 3.8 0l2-1.6c1.5-1.2 3.5-1.2 5 0l4 3.2c1.5 1.2 3.4.4 4-1.8l6.8-17.4C61.2 33.4 57 6 43.5 6z"/>
+      </svg>`;
+  });
+</script>
+            <!-- Password -->
+            <div class="form-field">
+              <div class="flex items-center justify-between mb-1.5">
+                <label class="block text-sm font-semibold text-slate-700">Password</label>
+                <a href="#" class="text-xs font-semibold text-blue-500 hover:underline">Forgot?</a>
+              </div>
+              <div class="relative group">
+                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <svg id="lock-icon" class="w-5 h-5 text-slate-400 group-focus-within:text-blue-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                </div>
+                <input
+                  type="password"
+                  id="password"
+                  name="password"
+                  oninput="clearError('password')"
+                  placeholder="••••••••"
+                  class="w-full pl-11 pr-12 py-3.5 rounded-xl border-2 text-slate-800 placeholder-slate-300 text-sm transition-all duration-200 outline-none bg-slate-50 focus:bg-white border-slate-200 focus:border-blue-400 focus:ring-4 focus:ring-blue-50"
+                />
+                <button type="button" onclick="togglePassword()" class="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-slate-600">
+                  <svg id="eye-icon" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                    <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                </button>
+              </div>
+              <p id="password-error" class="hidden mt-1.5 text-xs text-red-500 flex items-center gap-1 animate-shake">
+                <span id="password-error-text"></span>
+              </p>
+            </div>
+
+            <!-- Remember me -->
+            <label class="flex items-center gap-3 cursor-pointer group form-field">
+              <div onclick="toggleRemember()" id="remember-checkbox" class="w-5 h-5 rounded-md border-2 border-slate-300 bg-white flex items-center justify-center transition-all duration-300"></div>
+              <span class="text-sm text-slate-600 select-none">Keep me signed in</span>
+            </label>
+
+            <button type="submit" id="submit-btn" class="submit-btn w-full py-4 rounded-xl font-bold text-white text-sm transition-all duration-300 shadow-lg relative overflow-hidden bg-gradient-to-r from-cyan-500 to-blue-600 hover:shadow-xl active:scale-[0.98]">
+              <div class="btn-shimmer"></div>
+              <span id="submit-content" class="flex items-center justify-center gap-2 relative">
+                <span>Sign In to Dashboard</span>
+                <svg class="btn-tooth-icon w-5 h-5 text-white" viewBox="0 0 64 64" fill="currentColor">
+                  <path d="M43.5 6C39.4 6 35.8 8 33 11.1 30.2 8 26.6 6 22.5 6 14 6 7 13.5 7 22.8c0 5.5 1.8 10.6 4.2 14.8L18 55c.6 2.2 2.5 3 4 1.8l4-3.2c1.5-1.2 3.5-1.2 5 0l2 1.6c1.3 1 2.6 1 3.8 0l2-1.6c1.5-1.2 3.5-1.2 5 0l4 3.2c1.5 1.2 3.4.4 4-1.8l6.8-17.4C61.2 33.4 57 6 43.5 6z"/>
+                </svg>
+              </span>
+            </button>
+          </form>
+
+          <!-- Footer Links (Modified) -->
+          <p class="text-center text-xs text-slate-400 mt-8 form-field">
+            By signing in, you agree to our <br class="sm:hidden" />
+            <a href="#" class="text-blue-500 font-semibold hover:underline">Terms</a> & 
+            <a href="#" class="text-blue-500 font-semibold hover:underline">Privacy Policy</a>
+          </p>
+        </div>
+
+        <!-- Security Badge -->
+        <div class="flex items-center justify-center gap-2 mt-6 text-slate-400 text-[10px] sm:text-xs text-center animate-field-slide-in">
+          <svg class="w-4 h-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+          </svg>
+          <span>256-bit SSL encrypted · HIPAA compliant</span>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      let currentRole = 'admin';
+      let rememberMe = false;
+      let showPassword = false;
+      let isLoading = false;
+
+      const roleColors = {
+        admin: { from: 'from-cyan-500', to: 'to-blue-600' },
+        dentist: { from: 'from-teal-500', to: 'to-emerald-600' },
+        receptionist: { from: 'from-violet-500', to: 'to-indigo-600' }
+      };
+
+      const roleLabels = { admin: 'Administrator', dentist: 'Dentist', receptionist: 'Receptionist' };
+
+      // Initialize animations on load
+      window.addEventListener('DOMContentLoaded', () => {
+        // Force removal of hidden/opacity after a short delay to ensure rendering
+        setTimeout(() => {
+          const leftPanel = document.getElementById('left-panel');
+          const rightPanel = document.getElementById('right-panel');
+          const formContainer = document.getElementById('login-form-container');
+
+          if(leftPanel) {
+            leftPanel.classList.remove('panel-hidden-left');
+            leftPanel.classList.add('panel-visible');
+          }
+          
+          rightPanel.classList.remove('panel-hidden-right');
+          rightPanel.classList.add('panel-visible');
+
+          // Trigger form fields sequentially
+          formContainer.style.opacity = '1';
+          formContainer.style.transform = 'translateY(0)';
+          
+          const fields = document.querySelectorAll('.form-field');
+          fields.forEach((f, i) => {
+            setTimeout(() => f.classList.add('field-appear'), i * 80);
+          });
+
+          const pills = document.querySelectorAll('.feature-pill, .stat-card');
+          pills.forEach((p, i) => {
+            setTimeout(() => {
+              p.style.opacity = '1';
+              p.style.transform = 'translateY(0)';
+            }, 400 + (i * 100));
+          });
+        }, 100);
+      });
+
+      function setRole(role) {
+        currentRole = role;
+        const colors = roleColors[role];
+        
+        document.querySelectorAll('.role-btn').forEach(btn => {
+          btn.classList.remove('bg-gradient-to-br', 'from-cyan-500', 'to-blue-600', 'from-teal-500', 'to-emerald-600', 'from-violet-500', 'to-indigo-600', 'text-white', 'shadow-md');
+          btn.classList.add('text-slate-500', 'hover:bg-slate-200');
+        });
+        
+        const activeBtn = document.getElementById(`btn-${role}`);
+        activeBtn.classList.remove('text-slate-500', 'hover:bg-slate-200');
+        activeBtn.classList.add('bg-gradient-to-br', colors.from, colors.to, 'text-white', 'shadow-md');
+        
+        document.getElementById('submit-btn').className = `submit-btn w-full py-4 rounded-xl font-bold text-white text-sm transition-all duration-300 shadow-lg relative overflow-hidden bg-gradient-to-r ${colors.from} ${colors.to} hover:shadow-xl active:scale-[0.98]`;
+        
+        const mobileLogo = document.getElementById('mobile-logo');
+        if(mobileLogo) {
+            mobileLogo.className = `w-10 h-10 rounded-xl bg-gradient-to-br ${colors.from} ${colors.to} flex items-center justify-center shadow-lg`;
+        }
+      }
+
+      function togglePassword() {
+        showPassword = !showPassword;
+        const passwordInput = document.getElementById('password');
+        const eyeIcon = document.getElementById('eye-icon');
+        passwordInput.type = showPassword ? 'text' : 'password';
+        eyeIcon.innerHTML = showPassword ? 
+          `<path d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />` :
+          `<path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />`;
+      }
+
+      function toggleRemember() {
+        rememberMe = !rememberMe;
+        const checkbox = document.getElementById('remember-checkbox');
+        const colors = roleColors[currentRole];
+        if (rememberMe) {
+          checkbox.className = `w-5 h-5 rounded-md bg-gradient-to-br ${colors.from} ${colors.to} flex items-center justify-center shadow-sm border-0 scale-110`;
+          checkbox.innerHTML = `<svg class="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg>`;
+        } else {
+          checkbox.className = 'w-5 h-5 rounded-md border-2 border-slate-300 bg-white flex items-center justify-center';
+          checkbox.innerHTML = '';
+        }
+      }
+
+      function clearError(field) {
+        document.getElementById(`${field}-error`).classList.add('hidden');
+        document.getElementById(field).classList.replace('border-red-300', 'border-slate-200');
+      }
+
+      function handleSubmit(event) {
+        event.preventDefault();
+        if (isLoading) return;
+        const email = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value;
+        if (!email || !password) {
+          if(!email) { document.getElementById('email-error-text').textContent = 'Email required'; document.getElementById('email-error').classList.remove('hidden'); }
+          if(!password) { document.getElementById('password-error-text').textContent = 'Password required'; document.getElementById('password-error').classList.remove('hidden'); }
+          return;
+        }
+        isLoading = true;
+        const btn = document.getElementById('submit-btn');
+        btn.disabled = true;
+        document.getElementById('submit-content').innerHTML = `Authenticating...`;
+        setTimeout(() => {
+          document.getElementById('login-form-container').classList.add('hidden');
+          document.getElementById('success-state').classList.remove('hidden');
+          document.getElementById('success-role').textContent = roleLabels[currentRole];
+          document.getElementById('success-email').textContent = email;
+        }, 1500);
+      }
+    </script>
+  </body>
+</html>

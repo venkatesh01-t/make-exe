@@ -1,0 +1,85 @@
+{% for item in labwork %}
+<tr id="row-{{ item.id }}" onclick="openLabModal('{{ item.id }}')" data-note="{{ item.note }}">
+    <td><span class="font-bold text-slate-400 text-xs tracking-widest uppercase">LC-{{ item.id }}</span></td>
+    <td>
+        <span class="font-bold text-slate-900">
+            {% if item.patient %}
+             {{ item.patient }}
+            {% else %}
+                {{ item.patient_name|default:"-" }}
+            {% endif %}
+        </span>
+    </td>
+    <td><span class="text-xs font-black uppercase tracking-widest text-blue-500">{{ item.work_type }}</span></td>
+    <td><span class="text-sm font-semibold text-slate-600">{{ item.lab_name }}</span></td>
+    <td>
+        <div class="flex items-center gap-3">
+            <div class="flex gap-1" id="dots-{{ item.id }}">
+                {% with status=item.workflow_status %}
+                <div class="dot {% if status == 'SEND' or status == 'RECEIVED' or status == 'INFORMED' or status == 'QA' or status == 'FINSHED' %}dot-active{% else %}dot-inactive{% endif %}"></div>
+                <div class="dot {% if status == 'RECEIVED' or status == 'INFORMED' or status == 'QA' or status == 'FINSHED' %}dot-active{% else %}dot-inactive{% endif %}"></div>
+                <div class="dot {% if status == 'INFORMED' or status == 'QA' or status == 'FINSHED' %}dot-active{% else %}dot-inactive{% endif %}"></div>
+                <div class="dot {% if status == 'QA' or status == 'FINSHED' %}dot-active{% else %}dot-inactive{% endif %}"></div>
+                <div class="dot {% if status == 'FINISHED' or status == 'FINSHED' %}dot-active{% else %}dot-inactive{% endif %}"></div>
+                {% endwith %}
+            </div>
+            <span id="status-{{ item.id }}"
+                class="px-2 py-0.5 rounded text-[10px] font-bold {% if item.workflow_status == 'FINSHED' %}bg-emerald-50 text-emerald-600{% else %}bg-blue-50 text-blue-600{% endif %} uppercase">
+                {{ item.workflow_status }}
+            </span>
+        </div>
+    </td>
+    <td><span class="text-xs font-bold text-slate-400 uppercase tracking-tighter">{{ item.date_sent|date:"M - d - Y" }}</span></td>
+    <td>
+        <button
+            onclick="event.stopPropagation(); openLabWorkPrintModal('{{ item.id }}');"
+            class="text-blue-600 p-2 hover:bg-blue-50 rounded-lg transition"
+            title="Open A4 details"
+            type="button">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <circle cx="12" cy="12" r="10" />
+                <path d="M12 16v-4" />
+                <path d="M12 8h.01" />
+            </svg>
+        </button>
+    </td>
+</tr>
+{% endfor %}
+
+<!-- Pagination Controls -->
+<tr>
+    <td colspan="7" class="py-4 border-t-2 border-slate-200">
+        <div class="flex items-center justify-between px-6">
+            <!-- Previous Button (Left Corner) - Only show if available -->
+            {% if page_obj.has_previous %}
+                <button hx-get="{% url 'clinic:lab_work_paginated' %}?page={{ page_obj.previous_page_number }}" 
+                        hx-target="#lab-orders-table-body" 
+                        hx-swap="innerHTML"
+                        class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition">
+                    ← Previous
+                </button>
+            {% else %}
+                <div></div>
+            {% endif %}
+            
+            <!-- Page Info (Center) -->
+            <div class="flex items-center gap-2">
+                <span class="text-sm font-semibold text-slate-600">
+                    Page <span class="text-blue-600">{{ page_obj.number }}</span> of <span class="text-blue-600">{{ total_pages }}</span>
+                </span>
+            </div>
+            
+            <!-- Next Button (Right Corner) - Only show if available -->
+            {% if page_obj.has_next %}
+                <button hx-get="{% url 'clinic:lab_work_paginated' %}?page={{ page_obj.next_page_number }}" 
+                        hx-target="#lab-orders-table-body" 
+                        hx-swap="innerHTML"
+                        class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition">
+                    Next →
+                </button>
+            {% else %}
+                <div></div>
+            {% endif %}
+        </div>
+    </td>
+</tr>

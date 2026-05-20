@@ -1,0 +1,328 @@
+
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+  <div>
+    <h3 class="text-xl font-bold text-gray-800">Doctors & Schedules</h3>
+    <p class="text-sm text-gray-400">Manage doctor profiles and weekly schedules</p>
+  </div>
+  <button onclick="openModal('addDoctorModal')" class="bg-gradient-to-r from-teal-500 to-teal-600 text-white px-5 py-2.5 rounded-xl text-sm font-semibold shadow-lg shadow-teal-200 hover:shadow-xl transition flex items-center gap-2 w-fit">
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+    </svg>Add Doctor
+  </button>
+</div>
+
+<div  class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6" 
+       id="doctorList">
+     
+  
+    {% include "ext/doctor_data.html" %}
+  
+</div>
+<script>
+  function openDeleteModal(doctorId, doctorName) {
+    document.getElementById('deleteRowId').value = doctorId;
+    document.getElementById('deleteItemName').textContent = doctorName;
+    openModal('deleteModal');
+  }
+  </script>
+
+
+<div id="deleteModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+  <div class="modal-backdrop absolute inset-0" onclick="closeModal('deleteModal')"></div>
+  <div class="modal-content bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl m-4 text-center">
+    <form id="deleteForm" 
+          hx-post="{% url 'clinic:doctor_delete' %}"
+          hx-target="#doctorList" 
+          hx-swap="innerHTML"
+          hx-headers='{"X-CSRFToken":"{{ csrf_token }}"}'>
+      <input type="hidden" name="doctor_id" id="deleteRowId">
+      <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4 text-red-500">
+        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+        </svg>
+      </div>
+      <h3 class="text-xl font-bold text-gray-900">Delete Doctor?</h3>
+      <p class="text-sm text-gray-500 mt-2 mb-6">
+        Are you sure you want to remove <span id="deleteItemName" class="font-bold text-gray-800">this doctor</span>? This action cannot be undone.
+      </p>
+      <div class="flex gap-3">
+        <button type="button" onclick="closeModal('deleteModal')"
+                class="flex-1 py-2.5 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200 transition">Cancel</button>
+        <button type="submit"
+                class="flex-1 py-2.5 bg-red-600 text-white font-bold rounded-xl shadow-lg shadow-red-200 hover:bg-red-700 transition">Yes, Delete</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+
+
+<div id="addDoctorModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+
+  <div class="modal-backdrop absolute inset-0 bg-black/40 backdrop-blur-sm" onclick="closeModal('addDoctorModal')"></div>
+
+  <div class="modal-content bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl m-4">
+
+    <h3 class="text-xl font-bold mb-6 text-gray-800">Add Doctor</h3>
+
+    <form
+      hx-post="{% url 'clinic:add_doctor' %}"
+      hx-target="#doctorList"
+      hx-swap="innerHTML"
+      hx-headers='{"X-CSRFToken":"{{csrf_token}}"}'
+      enctype="multipart/form-data"
+      hx-encoding="multipart/form-data"
+      class="space-y-4">
+
+      <!-- Doctor Name -->
+      <div>
+        <label class="text-sm font-medium text-gray-700">Doctor Name</label>
+        <input type="text" name="name" placeholder="Dr. John Doe"
+        class="w-full mt-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 outline-none">
+      </div>
+
+      <!-- Specialization -->
+      <div>
+        <label class="text-sm font-medium text-gray-700">Specialization</label>
+        <input type="text" name="specialization" placeholder="General Dentistry"
+        class="w-full mt-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 outline-none">
+      </div>
+
+      <!-- Education -->
+      <div>
+        <label class="text-sm font-medium text-gray-700">Education</label>
+        <input type="text" name="education" placeholder="B.D.S, M.D.S"
+        class="w-full mt-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 outline-none">
+      </div>
+
+      <!-- Signature -->
+      <div>
+        <label class="text-sm font-medium text-gray-700">Signature</label>
+        <input type="file" name="signature" accept="image/*"
+        class="w-full mt-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 outline-none">
+        <p class="text-xs text-gray-400 mt-1">Background will be removed and signature saved in black/white.</p>
+      </div>
+
+      <!-- Experience -->
+      <div>
+        <label class="text-sm font-medium text-gray-700">Experience (Years)</label>
+        <input type="number" name="experience" min="0" placeholder="5"
+        class="w-full mt-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 outline-none">
+      </div>
+
+      <!-- Rating -->
+      <div>
+        <label class="text-sm font-medium text-gray-700">Rating</label>
+        <input type="text" name="rating" placeholder="4.8"
+        class="w-full mt-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 outline-none">
+      </div>
+
+      <!-- Working Days & Hours -->
+      <div>
+        <label class="text-sm font-medium text-gray-700">Working Days & Hours</label>
+        
+        <!-- Days selection -->
+        <div class="grid grid-cols-3 gap-2 mt-1 mb-2">
+          <label class="inline-flex items-center gap-1">
+            <input type="checkbox" name="working_days" value="Mon" class="form-checkbox text-teal-500">
+            Mon
+          </label>
+          <label class="inline-flex items-center gap-1">
+            <input type="checkbox" name="working_days" value="Tue" class="form-checkbox text-teal-500">
+            Tue
+          </label>
+          <label class="inline-flex items-center gap-1">
+            <input type="checkbox" name="working_days" value="Wed" class="form-checkbox text-teal-500">
+            Wed
+          </label>
+          <label class="inline-flex items-center gap-1">
+            <input type="checkbox" name="working_days" value="Thu" class="form-checkbox text-teal-500">
+            Thu
+          </label>
+          <label class="inline-flex items-center gap-1">
+            <input type="checkbox" name="working_days" value="Fri" class="form-checkbox text-teal-500">
+            Fri
+          </label>
+          <label class="inline-flex items-center gap-1">
+            <input type="checkbox" name="working_days" value="Sat" class="form-checkbox text-teal-500">
+            Sat
+          </label>
+        </div>
+
+        <!-- Time selection -->
+        <div class="flex gap-2 mt-1">
+          <input type="time" name="start_time" placeholder="Start Time"
+          class="flex-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 outline-none">
+          <input type="time" name="end_time" placeholder="End Time"
+          class="flex-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 outline-none">
+        </div>
+
+      </div>
+
+      <!-- Buttons -->
+      <div class="flex gap-3 pt-4">
+        <button type="button"
+          onclick="closeModal('addDoctorModal')"
+          class="flex-1 py-2 bg-gray-100 text-gray-700 rounded-lg font-bold">
+          Cancel
+        </button>
+
+        <button type="submit"
+          class="flex-1 py-2 bg-teal-600 text-white rounded-lg font-bold hover:bg-teal-700">
+          Save
+        </button>
+      </div>
+
+    </form>
+
+  </div>
+</div>
+
+
+
+<div id="editDoctorModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+
+  <div class="modal-backdrop absolute inset-0 bg-black/40 backdrop-blur-sm" onclick="closeModal('editDoctorModal')"></div>
+
+  <div class="modal-content bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl m-4">
+
+    <h3 class="text-xl font-bold mb-6 text-gray-800">Edit Doctor</h3>
+
+    <form
+      hx-post="{% url 'clinic:edit_doctor' %}"
+      hx-target="#doctorList"
+      hx-swap="innerHTML"
+      hx-headers='{"X-CSRFToken":"{{csrf_token}}"}'
+      enctype="multipart/form-data"
+      hx-encoding="multipart/form-data"
+      class="space-y-4">
+
+      <!-- Hidden ID -->
+      <input type="hidden" name="doctor_id" id="editDoctorId">
+
+      <!-- Doctor Name -->
+      <div>
+        <label class="text-sm font-medium text-gray-700">Doctor Name</label>
+        <input type="text" name="name" id="editDoctorName"
+        class="w-full mt-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 outline-none">
+      </div>
+
+      <!-- Specialization -->
+      <div>
+        <label class="text-sm font-medium text-gray-700">Specialization</label>
+        <input type="text" name="specialization" id="editDoctorSpecialization"
+        class="w-full mt-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 outline-none">
+      </div>
+
+      <!-- Education -->
+      <div>
+        <label class="text-sm font-medium text-gray-700">Education</label>
+        <input type="text" name="education" id="editDoctorEducation"
+        class="w-full mt-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 outline-none">
+      </div>
+
+      <!-- Signature -->
+      <div>
+        <label class="text-sm font-medium text-gray-700">Signature</label>
+        <input type="file" name="signature" accept="image/*"
+        class="w-full mt-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 outline-none">
+        <img id="editDoctorSignaturePreview" src="" alt="Signature Preview" class="hidden mt-2 h-10 object-contain bg-gray-50 border rounded px-2 py-1">
+        <label id="editDoctorRemoveSignatureWrap" class="hidden mt-2 inline-flex items-center gap-2 text-xs text-red-600 font-medium">
+          <input type="checkbox" name="remove_signature" id="editDoctorRemoveSignature" value="1" class="rounded border-gray-300 text-red-600 focus:ring-red-500">
+          Remove current signature
+        </label>
+        <p class="text-xs text-gray-400 mt-1">Upload a new file to replace current signature.</p>
+      </div>
+
+      <!-- Experience -->
+      <div>
+        <label class="text-sm font-medium text-gray-700">Experience (Years)</label>
+        <input type="number" name="experience" id="editDoctorExperience"
+        class="w-full mt-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 outline-none">
+      </div>
+
+      <!-- Rating -->
+      <div>
+        <label class="text-sm font-medium text-gray-700">Rating</label>
+        <input type="text" name="rating" id="editDoctorRating"
+        class="w-full mt-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 outline-none">
+      </div>
+
+      <!-- Working Days -->
+      <div>
+        <label class="text-sm font-medium text-gray-700">Working Days</label>
+
+        <div class="grid grid-cols-3 gap-2 mt-1 mb-2">
+          <label><input type="checkbox" name="working_days" value="Mon" class="day-checkbox"> Mon</label>
+          <label><input type="checkbox" name="working_days" value="Tue" class="day-checkbox"> Tue</label>
+          <label><input type="checkbox" name="working_days" value="Wed" class="day-checkbox"> Wed</label>
+          <label><input type="checkbox" name="working_days" value="Thu" class="day-checkbox"> Thu</label>
+          <label><input type="checkbox" name="working_days" value="Fri" class="day-checkbox"> Fri</label>
+          <label><input type="checkbox" name="working_days" value="Sat" class="day-checkbox"> Sat</label>
+        </div>
+
+        <div class="flex gap-2 mt-1">
+          <input type="time" name="start_time" id="editDoctorStart"
+          class="flex-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 outline-none">
+
+          <input type="time" name="end_time" id="editDoctorEnd"
+          class="flex-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 outline-none">
+        </div>
+
+      </div>
+
+      <div class="flex gap-3 pt-4">
+        <button type="button"
+          onclick="closeModal('editDoctorModal')"
+          class="flex-1 py-2 bg-gray-100 text-gray-700 rounded-lg font-bold">
+          Cancel
+        </button>
+
+        <button type="submit"
+          class="flex-1 py-2 bg-teal-600 text-white rounded-lg font-bold hover:bg-teal-700">
+          Update
+        </button>
+      </div>
+
+    </form>
+
+  </div>
+</div>
+<script>
+
+function openEditDoctorModal(doctor){
+
+document.getElementById("editDoctorId").value = doctor.id
+document.getElementById("editDoctorName").value = doctor.name
+document.getElementById("editDoctorSpecialization").value = doctor.specialization
+document.getElementById("editDoctorEducation").value = doctor.education || ""
+document.getElementById("editDoctorExperience").value = doctor.experience
+document.getElementById("editDoctorRating").value = doctor.rating
+document.getElementById("editDoctorStart").value = doctor.start_time
+document.getElementById("editDoctorEnd").value = doctor.end_time
+
+const signaturePreview = document.getElementById("editDoctorSignaturePreview")
+const removeSignatureWrap = document.getElementById("editDoctorRemoveSignatureWrap")
+const removeSignatureInput = document.getElementById("editDoctorRemoveSignature")
+removeSignatureInput.checked = false
+
+if (doctor.signature_url) {
+  signaturePreview.src = doctor.signature_url
+  signaturePreview.classList.remove("hidden")
+  removeSignatureWrap.classList.remove("hidden")
+} else {
+  signaturePreview.src = ""
+  signaturePreview.classList.add("hidden")
+  removeSignatureWrap.classList.add("hidden")
+}
+
+document.querySelectorAll(".day-checkbox").forEach(cb=>{
+cb.checked = doctor.days.includes(cb.value)
+})
+
+openModal("editDoctorModal")
+
+}
+
+</script>

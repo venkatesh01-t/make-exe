@@ -1,0 +1,19 @@
+{% for i in labtest %}
+<tr class="hover:bg-slate-50 transition">
+    <td class="py-4 px-6 font-semibold text-slate-900">
+        {{ i.test_name }}
+    </td>
+    <td class="py-4 px-6 text-slate-600 font-medium">
+        ${{ i.test_price }}
+    </td>
+    <td class="py-4 px-6 text-slate-600">
+        {{ i.test_category }}
+    </td>
+    <td class="py-4 px-6 text-center">
+        <button onclick="editLabWork('{{ i.id }}','{{ i.test_name }}','{{ i.test_price }}','{{ i.test_category }}')"
+            class="text-emerald-600 hover:text-emerald-800 font-medium text-sm">
+            Edit
+        </button>
+    </td>
+</tr>
+{% endfor %}
