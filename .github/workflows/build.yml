@@ -26,17 +26,18 @@ jobs:
           pip install -r requirements-build.txt
 
       - name: Build EXE with Nuitka
+        shell: pwsh
         run: |
-          python -m nuitka main.py \
-            --onefile \
-            --standalone \
-            --enable-plugin=tk-inter \
-            --include-package=clinic \
-            --include-package-data=customtkinter \
-            --include-data-dir=clinic=clinic \
-            --windows-uac-admin \
-            --windows-disable-console \
-            --assume-yes-for-downloads \
+          python -m nuitka main.py `
+            --onefile `
+            --standalone `
+            --enable-plugin=tk-inter `
+            --include-package=clinic `
+            --include-package-data=customtkinter `
+            --include-data-dir=clinic=clinic `
+            --windows-uac-admin `
+            --windows-disable-console `
+            --assume-yes-for-downloads `
             --output-filename=ClinicManager.exe
 
       - name: Upload artifact
