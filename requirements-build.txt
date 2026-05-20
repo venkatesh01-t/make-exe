@@ -3,3 +3,4 @@ customtkinter
 requests
 qrcode[pil]
 waitress
+django
