@@ -23,7 +23,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install nuitka ordered-set zstandard
-          pip install -r requirements-build.txt
+          pip install nuitka customtkinter requests qrcode[pil] waitress
 
       - name: Build EXE with Nuitka
         shell: pwsh
