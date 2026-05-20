@@ -1,8 +1,0 @@
-nuitka
-customtkinter
-requests
-qrcode[pil]
-waitress
-django
-opencv-python-headless
-numpy
