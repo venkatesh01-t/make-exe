@@ -30,6 +30,7 @@ jobs:
       - name: Build executable
         shell: pwsh
         run: |
+          $env:PYTHONPATH = "clinic;."
           python -m nuitka `
             --onefile `
             --standalone `
