@@ -35,7 +35,6 @@ jobs:
             --standalone `
             --output-dir=build `
             --output-filename=clinic.exe `
-            --windows-subsystem=gui `
             --windows-console-mode=disable `
             --include-package=clinic `
             --include-package=django `
@@ -46,12 +45,12 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: clinic-exe
-          path: clinic.exe
+          path: build/clinic.exe
 
       - name: Create Release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v1
         with:
-          files: clinic.exe
+          files: build/clinic.exe
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
