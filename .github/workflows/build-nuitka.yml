@@ -36,7 +36,7 @@ jobs:
             --output-dir=build `
             --output-filename=clinic.exe `
             --windows-subsystem=gui `
-            --windows-disable-console `
+            --windows-console-mode=disable `
             --include-package=clinic `
             --include-package=django `
             --include-package=PySide6 `
