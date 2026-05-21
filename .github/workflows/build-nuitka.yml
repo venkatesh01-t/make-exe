@@ -38,7 +38,9 @@ jobs:
             --windows-console-mode=disable `
             --include-package=clinic `
             --include-package=django `
-            --include-package=PySide6 `
+            --enable-plugin=pyside6 `
+            --module-parameter=django-settings-module=clinic.settings `
+            --assume-yes-for-downloads `
             launcher.py
 
       - name: Upload artifact
