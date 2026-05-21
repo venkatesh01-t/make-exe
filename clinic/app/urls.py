@@ -16,6 +16,7 @@ from .patient_uploads_api import PatientFileDetailAPIView
 app_name = 'clinic'
 
 urlpatterns = [
+    path('health/', health_check, name='health'),
     # Main shell page
     path("users/create/", UserCreateView.as_view(), name="user_create"),
     path("users/edit/<int:pk>/", UserEditView.as_view(), name="user_edit"),

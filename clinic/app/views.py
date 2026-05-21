@@ -49,6 +49,15 @@ def test_500_page(request):
     """Test view to see 500 page during development"""
     raise Exception("Test 500 error")
 
+
+# --------------------------
+# Health Check (for desktop app)
+# --------------------------
+@csrf_exempt
+def health_check(request):
+    """Health check endpoint for desktop app bootstrap."""
+    return JsonResponse({'status': 'ok'})
+
 def clinic_debug(request):
     """Debug view to check clinic data"""
     from .models import ClinicInformation

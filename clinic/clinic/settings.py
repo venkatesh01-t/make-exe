@@ -87,7 +87,17 @@ WSGI_APPLICATION = 'clinic.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATA_DIR = BASE_DIR.parent / 'data'
+import os
+
+# Check if running as desktop app
+IS_DESKTOP_APP = os.environ.get('IS_DESKTOP_APP', '').lower() == '1'
+
+if IS_DESKTOP_APP:
+    # Running as desktop application - use environment variable for data path
+    DATA_DIR = Path(os.environ.get('CLINIC_DATA_PATH', BASE_DIR.parent / 'data'))
+else:
+    # Running as regular Django server
+    DATA_DIR = BASE_DIR.parent / 'data'
 
 DATABASES = {
     'default': {
@@ -132,7 +142,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATIC_ROOT = DATA_DIR / 'static'
 
 # Media files (user uploaded)
 MEDIA_URL = '/media/'
