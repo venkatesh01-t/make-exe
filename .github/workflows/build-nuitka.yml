@@ -31,6 +31,7 @@ jobs:
         uses: microsoft/setup-msbuild@v2
 
       - name: Build EXE (Nuitka Fully Standalone x64)
+        shell: cmd
         run: |
           python -m nuitka clinic_manager.py ^
             --standalone ^
