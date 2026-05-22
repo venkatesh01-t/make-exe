@@ -444,6 +444,7 @@ class ClinicManager(ctk.CTk if ctk else tk.Tk):
         """Run startup checks: download repo, check folders, install requirements."""
         try:
             startup_ok = True
+            requirements_ok = False
             self.append_output('=== STARTUP CHECKS STARTED ===')
             self.append_output(f'Application Root: {APP_ROOT}')
             self.append_output(f'Working Directory: {WORKSPACE}')
@@ -473,19 +474,20 @@ class ClinicManager(ctk.CTk if ctk else tk.Tk):
             if still_missing:
                 startup_ok = False
                 self.append_output('Missing items will not block startup: ' + ', '.join(still_missing))
-            
-            # Step 3: Install requirements
-            self.after(0, lambda: self.splash_label.config(text='Installing Requirements\nSetting up packages...'))
-            self.after(0, lambda: self.splash_status.config(text='Step 3 of 4: Installation'))
-            self.append_output('Step 3: Installing Python requirements...')
+
+            # Show the main window first, then continue package setup in the background.
+            self.append_output('Startup checks complete enough for the main page to open.')
+            self.after(0, self.deiconify)
+            self.after(0, self.splash.destroy)
+
+            # Step 3: Install requirements after the main page is visible
+            self.append_output('Step 3: Installing Python requirements in background...')
             requirements_ok = self.install_requirements()
             if not requirements_ok:
                 startup_ok = False
                 self.append_output('Requirements installation did not complete successfully')
-            
+
             # Step 4: Re-import qrcode if available
-            self.after(0, lambda: self.splash_label.config(text='Finalizing System\nAlmost ready...'))
-            self.after(0, lambda: self.splash_status.config(text='Step 4 of 4: Finalizing'))
             self.append_output('Step 4: Checking for qrcode package...')
             try:
                 import qrcode as _q
@@ -499,12 +501,6 @@ class ClinicManager(ctk.CTk if ctk else tk.Tk):
                 self.append_output('System ready. You can now start the server.')
             else:
                 self.append_output('Startup finished with warnings. Review the log before starting the server.')
-            
-            # Reset progress and show main window
-            self.after(0, lambda: self.splash_progress.config(value=100))
-            self.after(0, lambda: self.splash_status.config(text='100%'))
-            self.after(0, self.reset_progress)
-            self.after(500, lambda: (self.splash.destroy(), self.deiconify()))
         except Exception as e:
             self.append_output('Startup error: ' + str(e))
             # Still show main window on error
@@ -524,7 +520,7 @@ class ClinicManager(ctk.CTk if ctk else tk.Tk):
                 pass
 
     def get_required_setup_items(self):
-        items = [WORKSPACE / 'requirements.txt']
+        items = [WORKSPACE / '3.11.9', WORKSPACE / 'data', WORKSPACE / 'requirements.txt']
         if not is_frozen_build():
             items.append(WORKSPACE / 'clinic')
         return items
