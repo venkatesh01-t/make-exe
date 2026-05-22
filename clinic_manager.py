@@ -456,7 +456,7 @@ class ClinicManager(ctk.CTk if ctk else tk.Tk):
 
             # Step 1: Check files and recover from GitHub if needed.
             self.after(0, lambda: self.splash_label.config(text='Checking Files\nPreparing system...'))
-            self.after(0, lambda: self.splash_status.config(text='Step 1 of 4: File Check'))
+            self.after(0, lambda: self.splash_status.config(text='Step 1 of 5: File Check'))
             if missing_items:
                 self.append_output('Missing setup items: ' + ', '.join(missing_items))
                 self.append_output('Attempting GitHub repo download to repair setup...')
@@ -468,39 +468,50 @@ class ClinicManager(ctk.CTk if ctk else tk.Tk):
             
             # Step 2: Check required folders
             self.after(0, lambda: self.splash_label.config(text='Checking Folders\nValidating setup...'))
-            self.after(0, lambda: self.splash_status.config(text='Step 2 of 4: Folder Check'))
+            self.after(0, lambda: self.splash_status.config(text='Step 2 of 5: Folder Check'))
             self.append_output('Step 2: Checking for required folders...')
             still_missing = self.check_folders()
             if still_missing:
                 startup_ok = False
                 self.append_output('Missing items will not block startup: ' + ', '.join(still_missing))
 
-            # Show the main window first, then continue package setup in the background.
-            self.append_output('Startup checks complete enough for the main page to open.')
-            self.after(0, self.deiconify)
-            self.after(0, self.splash.destroy)
-
-            # Step 3: Install requirements after the main page is visible
-            self.append_output('Step 3: Installing Python requirements in background...')
-            requirements_ok = self.install_requirements()
-            if not requirements_ok:
-                startup_ok = False
-                self.append_output('Requirements installation did not complete successfully')
-
-            # Step 4: Re-import qrcode if available
-            self.append_output('Step 4: Checking for qrcode package...')
+            # Step 3: Check qrcode availability before install
+            self.after(0, lambda: self.splash_label.config(text='Checking QR Support\nPreparing final setup...'))
+            self.after(0, lambda: self.splash_status.config(text='Step 3 of 5: QR Check'))
+            self.append_output('Step 3: Checking for qrcode package...')
             try:
                 import qrcode as _q
                 globals()['qrcode'] = _q
                 self.append_output('qrcode package available')
             except Exception:
                 self.append_output('qrcode not yet installed, will install on first QR generation')
+
+            # Step 4: Prepare for the final install
+            self.after(0, lambda: self.splash_label.config(text='Preparing Install\nAlmost ready...'))
+            self.after(0, lambda: self.splash_status.config(text='Step 4 of 5: Preparation'))
+            self.append_output('Step 4: Final preparation before requirements install...')
+
+            # Step 5: Install requirements as the final splash step
+            self.after(0, lambda: self.splash_label.config(text='Installing Requirements\nPlease wait...'))
+            self.after(0, lambda: self.splash_status.config(text='Step 5 of 5: Installation'))
+            self.append_output('Step 5: Installing Python requirements...')
+            requirements_ok = self.install_requirements()
+            if not requirements_ok:
+                startup_ok = False
+                self.append_output('Requirements installation did not complete successfully')
+
+            # Open the main page after install finishes
+            self.after(0, lambda: self.splash_label.config(text='Finalizing System\nOpening main page...'))
+            self.after(0, lambda: self.splash_status.config(text='Finalizing...'))
             
             self.append_output('=== STARTUP CHECKS COMPLETED ===')
             if startup_ok:
                 self.append_output('System ready. You can now start the server.')
             else:
                 self.append_output('Startup finished with warnings. Review the log before starting the server.')
+
+            self.after(0, self.deiconify)
+            self.after(0, self.splash.destroy)
         except Exception as e:
             self.append_output('Startup error: ' + str(e))
             # Still show main window on error
@@ -955,10 +966,6 @@ class ClinicManager(ctk.CTk if ctk else tk.Tk):
 
     def install_requirements(self):
         """Install all packages from requirement.txt."""
-        if is_frozen_build():
-            self.append_output('Frozen build detected, skipping runtime requirements installation')
-            return True
-
         req = WORKSPACE / 'requirements.txt'
         if not PYTHON_EXE.exists():
             self.append_output(f'Python not found at {PYTHON_EXE}')
@@ -988,10 +995,6 @@ class ClinicManager(ctk.CTk if ctk else tk.Tk):
 
     def install_python_packages(self, packages):
         """Install pip packages using bundled Python."""
-        if is_frozen_build():
-            self.append_output('Frozen build detected, skipping package install')
-            return False
-
         if not PYTHON_EXE.exists():
             self.append_output(f'Python not found at {PYTHON_EXE}')
             return False
