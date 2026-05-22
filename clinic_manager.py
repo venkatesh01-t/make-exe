@@ -524,7 +524,7 @@ class ClinicManager(ctk.CTk if ctk else tk.Tk):
                 pass
 
     def get_required_setup_items(self):
-        items = [WORKSPACE / '3.11.9', WORKSPACE / 'data', WORKSPACE / 'requirements.txt']
+        items = [WORKSPACE / 'requirements.txt']
         if not is_frozen_build():
             items.append(WORKSPACE / 'clinic')
         return items
