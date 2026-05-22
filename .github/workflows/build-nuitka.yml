@@ -36,7 +36,6 @@ jobs:
           --standalone
           --onefile
           --msvc=latest
-          --python-arch=x86_64
           --windows-disable-console
           --enable-plugin=tk-inter
           --include-package=customtkinter
