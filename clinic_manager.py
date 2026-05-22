@@ -443,6 +443,7 @@ class ClinicManager(ctk.CTk if ctk else tk.Tk):
     def startup_checks(self):
         """Run startup checks: download repo, check folders, install requirements."""
         try:
+            startup_ok = True
             self.append_output('=== STARTUP CHECKS STARTED ===')
             self.append_output(f'Application Root: {APP_ROOT}')
             self.append_output(f'Working Directory: {WORKSPACE}')
@@ -459,6 +460,7 @@ class ClinicManager(ctk.CTk if ctk else tk.Tk):
                 self.append_output('Missing setup items: ' + ', '.join(missing_items))
                 self.append_output('Attempting GitHub repo download to repair setup...')
                 if not self.download_and_extract():
+                    startup_ok = False
                     self.append_output('GitHub download failed; continuing to main page anyway')
             else:
                 self.append_output('Required setup items already present')
@@ -469,13 +471,17 @@ class ClinicManager(ctk.CTk if ctk else tk.Tk):
             self.append_output('Step 2: Checking for required folders...')
             still_missing = self.check_folders()
             if still_missing:
+                startup_ok = False
                 self.append_output('Missing items will not block startup: ' + ', '.join(still_missing))
             
             # Step 3: Install requirements
             self.after(0, lambda: self.splash_label.config(text='Installing Requirements\nSetting up packages...'))
             self.after(0, lambda: self.splash_status.config(text='Step 3 of 4: Installation'))
             self.append_output('Step 3: Installing Python requirements...')
-            self.install_requirements()
+            requirements_ok = self.install_requirements()
+            if not requirements_ok:
+                startup_ok = False
+                self.append_output('Requirements installation did not complete successfully')
             
             # Step 4: Re-import qrcode if available
             self.after(0, lambda: self.splash_label.config(text='Finalizing System\nAlmost ready...'))
@@ -489,7 +495,10 @@ class ClinicManager(ctk.CTk if ctk else tk.Tk):
                 self.append_output('qrcode not yet installed, will install on first QR generation')
             
             self.append_output('=== STARTUP CHECKS COMPLETED ===')
-            self.append_output('System ready. You can now start the server.')
+            if startup_ok:
+                self.append_output('System ready. You can now start the server.')
+            else:
+                self.append_output('Startup finished with warnings. Review the log before starting the server.')
             
             # Reset progress and show main window
             self.after(0, lambda: self.splash_progress.config(value=100))
@@ -959,10 +968,10 @@ class ClinicManager(ctk.CTk if ctk else tk.Tk):
             self.append_output(f'Python not found at {PYTHON_EXE}')
             return False
         if not req.exists():
-            self.append_output('requirement.txt not found, skipping')
+            self.append_output('requirements.txt not found, skipping')
             return False
         
-        self.append_output('Installing requirements from requirement.txt...')
+        self.append_output(f'Installing requirements with {PYTHON_EXE} -m pip install -r {req}...')
         cmd = [str(PYTHON_EXE), '-m', 'pip', 'install', '-r', str(req)]
         try:
             CREATE_NO_WINDOW = 0x08000000 if sys.platform == 'win32' else 0
