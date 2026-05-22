@@ -30,24 +30,23 @@ jobs:
       - name: Install MSVC Build Tools (ensures proper runtime bundling)
         uses: microsoft/setup-msbuild@v2
 
-      - name: Build EXE (Nuitka Fully Standalone x64)
-        shell: cmd
-        run: |
-          python -m nuitka clinic_manager.py ^
-            --standalone ^
-            --onefile ^
-            --msvc=latest ^
-            --python-arch=x86_64 ^
-            --windows-disable-console ^
-            --enable-plugin=tk-inter ^
-            --include-package=customtkinter ^
-            --include-package=qrcode ^
-            --include-package=requests ^
-            --include-package=waitress ^
-            --include-data-dir=clinic_manager_data\clinic=clinic ^
-            --include-data-dir=clinic_manager_data\clinic\staticfiles=staticfiles ^
-            --output-filename=clinic_manager.exe ^
-            --assume-yes-for-downloads
+      - name: Build EXE (Nuitka)
+        run: >
+          python -m nuitka clinic_manager.py
+          --standalone
+          --onefile
+          --msvc=latest
+          --python-arch=x86_64
+          --windows-disable-console
+          --enable-plugin=tk-inter
+          --include-package=customtkinter
+          --include-package=qrcode
+          --include-package=requests
+          --include-package=waitress
+          --include-data-dir=clinic_manager_data\clinic=clinic
+          --include-data-dir=clinic_manager_data\clinic\staticfiles=staticfiles
+          --output-filename=clinic_manager.exe
+          --assume-yes-for-downloads
 
       - name: Verify output exists
         run: dir
