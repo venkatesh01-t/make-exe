@@ -1,59 +1,58 @@
-name: Build Clinic Desktop App
+name: Build Clinic Manager (Nuitka Windows Portable)
 
 on:
   push:
-    branches: [main]
-    tags: ['v*']
+    branches: ["main"]
   workflow_dispatch:
 
 jobs:
-  build:
+  build-windows:
     runs-on: windows-latest
 
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Python
+      - name: Setup Python (64-bit)
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: "3.11"
+          architecture: "x64"
 
       - name: Upgrade pip
         run: python -m pip install --upgrade pip
 
       - name: Install build dependencies
         run: |
-          pip install nuitka ordered-set zstandard
-          pip install -r requirements.txt
+          pip install nuitka
+          pip install customtkinter qrcode requests waitress
 
-      - name: Build executable
-        shell: pwsh
+      - name: Install MSVC Build Tools (ensures proper runtime bundling)
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Build EXE (Nuitka Fully Standalone x64)
         run: |
-          $env:PYTHONPATH = "clinic;."
-          python -m nuitka `
-            --onefile `
-            --standalone `
-            --output-dir=build `
-            --output-filename=clinic.exe `
-            --windows-console-mode=disable `
-            --include-package=clinic `
-            --include-package=django `
-            --enable-plugin=pyside6 `
-            --module-parameter=django-settings-module=clinic.settings `
-            --assume-yes-for-downloads `
-            launcher.py
+          python -m nuitka clinic_manager.py ^
+            --standalone ^
+            --onefile ^
+            --msvc=latest ^
+            --python-arch=x86_64 ^
+            --windows-disable-console ^
+            --enable-plugin=tk-inter ^
+            --include-package=customtkinter ^
+            --include-package=qrcode ^
+            --include-package=requests ^
+            --include-package=waitress ^
+            --include-data-dir=clinic_manager_data\clinic=clinic ^
+            --include-data-dir=clinic_manager_data\clinic\staticfiles=staticfiles ^
+            --output-filename=clinic_manager.exe ^
+            --assume-yes-for-downloads
+
+      - name: Verify output exists
+        run: dir
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: clinic-exe
-          path: build/clinic.exe
-
-      - name: Create Release
-        if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v1
-        with:
-          files: build/clinic.exe
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          name: clinic-manager-windows-x64
+          path: clinic_manager.exe
