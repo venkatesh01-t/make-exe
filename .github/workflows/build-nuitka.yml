@@ -1,4 +1,4 @@
-name: Build Clinic Manager (Nuitka Windows Portable)
+name: Build Clinic Manager (PyInstaller Windows Portable)
 
 on:
   push:
@@ -24,34 +24,25 @@ jobs:
 
       - name: Install build dependencies
         run: |
-          pip install nuitka
+          pip install pyinstaller
           pip install customtkinter qrcode requests waitress
 
-      - name: Install MSVC Build Tools (ensures proper runtime bundling)
-        uses: microsoft/setup-msbuild@v2
-
-      - name: Build EXE (Nuitka)
+      - name: Build EXE (PyInstaller)
         run: >
-          python -m nuitka clinic_manager.py
-          --standalone
+          pyinstaller clinic_manager.py
           --onefile
-          --msvc=latest
-          --windows-disable-console
-          --enable-plugin=tk-inter
-          --include-package=customtkinter
-          --include-package=qrcode
-          --include-package=requests
-          --include-package=waitress
-          --include-data-dir=clinic_manager_data\clinic=clinic
-          --include-data-dir=clinic_manager_data\clinic\staticfiles=staticfiles
-          --output-filename=clinic_manager.exe
-          --assume-yes-for-downloads
+          --noconsole
+          --name clinic_manager
+          --add-data "clinic_manager_data\clinic;clinic"
+          --add-data "clinic_manager_data\clinic\staticfiles;staticfiles"
+          --clean
+          --noconfirm
 
       - name: Verify output exists
-        run: dir
+        run: dir dist
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: clinic-manager-windows-x64
-          path: clinic_manager.exe
+          path: dist/clinic_manager.exe
