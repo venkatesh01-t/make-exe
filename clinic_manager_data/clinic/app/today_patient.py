@@ -24,6 +24,7 @@ from .models import (
     labwork,
     labdetails,
 )
+from .storage_manager import get_storage_status
 from django.contrib.auth.decorators import login_required
 from django.db.models.functions import TruncDate
 from django.http import HttpResponse, JsonResponse
@@ -729,6 +730,26 @@ class PatientUploadCreateView(LoginRequiredMixin, TemplateView):
                     "message": validation_errors[0],
                     "type": "error",
                     "duration": 5500,
+                    "closemodel": ""
+                }
+            })
+            return response
+
+        requested_bytes = sum(getattr(incoming_file, "size", 0) or 0 for incoming_file in files)
+        storage_status = get_storage_status(additional_bytes=requested_bytes)
+        if not storage_status["can_store"]:
+            response = render(request, self.template_name, {
+                "uploads": uploads_qs,
+                "daily_patient": daily_patient,
+            })
+            response["HX-Trigger"] = json.dumps({
+                "showNotification": {
+                    "message": (
+                        f"Storage is full. Used {storage_status['used_human']} of "
+                        f"{storage_status['limit_mb']} MB. Please upgrade storage to continue uploads."
+                    ),
+                    "type": "error",
+                    "duration": 6500,
                     "closemodel": ""
                 }
             })

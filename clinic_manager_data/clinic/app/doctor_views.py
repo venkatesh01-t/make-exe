@@ -13,6 +13,7 @@ except Exception:
 
 
 from .models import Doctor
+from .storage_manager import get_file_size_bytes, get_storage_status
 
 
 def _build_signature_png(image_file):
@@ -104,8 +105,42 @@ class DoctorEditView(LoginRequiredMixin, TemplateView):
             if signature_file:
                 processed = _build_signature_png(signature_file)
                 if processed:
+                    processed_size = get_file_size_bytes(processed)
+                    storage_status = get_storage_status(additional_bytes=processed_size)
+                    if not storage_status["can_store"]:
+                        doctor.save()
+                        response = doctor_data(request)
+                        response["HX-Trigger"] = json.dumps({
+                            "showNotification": {
+                                "message": (
+                                    f"Storage is full. Used {storage_status['used_human']} of "
+                                    f"{storage_status['limit_mb']} MB. Upgrade storage to save the signature."
+                                ),
+                                "type": "error",
+                                "duration": 6500,
+                                "closemodel": "editDoctorModal"
+                            }
+                        })
+                        return response
                     doctor.signature.save(f"doctor_signature_{doctor.pk}.png", processed, save=False)
                 else:
+                    original_size = get_file_size_bytes(signature_file)
+                    storage_status = get_storage_status(additional_bytes=original_size)
+                    if not storage_status["can_store"]:
+                        doctor.save()
+                        response = doctor_data(request)
+                        response["HX-Trigger"] = json.dumps({
+                            "showNotification": {
+                                "message": (
+                                    f"Storage is full. Used {storage_status['used_human']} of "
+                                    f"{storage_status['limit_mb']} MB. Upgrade storage to save the signature."
+                                ),
+                                "type": "error",
+                                "duration": 6500,
+                                "closemodel": "editDoctorModal"
+                            }
+                        })
+                        return response
                     # Fallback: save original upload if processing is unavailable.
                     doctor.signature = signature_file
 
@@ -148,8 +183,42 @@ class DoctorAddView(LoginRequiredMixin, TemplateView):
             if signature_file:
                 processed = _build_signature_png(signature_file)
                 if processed:
+                    processed_size = get_file_size_bytes(processed)
+                    storage_status = get_storage_status(additional_bytes=processed_size)
+                    if not storage_status["can_store"]:
+                        doctor.save()
+                        response = doctor_data(request)
+                        response["HX-Trigger"] = json.dumps({
+                            "showNotification": {
+                                "message": (
+                                    f"Storage is full. Used {storage_status['used_human']} of "
+                                    f"{storage_status['limit_mb']} MB. Upgrade storage to save the signature."
+                                ),
+                                "type": "error",
+                                "duration": 6500,
+                                "closemodel": "addDoctorModal"
+                            }
+                        })
+                        return response
                     doctor.signature.save(f"doctor_signature_{doctor.pk}.png", processed, save=False)
                 else:
+                    original_size = get_file_size_bytes(signature_file)
+                    storage_status = get_storage_status(additional_bytes=original_size)
+                    if not storage_status["can_store"]:
+                        doctor.save()
+                        response = doctor_data(request)
+                        response["HX-Trigger"] = json.dumps({
+                            "showNotification": {
+                                "message": (
+                                    f"Storage is full. Used {storage_status['used_human']} of "
+                                    f"{storage_status['limit_mb']} MB. Upgrade storage to save the signature."
+                                ),
+                                "type": "error",
+                                "duration": 6500,
+                                "closemodel": "addDoctorModal"
+                            }
+                        })
+                        return response
                     # Fallback: save original upload if processing is unavailable.
                     doctor.signature = signature_file
                 doctor.save()

@@ -15,8 +15,22 @@ from django.utils import timezone
 from django.views.generic import TemplateView
 
 from .models import BillingInvoice, ClinicInformation, DailyPatient, Doctor, InventoryItem, Patient, Treatment, appoinments
+from .storage_manager import get_file_size_bytes, get_storage_status
 
 User = get_user_model()
+
+
+def build_settings_context():
+    clinic = ClinicInformation.objects.first()
+    if not clinic:
+        clinic = ClinicInformation(reg_no="")
+
+    return {
+        'clinic': clinic,
+        'users': User.objects.all(),
+        'doctors': Doctor.objects.all(),
+        'storage_status': get_storage_status(),
+    }
 
 
 
@@ -26,14 +40,7 @@ class SettingsPartialView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        clinic = ClinicInformation.objects.first()
-        
-        if not clinic:
-            # create a temporary unsaved instance so template access won't blow up
-            clinic = ClinicInformation(reg_no="")
-        context['clinic'] = clinic
-        context['users'] = User.objects.all()
-        context['doctors'] = Doctor.objects.all()
+        context.update(build_settings_context())
         return context
 
 class UserCreateView(LoginRequiredMixin, TemplateView):
@@ -216,6 +223,11 @@ class ClinicInfoView(LoginRequiredMixin, TemplateView):
         if doctor_specialist:
             clinic.doctor_specialist = doctor_specialist
 
+        clinic.save()
+
+        logo_blocked = False
+        blocked_message = ''
+
         # Handle logo upload (save directly to clinic without backup)
         image_file = request.FILES.get('logo')
         if image_file:
@@ -238,21 +250,30 @@ class ClinicInfoView(LoginRequiredMixin, TemplateView):
             # --- 5. Encode as PNG in memory ---
             success, png_data = cv2.imencode('.png', rgba)
             if success:
-                # --- 6. Save to model field ---
-                clinic.logo.save(
-                    f"clinic_logo_{clinic.id}.png",
-                    ContentFile(png_data.tobytes()),
-                    save=False
-                )
+                logo_content = ContentFile(png_data.tobytes())
+                storage_status = get_storage_status(additional_bytes=get_file_size_bytes(logo_content))
+                if not storage_status['can_store']:
+                    logo_blocked = True
+                    blocked_message = (
+                        f"Storage is full. Used {storage_status['used_human']} of "
+                        f"{storage_status['limit_mb']} MB. Upgrade storage to save the clinic logo."
+                    )
+                else:
+                    # --- 6. Save to model field ---
+                    clinic.logo.save(
+                        f"clinic_logo_{clinic.id}.png",
+                        logo_content,
+                        save=False
+                    )
 
-            # --- 7. Save the clinic object ---
+        # --- 7. Save the clinic object ---
         clinic.save()
 
         response = HttpResponse()
         response["HX-Trigger"] = json.dumps({
             "showNotification": {
-                "message": "Clinic information saved successfully!",
-                "type": "success",
+                "message": blocked_message or "Clinic information saved successfully!",
+                "type": "error" if logo_blocked else "success",
                 "duration": 3000
             }
         })

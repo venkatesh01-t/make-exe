@@ -6,6 +6,47 @@
       <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
         <!-- Left Column -->
         <div class="xl:col-span-2 space-y-6">
+          <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="px-5 sm:px-6 py-4 border-b border-gray-100 flex items-center gap-3">
+              <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center"><svg class="w-4.5 h-4.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7h16M4 12h16M4 17h16"/></svg></div>
+              <h3 class="text-base font-bold text-gray-800">Storage Manager</h3>
+            </div>
+            <div class="p-5 sm:p-6 space-y-5">
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="rounded-2xl border border-gray-100 bg-gray-50 p-4">
+                  <p class="text-xs uppercase tracking-wider text-gray-400 font-semibold">Used</p>
+                  <p class="mt-2 text-2xl font-bold text-gray-900">{{ storage_status.used_human }}</p>
+                  <p class="text-xs text-gray-500">of {{ storage_status.limit_mb }} MB</p>
+                </div>
+                <div class="rounded-2xl border border-gray-100 bg-gray-50 p-4">
+                  <p class="text-xs uppercase tracking-wider text-gray-400 font-semibold">Free</p>
+                  <p class="mt-2 text-2xl font-bold text-gray-900">{{ storage_status.available_human }}</p>
+                  <p class="text-xs text-gray-500">remaining</p>
+                </div>
+                <div class="rounded-2xl border border-gray-100 bg-gray-50 p-4">
+                  <p class="text-xs uppercase tracking-wider text-gray-400 font-semibold">Usage</p>
+                  <p class="mt-2 text-2xl font-bold text-gray-900">{{ storage_status.percent_used }}%</p>
+                  <p class="text-xs text-gray-500">data folder</p>
+                </div>
+              </div>
+
+              <div>
+                <div class="flex items-center justify-between mb-2 text-xs font-semibold uppercase tracking-wider text-gray-400">
+                  <span>Capacity</span>
+                  <span>{{ storage_status.used_human }} / {{ storage_status.limit_mb }} MB</span>
+                </div>
+                <div class="h-3 w-full rounded-full bg-gray-100 overflow-hidden">
+                  <div class="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-500" style="width: {{ storage_status.percent_used }}%;"></div>
+                </div>
+              </div>
+
+              <div class="rounded-2xl border border-dashed border-emerald-200 bg-emerald-50/60 p-4">
+                <p class="text-sm font-medium text-emerald-900">Manual storage update only</p>
+                <p class="mt-2 text-xs text-emerald-600">Current limit: {{ storage_status.limit_mb }} MB</p>
+              </div>
+            </div>
+          </div>
+
           <!-- Clinic Information -->
           <form hx-post="{% url 'clinic:save_clinic_info' %}" 
                 hx-headers='{"X-CSRFToken":"{{csrf_token}}"}' 
