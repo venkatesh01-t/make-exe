@@ -7,7 +7,19 @@ from pathlib import Path
 from django.conf import settings
 
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
+def get_project_root() -> Path:
+    """Get the project root directory, which is the 'clinic_manager_data' folder."""
+    # The GUI launcher sets this environment variable to handle frozen executables.
+    workspace_path = os.environ.get('CLINIC_WORKSPACE')
+    if workspace_path:
+        return Path(workspace_path)
+
+    # Fallback for running without the launcher (e.g., direct manage.py commands).
+    # This assumes a standard project structure.
+    return Path(__file__).resolve().parents[2]
+
+
+PROJECT_ROOT = get_project_root()
 STORAGE_FILE_NAME = "storage.txt"
 
 

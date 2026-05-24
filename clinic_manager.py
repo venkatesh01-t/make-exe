@@ -137,6 +137,7 @@ def run_embedded_django_server(port: int):
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'clinic.settings')
     os.environ.setdefault('CLINIC_DATA_DIR', str(runtime_data_dir))
     os.environ.setdefault('CLINIC_STATIC_ROOT', str(runtime_static_dir))
+    os.environ.setdefault('CLINIC_WORKSPACE', str(WORKSPACE))
 
     if PYTHON_EXE.exists():
         os.execv(str(PYTHON_EXE), [str(PYTHON_EXE), str(project_dir / 'manage.py'), 'runserver', f'0.0.0.0:{port}'])
@@ -1307,6 +1308,7 @@ class ClinicManager(ctk.CTk if ctk else tk.Tk):
         env = os.environ.copy()
         env['CLINIC_DATA_DIR'] = str(DATA_DIR)
         env['CLINIC_STATIC_ROOT'] = str(get_runtime_static_dir())
+        env['CLINIC_WORKSPACE'] = str(WORKSPACE)
         return env
 
     def open_browser(self):
