@@ -7,7 +7,6 @@ from pathlib import Path
 from django.conf import settings
 
 
-DEFAULT_STORAGE_LIMIT_MB = 1024
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 STORAGE_FILE_NAME = "storage.txt"
 
@@ -22,29 +21,29 @@ def get_storage_file_path() -> Path:
 
 def parse_storage_limit_mb(raw_text: str | None) -> int:
     if not raw_text:
-        return DEFAULT_STORAGE_LIMIT_MB
+        return 0
 
     match = re.search(r"(\d+(?:\.\d+)?)", raw_text)
     if not match:
-        return DEFAULT_STORAGE_LIMIT_MB
+        return 0
 
     try:
         value = int(float(match.group(1)))
     except (TypeError, ValueError):
-        return DEFAULT_STORAGE_LIMIT_MB
+        return 0
 
-    return value if value > 0 else DEFAULT_STORAGE_LIMIT_MB
+    return value if value > 0 else 0
 
 
 def read_storage_limit_mb() -> int:
     storage_file = get_storage_file_path()
     if not storage_file.exists():
-        return DEFAULT_STORAGE_LIMIT_MB
+        return 0
 
     try:
         return parse_storage_limit_mb(storage_file.read_text(encoding="utf-8"))
     except OSError:
-        return DEFAULT_STORAGE_LIMIT_MB
+        return 0
 
 
 def write_storage_limit_mb(limit_mb: int) -> Path:
