@@ -201,6 +201,25 @@ class ClinicManager(ctk.CTk if ctk else tk.Tk):
             ctk.set_appearance_mode('dark')
         else:
             self.configure(bg='#f0f0f0')
+
+        # Set background logo on main window
+        try:
+            icon_path = APP_ROOT / 'logo.ico'
+            if icon_path.exists():
+                self.background_image = tk.PhotoImage(file=str(icon_path))
+                # Create a label for the image
+                background_label = tk.Label(self, image=self.background_image)
+                # Place it in the center and send it to the back
+                background_label.place(relx=0.5, rely=0.5, anchor='center')
+                background_label.lower()
+                # Set background color to match window (best effort)
+                if not ctk:
+                    background_label.config(bg='#f0f0f0')
+                else:
+                    # For customtkinter dark theme, a dark grey is a safe bet
+                    background_label.config(bg='#2b2b2b')
+        except Exception as e:
+            log(f"Failed to set background image: {e}")
         
         # Initialize variables first before creating splash screen
         self.url_var = tk.StringVar(value='')
@@ -347,15 +366,6 @@ class ClinicManager(ctk.CTk if ctk else tk.Tk):
         # Canvas for QR code - always use white background for visibility
         self.qr_canvas = tk.Canvas(mid, width=200, height=200, bg='white', highlightthickness=2, highlightbackground='#bdc3c7')
         self.qr_canvas.pack(side='right', padx=12)
-
-        # Display logo in QR canvas initially
-        try:
-            icon_path = APP_ROOT / 'logo.ico'
-            if icon_path.exists():
-                self.qr_logo = tk.PhotoImage(file=str(icon_path))
-                self.qr_canvas.create_image(100, 100, image=self.qr_logo)
-        except Exception as e:
-            log(f"Failed to load logo into QR canvas: {e}")
 
         # Access Methods Panel - Beautiful display of all connection options
         access_frame = ctk.CTkFrame(self) if ctk else tk.Frame(self, bg='#2c3e50', border=1, relief='solid')
