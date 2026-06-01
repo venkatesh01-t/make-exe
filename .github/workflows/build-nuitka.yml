@@ -34,6 +34,7 @@ jobs:
           --noconsole
           --name clinic_manager
           --icon logo.ico
+          --add-data "logo.ico;."
           --add-data "clinic_manager_data\clinic;clinic"
           --add-data "clinic_manager_data\clinic\staticfiles;staticfiles"
           --clean
