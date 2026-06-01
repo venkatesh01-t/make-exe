@@ -202,8 +202,7 @@ def log(msg: str):
         # Ensure log directory exists
         LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
         now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        line = f"[{now}] {msg}
-"
+        line = f"[{now}] {msg}\n"
         with open(LOG_FILE, 'a', encoding='utf-8') as f:
             f.write(line)
     except Exception as e:
@@ -321,8 +320,7 @@ class ClinicManager(ctk.CTk if ctk else tk.Tk):
         except Exception as e:
             log(f"Failed to load splash logo with Pillow: {e}")
         
-        self.splash_label = tk.Label(content_frame, text='Initializing system...
-Please wait', font=('Segoe UI', 11), bg='#f0f0f0', fg='#2c3e50', justify='center')
+        self.splash_label = tk.Label(content_frame, text='Initializing system...\nPlease wait', font=('Segoe UI', 11), bg='#f0f0f0', fg='#2c3e50', justify='center')
         self.splash_label.pack(pady=15)
         
         # Splash progress bar
@@ -428,8 +426,7 @@ Please wait', font=('Segoe UI', 11), bg='#f0f0f0', fg='#2c3e50', justify='center
         try:
             while True:
                 text = self.output_queue.get_nowait()
-                self.output.insert('end', text + '
-')
+                self.output.insert('end', text + '\n')
                 self.output.see('end')
                 log(text)
         except queue.Empty:
@@ -457,8 +454,7 @@ Please wait', font=('Segoe UI', 11), bg='#f0f0f0', fg='#2c3e50', justify='center
             missing_items = [str(path) for path in required_items if not path.exists()]
 
             # Step 1: Check files and recover from GitHub if needed.
-            self.after(0, lambda: self.splash_label.config(text='Checking Files
-Preparing system...'))
+            self.after(0, lambda: self.splash_label.config(text='Checking Files\nPreparing system...'))
             self.after(0, lambda: self.splash_status.config(text='Step 1 of 5: File Check'))
             if missing_items:
                 self.append_output('Missing setup items: ' + ', '.join(missing_items))
@@ -470,8 +466,7 @@ Preparing system...'))
                 self.append_output('Required setup items already present')
             
             # Step 2: Check required folders
-            self.after(0, lambda: self.splash_label.config(text='Checking Folders
-Validating setup...'))
+            self.after(0, lambda: self.splash_label.config(text='Checking Folders\nValidating setup...'))
             self.after(0, lambda: self.splash_status.config(text='Step 2 of 5: Folder Check'))
             self.append_output('Step 2: Checking for required folders...')
             still_missing = self.check_folders()
@@ -480,8 +475,7 @@ Validating setup...'))
                 self.append_output('Missing items will not block startup: ' + ', '.join(still_missing))
 
             # Step 3: Check qrcode availability before install
-            self.after(0, lambda: self.splash_label.config(text='Checking QR Support
-Preparing final setup...'))
+            self.after(0, lambda: self.splash_label.config(text='Checking QR Support\nPreparing final setup...'))
             self.after(0, lambda: self.splash_status.config(text='Step 3 of 5: QR Check'))
             self.append_output('Step 3: Checking for qrcode package...')
             try:
@@ -492,14 +486,12 @@ Preparing final setup...'))
                 self.append_output('qrcode not yet installed, will install on first QR generation')
 
             # Step 4: Prepare for the final install
-            self.after(0, lambda: self.splash_label.config(text='Preparing Install
-Almost ready...'))
+            self.after(0, lambda: self.splash_label.config(text='Preparing Install\nAlmost ready...'))
             self.after(0, lambda: self.splash_status.config(text='Step 4 of 5: Preparation'))
             self.append_output('Step 4: Final preparation before requirements install...')
 
             # Step 5: Install requirements as the final splash step
-            self.after(0, lambda: self.splash_label.config(text='Installing Requirements
-Please wait...'))
+            self.after(0, lambda: self.splash_label.config(text='Installing Requirements\nPlease wait...'))
             self.after(0, lambda: self.splash_status.config(text='Step 5 of 5: Installation'))
             self.append_output('Step 5: Installing Python requirements...')
             requirements_ok = self.install_requirements()
@@ -508,8 +500,7 @@ Please wait...'))
                 self.append_output('Requirements installation did not complete successfully')
 
             # Open the main page after install finishes
-            self.after(0, lambda: self.splash_label.config(text='Finalizing System
-Opening main page...'))
+            self.after(0, lambda: self.splash_label.config(text='Finalizing System\nOpening main page...'))
             self.after(0, lambda: self.splash_status.config(text='Finalizing...'))
             
             self.append_output('=== STARTUP CHECKS COMPLETED ===')
@@ -614,8 +605,7 @@ Opening main page...'))
                             self.append_output(progress_msg)
                             
                             # Update splash screen and UI with proper value capture
-                            splash_text = f'Downloading...
-{percentage:.1f}% Complete'
+                            splash_text = f'Downloading...\n{percentage:.1f}% Complete'
                             self.after(0, lambda txt=splash_text: self.splash_label.config(text=txt))
                             self.after(0, lambda p=percentage: self.splash_progress.config(value=p))
                             self.after(0, lambda s=speed_mbps, t=remaining_time: (
@@ -1343,8 +1333,7 @@ Opening main page...'))
                 # Windows: use netstat and taskkill
                 CREATE_NO_WINDOW = 0x08000000
                 result = subprocess.run(['netstat', '-ano'], capture_output=True, text=True, timeout=5, creationflags=CREATE_NO_WINDOW)
-                for line in result.stdout.split('
-'):
+                for line in result.stdout.split('\n'):
                     if f':{port}' in line and 'LISTENING' in line:
                         parts = line.split()
                         if parts:
@@ -1358,8 +1347,7 @@ Opening main page...'))
             else:
                 # Linux/Mac: use lsof and kill
                 result = subprocess.run(['lsof', '-i', f':{port}'], capture_output=True, text=True, timeout=5, preexec_fn=os.setsid if hasattr(os, 'setsid') else None)
-                lines = result.stdout.strip().split('
-')[1:]  # Skip header
+                lines = result.stdout.strip().split('\n')[1:]  # Skip header
                 for line in lines:
                     parts = line.split()
                     if len(parts) > 1:
