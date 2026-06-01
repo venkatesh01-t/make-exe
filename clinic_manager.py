@@ -190,6 +190,12 @@ class ClinicManager(ctk.CTk if ctk else tk.Tk):
     def __init__(self):
         super().__init__()
         self.title('Clinic Manager')
+        try:
+            icon_path = APP_ROOT / 'logo.ico'
+            if icon_path.exists():
+                self.iconbitmap(str(icon_path))
+        except Exception as e:
+            log(f"Failed to set main window icon: {e}")
         self.geometry('900x600')
         if ctk:
             ctk.set_appearance_mode('dark')
@@ -217,6 +223,12 @@ class ClinicManager(ctk.CTk if ctk else tk.Tk):
         # Create splash screen with classic design
         self.splash = tk.Toplevel(self)
         self.splash.title('Clinic Manager')
+        try:
+            icon_path = APP_ROOT / 'logo.ico'
+            if icon_path.exists():
+                self.splash.iconbitmap(str(icon_path))
+        except Exception as e:
+            log(f"Failed to set splash screen icon: {e}")
         self.splash.geometry('500x350')
         self.splash.resizable(False, False)
         self.splash.configure(bg='#f0f0f0')
@@ -245,6 +257,16 @@ class ClinicManager(ctk.CTk if ctk else tk.Tk):
         # Content frame
         content_frame = tk.Frame(self.splash, bg='#f0f0f0')
         content_frame.pack(side='top', fill='both', expand=True, padx=40, pady=30)
+        
+        # Add logo to splash screen
+        try:
+            icon_path = APP_ROOT / 'logo.ico'
+            if icon_path.exists():
+                self.splash_logo = tk.PhotoImage(file=str(icon_path))
+                logo_label = tk.Label(content_frame, image=self.splash_logo, bg='#f0f0f0')
+                logo_label.pack(pady=(0, 10))
+        except Exception as e:
+            log(f"Failed to load splash logo: {e}")
         
         # Status message
         self.splash_label = tk.Label(content_frame, text='Initializing system...\nPlease wait', 
@@ -325,6 +347,15 @@ class ClinicManager(ctk.CTk if ctk else tk.Tk):
         # Canvas for QR code - always use white background for visibility
         self.qr_canvas = tk.Canvas(mid, width=200, height=200, bg='white', highlightthickness=2, highlightbackground='#bdc3c7')
         self.qr_canvas.pack(side='right', padx=12)
+
+        # Display logo in QR canvas initially
+        try:
+            icon_path = APP_ROOT / 'logo.ico'
+            if icon_path.exists():
+                self.qr_logo = tk.PhotoImage(file=str(icon_path))
+                self.qr_canvas.create_image(100, 100, image=self.qr_logo)
+        except Exception as e:
+            log(f"Failed to load logo into QR canvas: {e}")
 
         # Access Methods Panel - Beautiful display of all connection options
         access_frame = ctk.CTkFrame(self) if ctk else tk.Frame(self, bg='#2c3e50', border=1, relief='solid')
