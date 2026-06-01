@@ -841,8 +841,7 @@ class ClinicManager(ctk.CTk if ctk else tk.Tk):
                             self.append_output(progress_msg)
                             
                             # Update splash screen and UI with proper value capture
-                            splash_text = f'Extracting...
-{percentage:.1f}% Complete'
+                            splash_text = f'Extracting...\n{percentage:.1f}% Complete'
                             self.after(0, lambda txt=splash_text: self.splash_label.config(text=txt))
                             self.after(0, lambda p=percentage: self.splash_progress.config(value=p))
                             self.after(0, lambda s=speed_fps, t=remaining_time: (
@@ -1543,7 +1542,7 @@ if __name__ == '__main__':
 # ============================================================================
 # PYINSTALLER COMPILATION INSTRUCTIONS
 # ============================================================================
-"""
+r"""
 COMPILE TO EXE WITH PYINSTALLER:
 
 1. Install PyInstaller:
