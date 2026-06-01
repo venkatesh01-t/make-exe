@@ -47,11 +47,8 @@ except ImportError:
     root.withdraw()  # Hide the main window
     messagebox.showerror(
         "Fatal Error: Missing Library",
-        "The required 'Pillow' library is not installed.
-
-"
-        "Please install it to run this application:
-"
+        "The required 'Pillow' library is not installed.\n\n"
+        "Please install it to run this application:\n"
         "pip install Pillow"
     )
     # Exit the script cleanly
