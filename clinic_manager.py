@@ -34,30 +34,6 @@ except Exception:
 
 
 # ============================================================================
-# PRE-STARTUP DEPENDENCY CHECK
-# ============================================================================
-try:
-    from PIL import Image, ImageTk
-except ImportError:
-    # Pillow is not installed, which is critical for images.
-    # We must show an error and exit before the main app class is defined.
-    import tkinter as tk
-    from tkinter import messagebox
-    root = tk.Tk()
-    root.withdraw()  # Hide the main window
-    messagebox.showerror(
-        "Fatal Error: Missing Library",
-        "The required 'Pillow' library is not installed.\n\n"
-        "Please install it to run this application:\n"
-        "pip install Pillow"
-    )
-    # Exit the script cleanly
-    PILLOW_AVAILABLE = False
-else:
-    PILLOW_AVAILABLE = True
-
-
-# ============================================================================
 # HIDE CONSOLE WINDOW (Windows only)
 # ============================================================================
 def hide_console_window():
@@ -213,17 +189,6 @@ def log(msg: str):
 class ClinicManager(ctk.CTk if ctk else tk.Tk):
     def __init__(self):
         super().__init__()
-
-        if not PILLOW_AVAILABLE:
-            # This check is secondary; the main one is at startup.
-            # If we get here, something is wrong. Destroy the window.
-            try:
-                self.destroy()
-            except tk.TclError:
-                pass # Window might already be gone
-            return
-
-        # --- Window Setup ---
         self.title('Clinic Manager')
         try:
             icon_path = APP_ROOT / 'logo.ico'
@@ -232,53 +197,30 @@ class ClinicManager(ctk.CTk if ctk else tk.Tk):
         except Exception as e:
             log(f"Failed to set main window icon: {e}")
         self.geometry('900x600')
-
-        # --- Theme and Background ---
         if ctk:
             ctk.set_appearance_mode('dark')
         else:
             self.configure(bg='#f0f0f0')
-
-        # Set background logo on main window using Pillow
-        try:
-            icon_path = APP_ROOT / 'logo.ico'
-            if icon_path.exists():
-                # Open with Pillow, resize for background, and make semi-transparent
-                img = Image.open(icon_path).resize((256, 256), Image.Resampling.LANCZOS)
-                img.putalpha(40)  # Make it a subtle watermark
-                self.background_image = ImageTk.PhotoImage(img)
-
-                background_label = tk.Label(self, image=self.background_image)
-                
-                # Set background color to match window theme
-                if not ctk:
-                    background_label.config(bg='#f0f0f0')
-                else:
-                    # For customtkinter, get the theme's background color
-                    background_label.config(bg=self._apply_appearance_mode(ctk.ThemeManager.theme["CTk"]["fg_color"]))
-                
-                background_label.place(relx=0.5, rely=0.5, anchor='center')
-                background_label.lower()  # Place it behind all other widgets
-        except Exception as e:
-            log(f"Failed to set background image with Pillow: {e}")
         
-        # --- App Variables ---
+        # Initialize variables first before creating splash screen
         self.url_var = tk.StringVar(value='')
         self.port_var = tk.IntVar(value=8000)
         self.progress_var = tk.DoubleVar(value=0)
         self.server_process = None
         self.server_running = False
         self.output_queue = queue.Queue()
-        self.server_port = 8000
-        self.current_ip = None
-        self.network_monitor_running = False
-        self.last_ip_check_time = 0
+        self.server_port = 8000  # Track the actual port being used
+        self.current_ip = None  # Track current IP address
+        self.network_monitor_running = False  # Network monitoring flag
+        self.last_ip_check_time = 0  # Rate limiting for IP checks
         
-        # --- Window Handlers ---
+        # Set up window close handler for proper cleanup
         self.protocol('WM_DELETE_WINDOW', self.on_closing)
+        
+        # Hide main window initially
         self.withdraw()
         
-        # --- Splash Screen ---
+        # Create splash screen with classic design
         self.splash = tk.Toplevel(self)
         self.splash.title('Clinic Manager')
         try:
@@ -290,63 +232,82 @@ class ClinicManager(ctk.CTk if ctk else tk.Tk):
         self.splash.geometry('500x350')
         self.splash.resizable(False, False)
         self.splash.configure(bg='#f0f0f0')
-        self.splash.overrideredirect(True) # Frameless
         
-        # Center splash
+        # Center splash screen on screen
         self.splash.update_idletasks()
         x = (self.splash.winfo_screenwidth() // 2) - (500 // 2)
         y = (self.splash.winfo_screenheight() // 2) - (350 // 2)
         self.splash.geometry(f'500x350+{x}+{y}')
         
-        # Splash header
+        # Splash header frame (classic style)
         header_frame = tk.Frame(self.splash, bg='#2c3e50', height=80)
         header_frame.pack(side='top', fill='x')
         header_frame.pack_propagate(False)
-        tk.Label(header_frame, text='Clinic Manager', font=('Segoe UI', 24, 'bold'), bg='#2c3e50', fg='white').pack(pady=15)
-        tk.Label(header_frame, text='v1.0 - Healthcare System', font=('Segoe UI', 9), bg='#2c3e50', fg='#ecf0f1').pack()
         
-        # Splash content
+        # Title in header
+        title_label = tk.Label(header_frame, text='Clinic Manager', font=('Segoe UI', 24, 'bold'), 
+                              bg='#2c3e50', fg='white')
+        title_label.pack(pady=15)
+        
+        # Version label
+        version_label = tk.Label(header_frame, text='v1.0 - Healthcare System', font=('Segoe UI', 9), 
+                                bg='#2c3e50', fg='#ecf0f1')
+        version_label.pack()
+        
+        # Content frame
         content_frame = tk.Frame(self.splash, bg='#f0f0f0')
         content_frame.pack(side='top', fill='both', expand=True, padx=40, pady=30)
         
-        # Add logo to splash screen using Pillow
+        # Add logo to splash screen
         try:
             icon_path = APP_ROOT / 'logo.ico'
             if icon_path.exists():
-                pil_img = Image.open(icon_path).resize((64, 64), Image.Resampling.LANCZOS)
-                self.splash_logo = ImageTk.PhotoImage(pil_img)
+                self.splash_logo = tk.PhotoImage(file=str(icon_path))
                 logo_label = tk.Label(content_frame, image=self.splash_logo, bg='#f0f0f0')
                 logo_label.pack(pady=(0, 10))
         except Exception as e:
-            log(f"Failed to load splash logo with Pillow: {e}")
+            log(f"Failed to load splash logo: {e}")
         
-        self.splash_label = tk.Label(content_frame, text='Initializing system...\nPlease wait', font=('Segoe UI', 11), bg='#f0f0f0', fg='#2c3e50', justify='center')
+        # Status message
+        self.splash_label = tk.Label(content_frame, text='Initializing system...\nPlease wait', 
+                                     font=('Segoe UI', 11), bg='#f0f0f0', fg='#2c3e50', justify='center')
         self.splash_label.pack(pady=15)
         
-        # Splash progress bar
+        # Progress bar on splash (indeterminate style)
         progress_frame = tk.Frame(content_frame, bg='#f0f0f0')
         progress_frame.pack(fill='x', pady=15)
-        self.splash_progress = ttk.Progressbar(progress_frame, variable=self.progress_var, maximum=100, length=350, mode='determinate')
+        
+        self.splash_progress = ttk.Progressbar(progress_frame, variable=self.progress_var, 
+                                               maximum=100, length=350, mode='determinate')
         self.splash_progress.pack(fill='x')
-        self.splash_status = tk.Label(content_frame, text='0%', font=('Segoe UI', 9), bg='#f0f0f0', fg='#7f8c8d')
+        
+        # Progress label
+        self.splash_status = tk.Label(content_frame, text='0%', font=('Segoe UI', 9), 
+                                      bg='#f0f0f0', fg='#7f8c8d')
         self.splash_status.pack(pady=5)
         
-        # Splash footer
+        # Footer frame
         footer_frame = tk.Frame(self.splash, bg='#ecf0f1', height=40)
         footer_frame.pack(side='bottom', fill='x')
         footer_frame.pack_propagate(False)
-        tk.Label(footer_frame, text='Loading system components...', font=('Segoe UI', 8), bg='#ecf0f1', fg='#7f8c8d').pack(pady=10)
+        
+        footer_label = tk.Label(footer_frame, text='Loading system components...', 
+                               font=('Segoe UI', 8), bg='#ecf0f1', fg='#7f8c8d')
+        footer_label.pack(pady=10)
         
         self.splash.update()
 
-        # --- Main UI Widgets ---
-        # Top control frame
+        # Top control frame with enhanced classic styling
         top = ctk.CTkFrame(self) if ctk else tk.Frame(self, bg='#2c3e50', border=1, relief='solid')
         top.pack(side='top', fill='x', padx=0, pady=0)
+
+        # Create a button style helper for classic design
         button_font = ('Segoe UI', 10, 'bold')
         button_bg = '#3498db'
         button_fg = 'white'
         button_activebg = '#2980b9'
+        button_disablebg = '#95a5a6'
+
         if ctk:
             ctk.CTkButton(top, text='Start Server', command=self.threaded(self.start_server)).pack(side='left', padx=8, pady=12)
             ctk.CTkButton(top, text='Stop Server', command=self.stop_server).pack(side='left', padx=8, pady=12)
@@ -354,63 +315,135 @@ class ClinicManager(ctk.CTk if ctk else tk.Tk):
             ctk.CTkButton(top, text='Backup Data', command=self.threaded(self.backup_data)).pack(side='right', padx=8, pady=12)
             ctk.CTkButton(top, text='Restore Data', command=self.threaded(self.restore_data)).pack(side='right', padx=8, pady=12)
         else:
-            btn_style = {'font': button_font, 'bg': button_bg, 'fg': button_fg, 'activebackground': button_activebg, 'activeforeground': button_fg, 'relief': 'solid', 'border': 0, 'padx': 12, 'pady': 8, 'cursor': 'hand2'}
+            btn_style = {'font': button_font, 'bg': button_bg, 'fg': button_fg, 
+                        'activebackground': button_activebg, 'activeforeground': button_fg,
+                        'relief': 'solid', 'border': 0, 'padx': 12, 'pady': 8,
+                        'cursor': 'hand2'}
+            
             self.start_btn = tk.Button(top, text='Start Server', command=self.threaded(self.start_server), **btn_style)
             self.start_btn.pack(side='left', padx=8, pady=12)
-            self.stop_btn = tk.Button(top, text='Stop Server', command=self.stop_server, **btn_style); self.stop_btn.pack(side='left', padx=8, pady=12)
+            self.stop_btn = tk.Button(top, text='Stop Server', command=self.stop_server, **btn_style)
+            self.stop_btn.pack(side='left', padx=8, pady=12)
             self.stop_btn.config(state='disabled')
-            self.browser_btn = tk.Button(top, text='Open Browser', command=self.open_browser, **btn_style); self.browser_btn.pack(side='left', padx=8, pady=12)
+            self.browser_btn = tk.Button(top, text='Open Browser', command=self.open_browser, **btn_style)
+            self.browser_btn.pack(side='left', padx=8, pady=12)
             self.browser_btn.config(state='disabled')
             tk.Button(top, text='Backup Data', command=self.threaded(self.backup_data), **btn_style).pack(side='right', padx=8, pady=12)
             tk.Button(top, text='Restore Data', command=self.threaded(self.restore_data), **btn_style).pack(side='right', padx=8, pady=12)
 
-        # URL and QR frame
+        # URL and QR frame with enhanced classic styling
         mid = ctk.CTkFrame(self) if ctk else tk.Frame(self, bg='#ecf0f1', border=1, relief='solid')
         mid.pack(side='top', fill='x', padx=12, pady=8)
+
         if ctk:
             ctk.CTkLabel(mid, text='Server URL:', font=('Segoe UI', 10, 'bold')).pack(side='left', padx=8, pady=8)
             ctk.CTkLabel(mid, textvariable=self.url_var, text_color='#3498db', font=('Segoe UI', 10, 'bold')).pack(side='left', padx=8, pady=8)
         else:
-            tk.Label(mid, text='Server URL:', font=('Segoe UI', 10, 'bold'), bg='#ecf0f1', fg='#2c3e50').pack(side='left', padx=8, pady=8)
-            tk.Label(mid, textvariable=self.url_var, font=('Segoe UI', 10, 'bold'), bg='#ecf0f1', fg='#3498db').pack(side='left', padx=8, pady=8)
+            url_title = tk.Label(mid, text='Server URL:', font=('Segoe UI', 10, 'bold'), bg='#ecf0f1', fg='#2c3e50')
+            url_title.pack(side='left', padx=8, pady=8)
+            url_label = tk.Label(mid, textvariable=self.url_var, font=('Segoe UI', 10, 'bold'), bg='#ecf0f1', fg='#3498db')
+            url_label.pack(side='left', padx=8, pady=8)
 
+        # Canvas for QR code - always use white background for visibility
         self.qr_canvas = tk.Canvas(mid, width=200, height=200, bg='white', highlightthickness=2, highlightbackground='#bdc3c7')
         self.qr_canvas.pack(side='right', padx=12)
 
-        # Access Methods Panel
+        # Display logo in QR canvas initially
+        try:
+            icon_path = APP_ROOT / 'logo.ico'
+            if icon_path.exists():
+                self.qr_logo = tk.PhotoImage(file=str(icon_path))
+                self.qr_canvas.create_image(100, 100, image=self.qr_logo)
+        except Exception as e:
+            log(f"Failed to load logo into QR canvas: {e}")
+
+        # Access Methods Panel - Beautiful display of all connection options
         access_frame = ctk.CTkFrame(self) if ctk else tk.Frame(self, bg='#2c3e50', border=1, relief='solid')
         access_frame.pack(side='top', fill='x', padx=12, pady=8)
-        header_frame = tk.Frame(access_frame, bg='#2c3e50'); header_frame.pack(fill='x', padx=12, pady=8)
-        tk.Label(header_frame, text='📱 Network Access Methods', font=('Segoe UI', 10, 'bold'), bg='#2c3e50', fg='white').pack(anchor='w')
-        content_frame = tk.Frame(access_frame, bg='#2c3e50'); content_frame.pack(fill='both', expand=True, padx=12, pady=8)
-        left_col = tk.Frame(content_frame, bg='#2c3e50'); left_col.pack(side='left', fill='both', expand=True, padx=(0, 15))
-        tk.Label(left_col, text='🖥️  Same Computer:', font=('Segoe UI', 9, 'bold'), bg='#2c3e50', fg='#3498db').pack(anchor='w', pady=(0, 5))
-        self.localhost_label = tk.Label(left_col, text='🔗 http://localhost:8000', font=('Segoe UI', 10), bg='#2c3e50', fg='#ecf0f1', wraplength=200, justify='left'); self.localhost_label.pack(anchor='w', pady=2)
-        self.loopback_label = tk.Label(left_col, text='🔗 http://127.0.0.1:8000', font=('Segoe UI', 10), bg='#2c3e50', fg='#ecf0f1', wraplength=200, justify='left'); self.loopback_label.pack(anchor='w', pady=2)
-        right_col = tk.Frame(content_frame, bg='#2c3e50'); right_col.pack(side='left', fill='both', expand=True, padx=(15, 0))
-        tk.Label(right_col, text='📱 Other Devices (Same WiFi):', font=('Segoe UI', 9, 'bold'), bg='#2c3e50', fg='#3498db').pack(anchor='w', pady=(0, 5))
-        self.ip_label = tk.Label(right_col, text='🔗 http://192.168.x.x:8000', font=('Segoe UI', 10), bg='#2c3e50', fg='#ecf0f1', wraplength=200, justify='left'); self.ip_label.pack(anchor='w', pady=2)
-        self.hostname_label = tk.Label(right_col, text='🔗 http://[hostname]:8000', font=('Segoe UI', 10), bg='#2c3e50', fg='#ecf0f1', wraplength=250, justify='left'); self.hostname_label.pack(anchor='w', pady=2)
+        
+        # Header for access methods
+        header_frame = tk.Frame(access_frame, bg='#2c3e50')
+        header_frame.pack(fill='x', padx=12, pady=8)
+        header_label = tk.Label(header_frame, text='📱 Network Access Methods', font=('Segoe UI', 10, 'bold'), bg='#2c3e50', fg='white')
+        header_label.pack(anchor='w')
+        
+        # Content frame with two columns
+        content_frame = tk.Frame(access_frame, bg='#2c3e50')
+        content_frame.pack(fill='both', expand=True, padx=12, pady=8)
+        
+        # Left column - Same Computer
+        left_col = tk.Frame(content_frame, bg='#2c3e50')
+        left_col.pack(side='left', fill='both', expand=True, padx=(0, 15))
+        
+        left_header = tk.Label(left_col, text='🖥️  Same Computer:', font=('Segoe UI', 9, 'bold'), bg='#2c3e50', fg='#3498db')
+        left_header.pack(anchor='w', pady=(0, 5))
+        
+        self.localhost_label = tk.Label(left_col, text='🔗 http://localhost:8000', font=('Segoe UI', 10), bg='#2c3e50', fg='#ecf0f1', wraplength=200, justify='left')
+        self.localhost_label.pack(anchor='w', pady=2)
+        
+        self.loopback_label = tk.Label(left_col, text='🔗 http://127.0.0.1:8000', font=('Segoe UI', 10), bg='#2c3e50', fg='#ecf0f1', wraplength=200, justify='left')
+        self.loopback_label.pack(anchor='w', pady=2)
+        
+        # Right column - Other Devices
+        right_col = tk.Frame(content_frame, bg='#2c3e50')
+        right_col.pack(side='left', fill='both', expand=True, padx=(15, 0))
+        
+        right_header = tk.Label(right_col, text='📱 Other Devices (Same WiFi):', font=('Segoe UI', 9, 'bold'), bg='#2c3e50', fg='#3498db')
+        right_header.pack(anchor='w', pady=(0, 5))
+        
+        self.ip_label = tk.Label(right_col, text='🔗 http://192.168.1.100:8000', font=('Segoe UI', 10), bg='#2c3e50', fg='#ecf0f1', wraplength=200, justify='left')
+        self.ip_label.pack(anchor='w', pady=2)
+        
+        self.hostname_label = tk.Label(right_col, text='🔗 http://DESKTOP-NAME:8000', font=('Segoe UI', 10), bg='#2c3e50', fg='#ecf0f1', wraplength=250, justify='left')
+        self.hostname_label.pack(anchor='w', pady=2)
 
-        # Progress info frame
-        progress_container = ctk.CTkFrame(self) if ctk else tk.Frame(self, bg='#f0f0f0'); progress_container.pack(side='top', fill='x', padx=12, pady=10)
-        progress_frame = ctk.CTkFrame(self) if ctk else tk.Frame(self, bg='white', border=1, relief='solid'); progress_frame.pack(in_=progress_container, fill='x', padx=0, pady=0)
-        self.progress_bar = ttk.Progressbar(progress_frame, variable=self.progress_var, maximum=100, length=400, mode='determinate'); self.progress_bar.pack(fill='x', padx=8, pady=8)
+        # Progress info frame with progress bar - enhanced classic design
+        progress_container = ctk.CTkFrame(self) if ctk else tk.Frame(self, bg='#f0f0f0')
+        progress_container.pack(side='top', fill='x', padx=12, pady=10)
+        
+        # Progress bar frame with border
+        progress_frame = ctk.CTkFrame(self) if ctk else tk.Frame(self, bg='white', border=1, relief='solid')
+        progress_frame.pack(in_=progress_container, fill='x', padx=0, pady=0)
+        
+        # Progress bar for downloads - styled with better appearance
+        self.progress_bar = ttk.Progressbar(progress_frame, variable=self.progress_var, maximum=100, length=400, mode='determinate')
+        self.progress_bar.pack(fill='x', padx=8, pady=8)
 
-        # Output area
-        bottom = ctk.CTkFrame(self) if ctk else tk.Frame(self, bg='#f0f0f0'); bottom.pack(side='top', fill='both', expand=True, padx=12, pady=12)
-        output_header = tk.Frame(bottom, bg='#f0f0f0'); output_header.pack(fill='x', pady=(0, 8))
-        tk.Label(output_header, text='System Output Log', font=('Segoe UI', 10, 'bold'), bg='#f0f0f0', fg='#2c3e50').pack(anchor='w')
-        output_frame = tk.Frame(bottom, bg='white', border=1, relief='solid'); output_frame.pack(fill='both', expand=True)
-        self.output = tk.Text(output_frame, height=20, wrap='word', bg='white', fg='#2c3e50', font=('Consolas', 9), border=0, relief='flat', highlightthickness=0); self.output.pack(fill='both', expand=True, padx=1, pady=1)
-        scrollbar = ttk.Scrollbar(output_frame, command=self.output.yview); scrollbar.pack(side='right', fill='y')
+
+        # Output area with enhanced classic styling
+        bottom = ctk.CTkFrame(self) if ctk else tk.Frame(self, bg='#f0f0f0')
+        bottom.pack(side='top', fill='both', expand=True, padx=12, pady=12)
+        
+        # Output header frame
+        output_header = tk.Frame(bottom, bg='#f0f0f0')
+        output_header.pack(fill='x', pady=(0, 8))
+        
+        # Output label with better styling
+        output_label = tk.Label(output_header, text='System Output Log', font=('Segoe UI', 10, 'bold'), bg='#f0f0f0', fg='#2c3e50')
+        output_label.pack(anchor='w')
+
+        # Output text frame with border
+        output_frame = tk.Frame(bottom, bg='white', border=1, relief='solid')
+        output_frame.pack(fill='both', expand=True)
+        
+        self.output = tk.Text(output_frame, height=20, wrap='word', bg='white', fg='#2c3e50', 
+                            font=('Consolas', 9), border=0, relief='flat',
+                            highlightthickness=0)
+        self.output.pack(fill='both', expand=True, padx=1, pady=1)
+        
+        # Add scrollbar to output
+        scrollbar = ttk.Scrollbar(output_frame, command=self.output.yview)
+        scrollbar.pack(side='right', fill='y')
         self.output.config(yscrollcommand=scrollbar.set)
 
-        # --- Finalization ---
         self.after(100, self.process_output_queue)
+
+        # Ensure workspace directory exists
         try:
             WORKSPACE.mkdir(parents=True, exist_ok=True)
-        except Exception: pass
+        except Exception as e:
+            pass  # Will be caught during startup checks
+
         threading.Thread(target=self.startup_checks, daemon=True).start()
 
     def threaded(self, fn):
@@ -1176,7 +1209,7 @@ class ClinicManager(ctk.CTk if ctk else tk.Tk):
             self.append_output(f'  🖥️  Same Computer:')
             self.append_output(f'     • http://localhost:{port}')
             self.append_output(f'     • http://127.0.0.1:{port}')
-            self.append_output(f'   Other Devices (Same WiFi):')
+            self.append_output(f'  � Other Devices (Same WiFi):')
             self.append_output(f'     • http://{ip}:{port}')
             try:
                 hostname = socket.gethostname()
@@ -1526,7 +1559,6 @@ class ClinicManager(ctk.CTk if ctk else tk.Tk):
 
 
 def main():
-    # The global PILLOW_AVAILABLE flag is checked before this is called.
     app = ClinicManager()
     app.mainloop()
 
@@ -1535,14 +1567,13 @@ if maybe_run_server_mode():
     raise SystemExit(0)
 
 if __name__ == '__main__':
-    if PILLOW_AVAILABLE:
-        main()
+    main()
 
 
 # ============================================================================
 # PYINSTALLER COMPILATION INSTRUCTIONS
 # ============================================================================
-r"""
+"""
 COMPILE TO EXE WITH PYINSTALLER:
 
 1. Install PyInstaller:
@@ -1550,7 +1581,7 @@ COMPILE TO EXE WITH PYINSTALLER:
 
 2. Compile with GUI only (no main console):
    pyinstaller --onefile --noconsole ^
-         --add-data "clinic_manager_data\clinic;clinic" ^
+         --add-data "clinic_manager_data\\clinic;clinic" ^
        --hidden-import=customtkinter ^
        --hidden-import=qrcode ^
        --hidden-import=requests ^
@@ -1564,7 +1595,7 @@ COMPILE TO EXE WITH PYINSTALLER:
 3. Run the exe:
    - Double-click clinic_manager.exe
    - Main GUI window appears (no console)
-   - Data folder created: clinic_manager_data
+   - Data folder created: clinic_manager_data\
    
 4. When you click "Start Server":
    - New console window opens automatically
