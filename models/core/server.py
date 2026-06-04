@@ -2,6 +2,7 @@ import os
 import sys
 import subprocess
 import socket
+from pathlib import Path
 from models.config.settings import PROJECT_DIR, PYTHON_EXE, WORKSPACE, get_project_dir, get_runtime_data_dir, get_runtime_static_dir
 from models.utils.os_helpers import is_frozen_build
 

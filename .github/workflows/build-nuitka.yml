@@ -37,6 +37,9 @@ jobs:
           --add-data "logo.ico;."
           --add-data "clinic_manager_data\clinic;clinic"
           --add-data "clinic_manager_data\clinic\staticfiles;staticfiles"
+          --collect-all customtkinter
+          --collect-submodules models
+          --hidden-import PIL._tkinter_finder
           --clean
           --noconfirm
 
