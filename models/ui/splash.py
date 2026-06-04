@@ -2,7 +2,7 @@ import customtkinter as ctk
 from tkinter import ttk
 from pathlib import Path
 from models.config.settings import APP_ROOT
-from models.utils.os_helpers import apply_window_icon, log
+from models.utils.os_helpers import apply_window_icon, log, get_bundle_root
 from models.design_system.tokens import Colors
 from models.design_system.fonts import make_font, Fonts
 
@@ -53,8 +53,14 @@ class SplashScreen(ctk.CTkToplevel):
         self._splash_image = None
         TARGET_LOGO_SIZE = (160, 160)
         try:
-            ico_path = APP_ROOT / 'logo.ico'
-            png_path = APP_ROOT / 'logo.png'
+            bundle_root = get_bundle_root()
+            ico_path = bundle_root / 'logo.ico'
+            png_path = bundle_root / 'logo.png'
+            
+            # Fallback to APP_ROOT if not in bundle
+            if not ico_path.exists() and not png_path.exists():
+                ico_path = APP_ROOT / 'logo.ico'
+                png_path = APP_ROOT / 'logo.png'
             
             from PIL import Image
             img_path = None
@@ -81,30 +87,43 @@ class SplashScreen(ctk.CTkToplevel):
                                          text_color=Colors.pair(Colors.TEXT_PRIMARY, Colors.DARK_TEXT))
         self.splash_label.pack(pady=15)
 
-        # Progress bar
-        progress_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
-        progress_frame.pack(fill='x', pady=5, padx=50) 
+        # Progress bar container
+        progress_container = ctk.CTkFrame(content_frame, fg_color="transparent")
+        progress_container.pack(fill='x', pady=5, padx=50) 
         
-        self.splash_progress = ctk.CTkProgressBar(progress_frame, 
+        self.splash_progress = ctk.CTkProgressBar(progress_container, 
                                                   fg_color=Colors.pair(Colors.BORDER, Colors.DARK_BORDER),
                                                   progress_color=Colors.PRIMARY,
-                                                  height=10)
+                                                  height=12)
         self.splash_progress.pack(fill='x')
         self.splash_progress.set(0)
 
-        self.splash_percent = ctk.CTkLabel(content_frame, text='0%', font=make_font(Fonts.XS),
-                                           text_color=Colors.TEXT_SECONDARY)
-        self.splash_percent.pack(pady=5)
+        # Meta info row (Percent, Speed, Stats)
+        self.meta_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
+        self.meta_frame.pack(fill="x", padx=50, pady=(5, 0))
 
+        self.splash_speed = ctk.CTkLabel(self.meta_frame, text='', font=make_font(Fonts.XS, "bold"),
+                                          text_color=Colors.SUCCESS)
+        self.splash_speed.pack(side="left")
+
+        self.splash_percent = ctk.CTkLabel(self.meta_frame, text='0%', font=make_font(Fonts.XS, "bold"),
+                                           text_color=Colors.PRIMARY)
+        self.splash_percent.pack(side="left", expand=True)
+
+        self.splash_stats = ctk.CTkLabel(self.meta_frame, text='', font=make_font(Fonts.XS, "bold"),
+                                         text_color=Colors.TEXT_SECONDARY)
+        self.splash_stats.pack(side="right")
+
+        # Detailed Status (Time remaining, etc)
         self.splash_status = ctk.CTkLabel(content_frame, text='', font=make_font(Fonts.XS),
-                                          text_color=Colors.TEXT_SECONDARY)
-        self.splash_status.pack(pady=2)
+                                          text_color=Colors.TEXT_MUTED)
+        self.splash_status.pack(pady=(10, 0))
 
         footer_frame = ctk.CTkFrame(self, fg_color=Colors.pair(Colors.SURFACE_ALT, Colors.DARK_SURFACE2), height=40, corner_radius=0)
         footer_frame.pack(side='bottom', fill='x')
         footer_frame.pack_propagate(False)
         
-        ctk.CTkLabel(footer_frame, text='© 2026 Clinic Solutions Inc.', font=make_font(Fonts.XS),
+        ctk.CTkLabel(footer_frame, text='© 2026 Clinic Solutions Inc. | System Secure', font=make_font(Fonts.XS),
                      text_color=Colors.TEXT_SECONDARY).pack(expand=True)
 
         self.update()
@@ -119,10 +138,16 @@ class SplashScreen(ctk.CTkToplevel):
             if label_text is not None:
                 self.splash_label.configure(text=label_text)
             if status_text is not None:
+                # status_text often contains "Speed | Time"
                 self.splash_status.configure(text=status_text)
             if percent is not None:
                 self.splash_progress.set(percent / 100)
                 self.splash_percent.configure(text=f'{percent:.1f}%')
+            if stats_text is not None:
+                self.splash_stats.configure(text=stats_text)
+            if speed_text is not None:
+                # speed_text often contains "Download Speed: X MB/s"
+                self.splash_speed.configure(text=speed_text.replace("Download Speed: ", ""))
             
             self.update_idletasks()
         except Exception:

@@ -63,6 +63,16 @@ def log(msg: str, log_file: Path):
         pass
 
 def get_logo_icon_path(app_root: Path):
+    # Check bundle root first (for PyInstaller assets)
+    try:
+        bundle_root = get_bundle_root()
+        icon_path = bundle_root / 'logo.ico'
+        if icon_path.exists():
+            return icon_path
+    except Exception:
+        pass
+        
+    # Fallback to application root
     icon_path = app_root / 'logo.ico'
     return icon_path if icon_path.exists() else None
 
