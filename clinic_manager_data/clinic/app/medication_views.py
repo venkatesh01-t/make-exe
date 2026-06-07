@@ -28,7 +28,7 @@ class MedicationListView(LoginRequiredMixin, View):
             'medications': medications,
             'categories': sorted(set(categories))
         }
-        return HttpResponse(render_to_string('ext/medication_list.html', context))
+        return HttpResponse(render_to_string('ext/medications/medication_list.html', context))
 
 
 class MedicationCreateView(LoginRequiredMixin, View):
@@ -45,7 +45,7 @@ class MedicationCreateView(LoginRequiredMixin, View):
             )
             
             context = {'medication': medication}
-            html = render_to_string('ext/medication_row.html', context)
+            html = render_to_string('ext/medications/medication_row.html', context)
             response = HttpResponse(html)
             response['HX-Trigger'] = build_hx_trigger('Medication added successfully', 'success', 3500, '')
             return response
@@ -68,7 +68,7 @@ class MedicationUpdateView(LoginRequiredMixin, View):
             medication.save()
             
             context = {'medication': medication}
-            html = render_to_string('ext/medication_row.html', context)
+            html = render_to_string('ext/medications/medication_row.html', context)
             response = HttpResponse(html)
             response['HX-Trigger'] = build_hx_trigger('Medication updated successfully', 'success', 3500, '')
             return response
@@ -99,7 +99,7 @@ class MedicationEditFormView(LoginRequiredMixin, View):
             'medication': medication,
             'categories': sorted(set(categories))
         }
-        html = render_to_string('ext/medication_edit_form.html', context)
+        html = render_to_string('ext/medications/medication_edit_form.html', context)
         return HttpResponse(html)
 
 

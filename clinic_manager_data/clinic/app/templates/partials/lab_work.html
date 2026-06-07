@@ -277,7 +277,7 @@
     </div>
 </div>
 
-{% include 'ext/labmodal.html' %}
+{% include 'ext/lab_work/labmodal.html' %}
 
 <!-- Modal: Progress Tracking (Provided by User) -->
 <div id="lab-modal" onclick="handleBackdropClick(event, 'lab-modal', 'l-modal-container')"
@@ -447,7 +447,7 @@
                 </thead>
 
                 <tbody class="divide-y divide-slate-100" id="lab-details-table-body">
-                    {% include 'ext/lab_details_data.html' %}
+                    {% include 'ext/lab_work/lab_details_data.html' %}
 
 
                 </tbody>
@@ -544,7 +544,7 @@
                 </thead>
 
                 <tbody class="divide-y divide-slate-100" id="lab-item-table-body">
-                    {% include 'ext/lab_item_data.html' %}
+                    {% include 'ext/lab_work/lab_item_data.html' %}
                 </tbody>
             </table>
         </div>

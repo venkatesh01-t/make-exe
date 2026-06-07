@@ -8,7 +8,7 @@ import json
 from django.db.models import Q
 from datetime import date, datetime
 from django.http import HttpResponse, JsonResponse
-from .models import Patient, labdetails, labtest, DailyPatient, Prescription, labwork, PatientUpload
+from .models import Patient, labdetails, labtest, DailyPatient, Prescription, labwork, PatientUpload, Doctor, Treatment
 from django.utils import timezone
 
 
@@ -82,14 +82,16 @@ def patients_table_body(request):
         
     }
     
-    return render(request, "ext/patients_data.html", context)
+    return render(request, "ext/patients/patients_data.html", context)
 
 class PatientsPartialView(LoginRequiredMixin, TemplateView):
     template_name = 'partials/patients.html'
     def get(self,request):
         context={
             "labdetails":labdetails.objects.all().order_by("-id"),
-        "labtest":labtest.objects.all().order_by("-id")
+            "labtest":labtest.objects.all().order_by("-id"),
+            "doctors": Doctor.objects.all(),
+            "treatment": Treatment.objects.all()
         }
         return render(request,self.template_name,context)
    
@@ -115,6 +117,16 @@ class Patientsdatasave(LoginRequiredMixin, TemplateView):
         status = 'Active'  # Default status
         previous_visits = 'None'  # Default previous visits
         last_visit = date.today()  # Set last visit to today for new patient
+        
+        # Check for duplicates
+        existing_patient = Patient.objects.filter(first_name=first_name, last_name=last_name, phone=phone).first()
+        if existing_patient:
+            response = HttpResponse(status=204)
+            response["HX-Trigger"] = json.dumps({
+                "patientExistsError": {"message": f"A patient with this name and phone number already exists! (Patient ID: #{existing_patient.id})"}
+            })
+            return response
+
         # Save to database
         Patient.objects.create(
             first_name=first_name,
@@ -338,3 +350,21 @@ class PatientFilesAPIView(LoginRequiredMixin, View):
             })
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=400)
+class CheckPatientExistsView(LoginRequiredMixin, View):
+    def post(self, request):
+        first_name = request.POST.get('first_name') or ''
+        last_name = request.POST.get('last_name') or ''
+        phone = request.POST.get('phone') or ''
+        
+        existing_patient = Patient.objects.filter(first_name=first_name, last_name=last_name, phone=phone).first()
+        if first_name and last_name and phone and existing_patient:
+            html = f"""<div id='addPatientErrorMsg' class='text-red-600 text-xs font-medium mt-2 bg-red-50 p-2 rounded-lg border border-red-100'>A patient with this name and phone number already exists! (Patient ID: #{existing_patient.id})</div>
+            <button type="submit" id="savePatientBtn" hx-swap-oob="true" disabled class="bg-gray-300 text-gray-500 px-5 py-2.5 rounded-xl text-sm font-semibold cursor-not-allowed transition">Save Patient</button>
+            """
+            return HttpResponse(html)
+        else:
+            html = """<div id='addPatientErrorMsg' class='hidden'></div>
+            <button type="submit" id="savePatientBtn" hx-swap-oob="true" class="bg-gradient-to-r from-teal-500 to-teal-600 text-white px-5 py-2.5 rounded-xl text-sm font-semibold shadow-lg shadow-teal-200 hover:shadow-xl transition">Save Patient</button>
+            """
+            return HttpResponse(html)
+

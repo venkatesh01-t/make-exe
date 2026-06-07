@@ -51,7 +51,7 @@ class TreatmentsPartialView(LoginRequiredMixin, TemplateView):
             message = f"Treatment '{name}' deleted successfully!"
             close="deleteModal"
 
-        response = render(request, 'ext/treatment_data.html', {"treatment": Treatment.objects.all()})
+        response = render(request, 'ext/treatments/treatment_data.html', {"treatment": Treatment.objects.all()})
         response["HX-Trigger"] = json.dumps({
             "showNotification": {
                 "message": message,

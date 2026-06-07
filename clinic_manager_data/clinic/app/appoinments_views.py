@@ -1,6 +1,7 @@
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import TemplateView
+from django.views import View
 from django.contrib.auth.decorators import login_required
 from .models import appoinments,Doctor,Treatment
 from django.core.paginator import Paginator
@@ -48,7 +49,7 @@ def get_appointment_data(request):
         "per_page": paginator.per_page,
     }
 
-    return render(request, "ext/appointment_data.html", context)
+    return render(request, "ext/appointments/appointment_data.html", context)
 
 
 def _appointment_calendar_data_json():
@@ -92,7 +93,7 @@ class AppointmentsPartialView(LoginRequiredMixin, TemplateView):
 class AppointmentCreateView(LoginRequiredMixin, TemplateView):  
     def get(self, request):
         
-        return TemplateView.as_view(template_name="ext/appoinmentform.html")(request)
+        return TemplateView.as_view(template_name="ext/appointments/appoinmentform.html")(request)
     def post(self, request):
         patient_name = self.request.POST
         print(patient_name)
@@ -160,3 +161,22 @@ class AppointmentDeleteView(LoginRequiredMixin, TemplateView):
             }
         })
         return response
+
+class AppointmentStatusUpdateView(LoginRequiredMixin, View):
+    def post(self, request, pk):
+        appointment = get_object_or_404(appoinments, id=pk)
+        new_status = request.POST.get('status')
+        if new_status:
+            appointment.status = new_status
+            appointment.save()
+
+        response = get_appointment_data(request)
+        response["HX-Trigger"] = json.dumps({
+            "showNotification": {
+                "message": f"Status updated to {new_status} for {appointment.name}!",
+                "type": "success",
+                "duration": 4000
+            }
+        })
+        return response
+

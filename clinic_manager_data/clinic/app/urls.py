@@ -89,6 +89,7 @@ urlpatterns = [
 
     path('add_patient/', Patientsdatasave.as_view(), name='add_patient'),
     path('edit_patient/', PatientEditView.as_view(), name='edit_patient'),
+    path('patient-check/', CheckPatientExistsView.as_view(), name='check_patient_exists'),
     path('delete_patient/', PatientDeleteView.as_view(), name='delete_patient'),
 
 
@@ -97,6 +98,7 @@ urlpatterns = [
     path('appointments-create/', AppointmentCreateView.as_view(), name='appointments_create'),
     path('appointments-edit/', AppointmentEditView.as_view(), name='appointments_edit'),
     path('appointments-delete/', AppointmentDeleteView.as_view(), name='appointments_delete'),
+    path('appointments-status-update/<int:pk>/', AppointmentStatusUpdateView.as_view(), name='appointment_status_update'),
     path('users/delete/', UserDeleteView.as_view(), name='user_delete'),
 
 

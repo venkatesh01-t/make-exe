@@ -167,7 +167,7 @@ def _render_billing_data(request, trigger_message=None, trigger_type='success', 
         'current_page': page_number,
         'per_page': per_page,
     }
-    response = render(request, 'ext/billing_data.html', context)
+    response = render(request, 'ext/billing/billing_data.html', context)
 
     if trigger_message:
         response['HX-Trigger'] = json.dumps({
@@ -198,7 +198,7 @@ class BillingPartialView(LoginRequiredMixin, TemplateView):
 
 
 class BillingDataView(LoginRequiredMixin, TemplateView):
-    template_name = 'ext/billing_data.html'
+    template_name = 'ext/billing/billing_data.html'
 
     def get(self, request, *args, **kwargs):
         return _render_billing_data(request)
@@ -288,7 +288,7 @@ class BillingMarkPaidView(LoginRequiredMixin, View):
 
 @method_decorator(xframe_options_exempt, name='dispatch')
 class BillingA4View(LoginRequiredMixin, TemplateView):
-    template_name = 'ext/billing_invoice_a4.html'
+    template_name = 'ext/billing/billing_invoice_a4.html'
 
     def get(self, request, invoice_id, *args, **kwargs):
         invoice = get_object_or_404(

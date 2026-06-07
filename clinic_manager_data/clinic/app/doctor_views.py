@@ -49,7 +49,7 @@ def _build_signature_png(image_file):
 def doctor_data(request):
     doctor=Doctor.objects.all()
 
-    return render(request, "ext/doctor_data.html", {"doctors": doctor})
+    return render(request, "ext/doctors/doctor_data.html", {"doctors": doctor})
 
 class DoctorsPartialView(LoginRequiredMixin, TemplateView):
     template_name = 'partials/doctors.html'

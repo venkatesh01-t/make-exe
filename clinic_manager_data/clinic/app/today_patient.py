@@ -574,7 +574,7 @@ def get_today_patient_data(request):
                     "message": "Data not found for selected date"
                 }
                 
-                response = render(request, "ext/today_patient_data.html", context)
+                response = render(request, "ext/today_patients/today_patient_data.html", context)
                 response["HX-Trigger"] = json.dumps({
                     "showNotification": {
                         "message": f"Data Not Found The Date {q_date}",
@@ -604,7 +604,7 @@ def get_today_patient_data(request):
                 },
                 "message": "Invalid date format"
             }
-            return render(request, "ext/today_patient_data.html", context)
+            return render(request, "ext/today_patients/today_patient_data.html", context)
 
     # Step 3: Get data for current page
     if 1 <= page_number <= total_pages:
@@ -643,7 +643,7 @@ def get_today_patient_data(request):
         }
     }
 
-    response = render(request, "ext/today_patient_data.html", context)
+    response = render(request, "ext/today_patients/today_patient_data.html", context)
     response["HX-Trigger"] = json.dumps({
                     "showNotification": {
                         "message": f"Data is available for the date {target_date}",
@@ -656,7 +656,7 @@ def get_today_patient_data(request):
 
 
 class PatientUploadListView(LoginRequiredMixin, TemplateView):
-    template_name = "ext/patient_upload_data.html"
+    template_name = "ext/patients/patient_upload_data.html"
 
     def get(self, request, daily_patient_id, *args, **kwargs):
         daily_patient = get_object_or_404(
@@ -680,7 +680,7 @@ class PatientUploadListView(LoginRequiredMixin, TemplateView):
 
 
 class PatientUploadCreateView(LoginRequiredMixin, TemplateView):
-    template_name = "ext/patient_upload_data.html"
+    template_name = "ext/patients/patient_upload_data.html"
 
     def post(self, request, *args, **kwargs):
         daily_patient_id = request.POST.get("daily_patient_id", "").strip()
@@ -810,7 +810,7 @@ class PatientUploadCreateView(LoginRequiredMixin, TemplateView):
 
 
 class PatientUploadDeleteView(LoginRequiredMixin, TemplateView):
-    template_name = "ext/patient_upload_data.html"
+    template_name = "ext/patients/patient_upload_data.html"
 
     def post(self, request, upload_id, *args, **kwargs):
         upload = get_object_or_404(PatientUpload.objects.select_related('daily_patient__patient'), id=upload_id)

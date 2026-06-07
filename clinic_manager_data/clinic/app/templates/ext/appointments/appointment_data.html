@@ -19,7 +19,26 @@
             </td>
             <td class="px-6 py-4 text-sm text-gray-600">{{ i.treatment }}</td>
             <td class="px-6 py-4 text-sm text-gray-600">{{ i.doctor }}</td>
-            <td class="px-6 py-4"><span class="badge bg-green-100 text-green-700">{{ i.status }}</span></td>
+            <td class="px-6 py-4">
+              <select hx-post="{% url 'clinic:appointment_status_update' i.id %}" 
+                      hx-trigger="change" 
+                      name="status" 
+                      hx-target="#appointmentTableBody" 
+                      hx-headers='{"X-CSRFTOKEN":"{{csrf_token}}"}' 
+                      class="text-xs rounded-full px-2 py-1 focus:outline-none focus:ring-2 cursor-pointer font-medium border
+                             {% if i.status == 'confirmed' %}bg-green-50 text-green-700 border-green-200 focus:ring-green-500
+                             {% elif i.status == 'pending' %}bg-amber-50 text-amber-700 border-amber-200 focus:ring-amber-500
+                             {% elif i.status == 'cancelled' %}bg-red-50 text-red-700 border-red-200 focus:ring-red-500
+                             {% elif i.status == 'rechange' %}bg-purple-50 text-purple-700 border-purple-200 focus:ring-purple-500
+                             {% elif i.status == 'finished' %}bg-blue-50 text-blue-700 border-blue-200 focus:ring-blue-500
+                             {% else %}bg-gray-50 text-gray-700 border-gray-200 focus:ring-gray-500{% endif %}">
+                <option value="confirmed" {% if i.status == 'confirmed' %}selected{% endif %}>Confirmed</option>
+                <option value="pending" {% if i.status == 'pending' %}selected{% endif %}>Pending</option>
+                <option value="cancelled" {% if i.status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                <option value="rechange" {% if i.status == 'rechange' %}selected{% endif %}>Rechange</option>
+                <option value="finished" {% if i.status == 'finished' %}selected{% endif %}>Finished</option>
+              </select>
+            </td>
             <td class="px-6 py-4">
               <div class="flex gap-2"><button
                   onclick="openViewModal('{{ i.name }}', '{{ i.treatment }}', '{{ i.time }}', '{{ i.doctor }}')"

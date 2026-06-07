@@ -45,7 +45,7 @@ class SettingsPartialView(LoginRequiredMixin, TemplateView):
 
 class UserCreateView(LoginRequiredMixin, TemplateView):
     def get(self, request):
-        return TemplateView.as_view(template_name="ext/user_form.html")(request)
+        return TemplateView.as_view(template_name="ext/settings/user_form.html")(request)
 
     def post(self, request):
         username = request.POST.get("username")
@@ -99,7 +99,7 @@ class UserEditView(LoginRequiredMixin, TemplateView):
     def get(self, request, pk):
         print(pk)
         user = get_object_or_404(User, pk=pk)
-        response = render(request, "ext/user_form.html", {
+        response = render(request, "ext/settings/user_form.html", {
             "user": user,
             "doctors": Doctor.objects.all()
         })
@@ -149,7 +149,7 @@ class UserEditView(LoginRequiredMixin, TemplateView):
 def get_users_table_body(request):
     content={"users": User.objects.all(),
              "doctor": Doctor.objects.all()}
-    return render(request, "ext/user_data.html", content)
+    return render(request, "ext/settings/user_data.html", content)
 
 
 class UserDeleteView(LoginRequiredMixin, TemplateView):

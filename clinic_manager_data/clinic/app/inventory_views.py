@@ -43,7 +43,7 @@ class InventoryPartialView(LoginRequiredMixin,TemplateView):
 
 
 class InventoryeditView(LoginRequiredMixin, TemplateView):
-    template_name = 'ext/inventory_data.html'  # Fragment containing only the <tr> tags/inventory_table.html'  # Fragment containing only the <tr> tags
+    template_name = 'ext/inventory/inventory_data.html'  # Fragment containing only the <tr> tags/inventory_table.html'  # Fragment containing only the <tr> tags
 
     def get(self, request):
         items = InventoryItem.objects.all().order_by('-id')
@@ -144,7 +144,7 @@ class InventoryeditView(LoginRequiredMixin, TemplateView):
             'today': timezone.now().date()
         }
         
-        response = render(request, 'ext/inventory_data_paginated.html', context)
+        response = render(request, 'ext/inventory/inventory_data_paginated.html', context)
 
         # Trigger notification and modal close in frontend
         response["HX-Trigger"] = json.dumps({
@@ -160,7 +160,7 @@ class InventoryeditView(LoginRequiredMixin, TemplateView):
 
 class InventoryPaginatedView(LoginRequiredMixin, TemplateView):
     """Handle paginated inventory data with HTMX"""
-    template_name = 'ext/inventory_data_paginated.html'
+    template_name = 'ext/inventory/inventory_data_paginated.html'
     
     def get(self, request):
         
@@ -228,7 +228,7 @@ class InventoryEventsView(LoginRequiredMixin, TemplateView):
     View to fetch and display events for an inventory item.
     Returns HTML fragment showing the event history.
     """
-    template_name = 'ext/inventory_events.html'
+    template_name = 'ext/inventory/inventory_events.html'
 
     def get(self, request, id):
         try:

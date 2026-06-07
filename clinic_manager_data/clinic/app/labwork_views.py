@@ -29,7 +29,7 @@ class LabWorkPartialView(LoginRequiredMixin, TemplateView):
 
 class LabWorkPaginatedView(LoginRequiredMixin, TemplateView):
     """Handle paginated lab work data with HTMX"""
-    template_name = 'ext/lab_data_paginated.html'
+    template_name = 'ext/lab_work/lab_data_paginated.html'
     
     def get(self, request):
         page_num = request.GET.get('page', 1)
@@ -107,7 +107,7 @@ class LabCreateView(TemplateView):
 
         # Get all labs to render table rows
         labs = labdetails.objects.all().order_by("-id")
-        response = render(request, "ext/lab_details_data.html", {"labdetails": labs})
+        response = render(request, "ext/lab_work/lab_details_data.html", {"labdetails": labs})
 
         # HTMX Trigger for notification and modal close
         response["HX-Trigger"] = json.dumps({
@@ -144,7 +144,7 @@ class LabWorkCRUDView(LoginRequiredMixin, TemplateView):
             message = "Lab work item added successfully"
 
         labtests = labtest.objects.all().order_by("-id")
-        response = render(request, "ext/lab_item_data.html", {"labtest": labtests})
+        response = render(request, "ext/lab_work/lab_item_data.html", {"labtest": labtests})
         response["HX-Trigger"] = json.dumps({
             "showNotification": {
                 "message": message,
@@ -194,7 +194,7 @@ class LabOrderCreateView(LoginRequiredMixin, TemplateView):
             'is_paginated': paginator.num_pages > 1
         }
         
-        response = render(request, "ext/lab_data_paginated.html", context)
+        response = render(request, "ext/lab_work/lab_data_paginated.html", context)
 
         response["HX-Trigger"] = json.dumps({
             "showNotification": {
@@ -242,7 +242,7 @@ class LabOrderStatusUpdateView(LoginRequiredMixin, TemplateView):
 
 
 class LabOrderDetailsPrintView(LoginRequiredMixin, TemplateView):
-    template_name = "ext/labwork_details_print.html"
+    template_name = "ext/lab_work/labwork_details_print.html"
 
     @method_decorator(xframe_options_exempt)
     def dispatch(self, request, *args, **kwargs):
