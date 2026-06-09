@@ -5,7 +5,8 @@ from django.views import View
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 import json
-from django.db.models import Q
+from django.db.models import Q, Value
+from django.db.models.functions import Concat
 from datetime import date, datetime
 from django.http import HttpResponse, JsonResponse
 from .models import Patient, labdetails, labtest, DailyPatient, Prescription, labwork, PatientUpload, Doctor, Treatment
@@ -17,7 +18,7 @@ from django.utils import timezone
 @login_required
 def patients_table_body(request):
     # Base queryset
-    patients_qs = Patient.objects.all().order_by('-created_at')
+    patients_qs = Patient.objects.all().order_by('-updated_at')
 
     # Filters from query params
     q = request.GET.get('q', '').strip()
@@ -25,12 +26,19 @@ def patients_table_body(request):
     status = request.GET.get('status', '').strip()
 
     if q:
-        # numeric -> try id, otherwise search names and phone
-        if q.isdigit():
-            patients_qs = patients_qs.filter(id=int(q))
+        clean_q = q.replace(" ", "")
+        fuzzy_pattern = '.*'.join(list(clean_q))
+
+        patients_qs = patients_qs.annotate(
+            full_name=Concat('first_name', Value(' '), 'last_name')
+        )
+        if clean_q.isdigit():
+            patients_qs = patients_qs.filter(
+                Q(id=int(clean_q)) | Q(phone__iregex=fuzzy_pattern) | Q(full_name__iregex=fuzzy_pattern)
+            )
         else:
             patients_qs = patients_qs.filter(
-                Q(first_name__icontains=q) | Q(last_name__icontains=q) | Q(phone__icontains=q)
+                Q(full_name__iregex=fuzzy_pattern) | Q(phone__iregex=fuzzy_pattern)
             )
 
     if gender:
@@ -87,11 +95,13 @@ def patients_table_body(request):
 class PatientsPartialView(LoginRequiredMixin, TemplateView):
     template_name = 'partials/patients.html'
     def get(self,request):
+        q = request.GET.get('q', '')
         context={
             "labdetails":labdetails.objects.all().order_by("-id"),
             "labtest":labtest.objects.all().order_by("-id"),
             "doctors": Doctor.objects.all(),
-            "treatment": Treatment.objects.all()
+            "treatment": Treatment.objects.all(),
+            "q": q
         }
         return render(request,self.template_name,context)
    
@@ -119,11 +129,12 @@ class Patientsdatasave(LoginRequiredMixin, TemplateView):
         last_visit = date.today()  # Set last visit to today for new patient
         
         # Check for duplicates
-        existing_patient = Patient.objects.filter(first_name=first_name, last_name=last_name, phone=phone).first()
-        if existing_patient:
+        override_duplicate = request.POST.get('override_duplicate') == 'true'
+        existing_patient = Patient.objects.filter(phone=phone).first() if phone else None
+        if existing_patient and not override_duplicate:
             response = HttpResponse(status=204)
             response["HX-Trigger"] = json.dumps({
-                "patientExistsError": {"message": f"A patient with this name and phone number already exists! (Patient ID: #{existing_patient.id})"}
+                "patientExistsError": {"message": f"A patient with this phone number already exists! (Patient ID: #{existing_patient.id}, Name: {existing_patient.first_name} {existing_patient.last_name})"}
             })
             return response
 
@@ -352,19 +363,24 @@ class PatientFilesAPIView(LoginRequiredMixin, View):
             return JsonResponse({'error': str(e)}, status=400)
 class CheckPatientExistsView(LoginRequiredMixin, View):
     def post(self, request):
-        first_name = request.POST.get('first_name') or ''
-        last_name = request.POST.get('last_name') or ''
         phone = request.POST.get('phone') or ''
         
-        existing_patient = Patient.objects.filter(first_name=first_name, last_name=last_name, phone=phone).first()
-        if first_name and last_name and phone and existing_patient:
-            html = f"""<div id='addPatientErrorMsg' class='text-red-600 text-xs font-medium mt-2 bg-red-50 p-2 rounded-lg border border-red-100'>A patient with this name and phone number already exists! (Patient ID: #{existing_patient.id})</div>
+        existing_patient = Patient.objects.filter(phone=phone).first() if phone else None
+        if phone and existing_patient:
+            html = f"""<div id='addPatientErrorMsg' class='text-orange-700 text-xs font-medium mt-2 bg-orange-50 p-3 rounded-lg border border-orange-200'>
+              <strong>Warning:</strong> A patient with this phone number already exists! (Patient ID: #{existing_patient.id}, Name: {existing_patient.first_name} {existing_patient.last_name})
+              <label class='flex items-center mt-2 cursor-pointer'>
+                <input type='checkbox' name='override_duplicate' value='true' class='w-4 h-4 text-orange-600 bg-white border-orange-300 rounded focus:ring-orange-500' onchange="var btn = document.getElementById('savePatientBtn'); btn.disabled = !this.checked; if(this.checked) {{ btn.className = 'bg-gradient-to-r from-teal-500 to-teal-600 text-white px-5 py-2.5 rounded-xl text-sm font-semibold shadow-lg shadow-teal-200 hover:shadow-xl transition'; }} else {{ btn.className = 'bg-gray-300 text-gray-500 px-5 py-2.5 rounded-xl text-sm font-semibold cursor-not-allowed transition'; }}">
+                <span class='ml-2 text-orange-800 font-semibold'>Override and save this new patient anyway</span>
+              </label>
+            </div>
             <button type="submit" id="savePatientBtn" hx-swap-oob="true" disabled class="bg-gray-300 text-gray-500 px-5 py-2.5 rounded-xl text-sm font-semibold cursor-not-allowed transition">Save Patient</button>
             """
             return HttpResponse(html)
         else:
-            html = """<div id='addPatientErrorMsg' class='hidden'></div>
+            html = """<div id='addPatientErrorMsg' class='text-red-600 text-xs font-medium hidden mt-2 bg-red-50 p-2 rounded-lg border border-red-100'></div>
             <button type="submit" id="savePatientBtn" hx-swap-oob="true" class="bg-gradient-to-r from-teal-500 to-teal-600 text-white px-5 py-2.5 rounded-xl text-sm font-semibold shadow-lg shadow-teal-200 hover:shadow-xl transition">Save Patient</button>
             """
             return HttpResponse(html)
+
 

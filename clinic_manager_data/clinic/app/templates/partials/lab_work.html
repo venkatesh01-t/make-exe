@@ -153,30 +153,36 @@
             add Lab Work
         </button>
 
-        <div class="w-full min-h-[88px] bg-white px-4 py-4 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-center">
+        <div class="w-full min-h-[88px] bg-white px-4 py-4 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-center cursor-pointer hover:bg-slate-50 transition"
+             hx-get="{% url 'clinic:lab_work_paginated' %}" hx-target="#lab-orders-table-body" hx-swap="innerHTML">
             <span class="text-[10px] uppercase font-black text-slate-400 tracking-widest">Active Orders</span>
             <span class="block text-2xl font-black text-blue-600" id="lab-count">--</span>
         </div>
         </div>
 
         <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 w-full">
-            <div class="bg-blue-50 border border-blue-100 rounded-2xl px-4 py-3">
+            <div class="bg-blue-50 border border-blue-100 rounded-2xl px-4 py-3 cursor-pointer hover:bg-blue-100 transition"
+                 hx-get="{% url 'clinic:lab_work_paginated' %}?status=SEND" hx-target="#lab-orders-table-body" hx-swap="innerHTML">
                 <p class="text-[10px] uppercase font-black text-blue-400 tracking-widest">SEND</p>
                 <p id="count-sent" class="text-xl font-black text-blue-700 mt-1">--</p>
             </div>
-            <div class="bg-sky-50 border border-sky-100 rounded-2xl px-4 py-3">
+            <div class="bg-sky-50 border border-sky-100 rounded-2xl px-4 py-3 cursor-pointer hover:bg-sky-100 transition"
+                 hx-get="{% url 'clinic:lab_work_paginated' %}?status=RECEIVED" hx-target="#lab-orders-table-body" hx-swap="innerHTML">
                 <p class="text-[10px] uppercase font-black text-sky-400 tracking-widest">RECEIVED</p>
                 <p id="count-received" class="text-xl font-black text-sky-700 mt-1">--</p>
             </div>
-            <div class="bg-indigo-50 border border-indigo-100 rounded-2xl px-4 py-3">
+            <div class="bg-indigo-50 border border-indigo-100 rounded-2xl px-4 py-3 cursor-pointer hover:bg-indigo-100 transition"
+                 hx-get="{% url 'clinic:lab_work_paginated' %}?status=INFORMED" hx-target="#lab-orders-table-body" hx-swap="innerHTML">
                 <p class="text-[10px] uppercase font-black text-indigo-400 tracking-widest">INFORMED</p>
                 <p id="count-designing" class="text-xl font-black text-indigo-700 mt-1">--</p>
             </div>
-            <div class="bg-amber-50 border border-amber-100 rounded-2xl px-4 py-3">
+            <div class="bg-amber-50 border border-amber-100 rounded-2xl px-4 py-3 cursor-pointer hover:bg-amber-100 transition"
+                 hx-get="{% url 'clinic:lab_work_paginated' %}?status=QA" hx-target="#lab-orders-table-body" hx-swap="innerHTML">
                 <p class="text-[10px] uppercase font-black text-amber-500 tracking-widest">QA</p>
                 <p id="count-qa-check" class="text-xl font-black text-amber-700 mt-1">--</p>
             </div>
-            <div class="bg-emerald-50 border border-emerald-100 rounded-2xl px-4 py-3">
+            <div class="bg-emerald-50 border border-emerald-100 rounded-2xl px-4 py-3 cursor-pointer hover:bg-emerald-100 transition"
+                 hx-get="{% url 'clinic:lab_work_paginated' %}?status=FINSHED" hx-target="#lab-orders-table-body" hx-swap="innerHTML">
                 <p class="text-[10px] uppercase font-black text-emerald-500 tracking-widest">FINISHED</p>
                 <p id="count-ready" class="text-xl font-black text-emerald-700 mt-1">--</p>
             </div>

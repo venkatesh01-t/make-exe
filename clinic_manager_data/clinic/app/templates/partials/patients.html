@@ -1,115 +1,99 @@
-
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-      <div>
-        <h3 class="text-xl font-bold text-gray-800">Patient Management</h3>
-        <p class="text-sm text-gray-400">View and manage all patient records</p>
-      </div>
-      <button
-        class="bg-gradient-to-r from-teal-500 to-teal-600 text-white px-5 py-2.5 rounded-xl text-sm font-semibold shadow-lg shadow-teal-200 hover:shadow-xl transition flex items-center gap-2 w-fit"
-        onclick="openModal('patientModal')">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-        </svg>Add Patient
-      </button>
-    </div>
-
-    <!-- Filters -->
-    <form id="filterForm" class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-5 mb-6">
-      <div class="flex flex-col sm:flex-row gap-3">
-        <div class="flex-1">
-          <div
-            class="flex items-center gap-2 bg-gray-50 rounded-xl px-4 py-2.5 focus-within:ring-2 focus-within:ring-teal-200 focus-within:bg-white border border-gray-200 transition">
-            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-            <input
-              id="patientsSearch"
-              name="q"
-              value="{{ q|default_if_none:'' }}"
-              hx-get="{% url 'clinic:patients_table_body' %}"
-              hx-target="#patientsTableBody"
-              hx-swap="innerHTML"
-              hx-trigger="keyup changed delay:150ms"
-              hx-include="#filterForm input, #filterForm select"
-              type="text"
-              placeholder="Search by name, phone, or ID..."
-              class="bg-transparent border-none text-sm text-gray-600 placeholder-gray-400 w-full focus:outline-none">
-          </div>
-        </div>
-
-        <select id="patientsGender" name="gender"
-          hx-get="{% url 'clinic:patients_table_body' %}"
-          hx-target="#patientsTableBody"
-          hx-swap="innerHTML"
-          hx-trigger="change"
-          hx-include="#filterForm input, #filterForm select"
-          class="text-sm border border-gray-200 rounded-xl px-3 py-2.5 text-gray-600 bg-white">
-          <option value="">All Gender</option>
-          <option value="Male" {% if gender == 'Male' %}selected{% endif %}>Male</option>
-          <option value="Female" {% if gender == 'Female' %}selected{% endif %}>Female</option>
-        </select>
-
-        <select id="patientsStatus" name="status"
-          hx-get="{% url 'clinic:patients_table_body' %}"
-          hx-target="#patientsTableBody"
-          hx-swap="innerHTML"
-          hx-trigger="change"
-          hx-include="#filterForm input, #filterForm select"
-          class="text-sm border border-gray-200 rounded-xl px-3 py-2.5 text-gray-600 bg-white">
-          <option value="">All Status</option>
-          <option value="Active" {% if status == 'Active' %}selected{% endif %}>Active</option>
-          <option value="Inactive" {% if status == 'Inactive' %}selected{% endif %}>Inactive</option>
-        </select>
-      </div>
-    </form>
-
-    <!-- Patients Table -->
-    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-      <div class="overflow-x-auto">
-        <table class="w-full">
-          <thead class="bg-gray-50">
-            <tr>
-              <th class="text-left px-5 sm:px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                Patient</th>
-              <th
-                class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden sm:table-cell">
-                Phone</th>
-              <th
-                class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">
-                Age/Gender</th>
-              <th
-                class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden lg:table-cell">
-                Last Visit</th>
-              <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
-              <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
-            </tr>
-          </thead>
-          <tbody 
-           id="patientsTableBody"
-       hx-get="{% url 'clinic:patients_table_body' %}"
-       hx-trigger="load"
-       hx-swap="innerHTML"
-       class="divide-y divide-gray-50">
-
-            <!-- Row 3: Robert Wilson -->
-              {% include 'ext/patients/patients_data.html' %}
-          </tbody>
-        </table>
-      </div>
-      <div
-        class="px-5 sm:px-6 py-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-3">
-        <!-- pagination info moved into the table rows; controls also appear there -->
-        <div class="flex items-center gap-1">
-
-  
-
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+  <div>
+    <h3 class="text-xl font-bold text-gray-800">Patient Management</h3>
+    <p class="text-sm text-gray-400">View and manage all patient records</p>
+  </div>
+  <button
+    class="bg-gradient-to-r from-teal-500 to-teal-600 text-white px-5 py-2.5 rounded-xl text-sm font-semibold shadow-lg shadow-teal-200 hover:shadow-xl transition flex items-center gap-2 w-fit"
+    onclick="openModal('patientModal')">
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+    </svg>Add Patient
+  </button>
 </div>
+
+<!-- Filters -->
+<form id="filterForm" hx-get="{% url 'clinic:patients_table_body' %}" hx-target="#patientsTableBody" hx-swap="innerHTML"
+  class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-5 mb-6">
+  <div class="flex flex-col sm:flex-row gap-3">
+    <div class="flex-1 flex gap-2">
+      <div
+        class="flex-1 flex items-center gap-2 bg-gray-50 rounded-xl px-4 py-2.5 focus-within:ring-2 focus-within:ring-teal-200 focus-within:bg-white border border-gray-200 transition">
+        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+        <input id="patientsSearch" name="q" value="{{ q|default_if_none:'' }}" type="text"
+          placeholder="Search by name, phone, or ID..." hx-get="{% url 'clinic:patients_table_body' %}"
+          hx-trigger="keyup changed delay:300ms, search" hx-target="#patientsTableBody" hx-include="#filterForm"
+          class="bg-transparent border-none text-sm text-gray-600 placeholder-gray-400 w-full focus:outline-none">
       </div>
+      <button type="submit"
+        class="bg-gradient-to-r from-teal-500 to-teal-600 hover:from-teal-600 hover:to-teal-700 text-white px-5 py-2.5 rounded-xl text-sm font-semibold shadow-md shadow-teal-100 transition">Search</button>
     </div>
-      </div>
+
+    <select id="patientsGender" name="gender" hx-get="{% url 'clinic:patients_table_body' %}"
+      hx-target="#patientsTableBody" hx-swap="innerHTML" hx-trigger="change"
+      hx-include="#filterForm input, #filterForm select"
+      class="text-sm border border-gray-200 rounded-xl px-3 py-2.5 text-gray-600 bg-white">
+      <option value="">All Gender</option>
+      <option value="Male" {% if gender == 'Male' %}selected{% endif %}>Male</option>
+      <option value="Female" {% if gender == 'Female' %}selected{% endif %}>Female</option>
+    </select>
+
+    <select id="patientsStatus" name="status" hx-get="{% url 'clinic:patients_table_body' %}"
+      hx-target="#patientsTableBody" hx-swap="innerHTML" hx-trigger="change"
+      hx-include="#filterForm input, #filterForm select"
+      class="text-sm border border-gray-200 rounded-xl px-3 py-2.5 text-gray-600 bg-white">
+      <option value="">All Status</option>
+      <option value="Active" {% if status == 'Active' %}selected{% endif %}>Active</option>
+      <option value="Inactive" {% if status == 'Inactive' %}selected{% endif %}>Inactive</option>
+    </select>
+  </div>
+</form>
+
+<!-- Patients Table -->
+<div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+  <div class="overflow-x-auto">
+    <table class="w-full">
+      <thead class="bg-gray-50">
+        <tr>
+          <th class="text-left px-5 sm:px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+            Patient</th>
+          <th
+            class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden sm:table-cell">
+            Phone</th>
+          <th
+            class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">
+            Age/Gender</th>
+          <th
+            class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden lg:table-cell">
+            Last Visit</th>
+          <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+          <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="patientsTableBody" hx-get="{% url 'clinic:patients_table_body' %}" hx-trigger="load"
+        hx-include="#filterForm"
+        hx-swap="innerHTML" class="divide-y divide-gray-50">
+
+        <!-- Row 3: Robert Wilson -->
+        {% include 'ext/patients/patients_data.html' %}
+      </tbody>
+    </table>
+  </div>
+  <div class="px-5 sm:px-6 py-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-3">
+    <!-- pagination info moved into the table rows; controls also appear there -->
+    <div class="flex items-center gap-1">
+
+
+
     </div>
-  </main>
+  </div>
+</div>
+</div>
+</div>
+</main>
 </div>
 
 <!-- ==================== ADD PATIENT MODAL ==================== -->
@@ -124,71 +108,72 @@
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
         </svg></button>
     </div>
-    <form hx-post="{% url 'clinic:add_patient' %}" hx-target="#patientsTableBody" hx-swap="innerHTML" hx-headers='{"X-CSRFTOKEN":"{{csrf_token}}"}' onsubmit="document.getElementById('addPatientErrorMsg').classList.add('hidden');">
-    <div class="p-6 space-y-4">
-      <div class="grid grid-cols-2 gap-4">
-        <div><label class="block text-sm font-medium text-gray-700 mb-1">First Name <span
-              class="text-red-500">*</span></label><input type="text" placeholder="John" required name="first_name"
-            hx-post="{% url 'clinic:check_patient_exists' %}" hx-trigger="keyup changed delay:500ms" hx-target="#addPatientErrorMsgContainer" hx-include="closest form" hx-headers='{"X-CSRFTOKEN":"{{csrf_token}}"}'
-            class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-800 transition"></div>
-        <div><label class="block text-sm font-medium text-gray-700 mb-1">Last Name <span
-              class="text-red-500">*</span></label><input type="text" placeholder="Doe"  name="last_name"
-            hx-post="{% url 'clinic:check_patient_exists' %}" hx-trigger="keyup changed delay:500ms" hx-target="#addPatientErrorMsgContainer" hx-include="closest form" hx-headers='{"X-CSRFTOKEN":"{{csrf_token}}"}'
-            class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-800 transition"></div>
-      </div>
-      <div class="grid grid-cols-2 gap-4">
-        <div><label class="block text-sm font-medium text-gray-700 mb-1">Date of Birth <span
-              class="text-red-500">*</span></label><input type="date"required name="dob"
-            class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-800 transition"></div>
+    <form hx-post="{% url 'clinic:add_patient' %}" hx-target="#patientsTableBody" hx-swap="innerHTML"
+      hx-headers='{"X-CSRFTOKEN":"{{csrf_token}}"}'
+      onsubmit="document.getElementById('addPatientErrorMsg').classList.add('hidden');">
+      <div class="p-6 space-y-4">
+        <div class="grid grid-cols-2 gap-4">
+          <div><label class="block text-sm font-medium text-gray-700 mb-1">First Name <span
+                class="text-red-500">*</span></label><input type="text" placeholder="John" required name="first_name"
+              hx-post="{% url 'clinic:check_patient_exists' %}" hx-trigger="keyup changed delay:50ms"
+              hx-target="#addPatientErrorMsgContainer" hx-include="closest form"
+              hx-headers='{"X-CSRFTOKEN":"{{csrf_token}}"}'
+              class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-800 transition"></div>
+          <div><label class="block text-sm font-medium text-gray-700 mb-1">Last Name <span
+                class="text-red-500">*</span></label><input type="text" placeholder="Doe" name="last_name"
+              hx-post="{% url 'clinic:check_patient_exists' %}" hx-trigger="keyup changed delay:50ms"
+              hx-target="#addPatientErrorMsgContainer" hx-include="closest form"
+              hx-headers='{"X-CSRFTOKEN":"{{csrf_token}}"}'
+              class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-800 transition"></div>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div><label class="block text-sm font-medium text-gray-700 mb-1">Date of Birth <span
+                class="text-red-500">*</span></label><input type="date" required name="dob"
+              class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-800 transition"></div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">
+              Gender <span class="text-red-500">*</span>
+            </label>
+            <select name="gender" required
+              class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-800 transition bg-white">
+              <option value="">Select</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+            </select>
+          </div>
+        </div>
         <div>
-  <label class="block text-sm font-medium text-gray-700 mb-1">
-    Gender <span class="text-red-500">*</span>
-  </label>
-  <select 
-    name="gender" 
-    required
-    class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-800 transition bg-white"
-  >
-    <option value="">Select</option>
-    <option value="Male">Male</option>
-    <option value="Female">Female</option>
-  </select>
-</div>
-</div>
-<div>
-  <label class="block text-sm font-medium text-gray-700 mb-1">
-    Phone <span class="text-red-500">*</span>
-  </label>
-  <input 
-    type="text" 
-    name="phone" 
-    placeholder="123456789012" 
-    required
-    maxlength="12"
-    oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0,12);"
-    hx-post="{% url 'clinic:check_patient_exists' %}" hx-trigger="keyup changed delay:500ms" hx-target="#addPatientErrorMsgContainer" hx-include="closest form" hx-headers='{"X-CSRFTOKEN":"{{csrf_token}}"}'
-    class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-800 transition"
-  >
-  <div id="addPatientErrorMsgContainer">
-    <div id="addPatientErrorMsg" class="text-red-600 text-xs font-medium hidden mt-2 bg-red-50 p-2 rounded-lg border border-red-100"></div>
-  </div>
-</div>
-      <div><label class="block text-sm font-medium text-gray-700 mb-1">Email</label><input type="email" name="email"
-          placeholder="john@example.com"
-          class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-800 transition"></div>
-      <div><label class="block text-sm font-medium text-gray-700 mb-1">Medical Notes</label><textarea rows="2" name="medical_notes"
-          placeholder="Allergies, conditions..."
-          class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-800 transition resize-none"></textarea>
+          <label class="block text-sm font-medium text-gray-700 mb-1">
+            Phone <span class="text-red-500">*</span>
+          </label>
+          <input type="text" name="phone" placeholder="123456789012" required maxlength="12"
+            oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0,12);"
+            hx-post="{% url 'clinic:check_patient_exists' %}" hx-trigger="keyup changed delay:50ms"
+            hx-target="#addPatientErrorMsgContainer" hx-include="closest form"
+            hx-headers='{"X-CSRFTOKEN":"{{csrf_token}}"}'
+            class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-800 transition">
+          <div id="addPatientErrorMsgContainer">
+            <div id="addPatientErrorMsg"
+              class="text-red-600 text-xs font-medium hidden mt-2 bg-red-50 p-2 rounded-lg border border-red-100"></div>
+          </div>
+        </div>
+        <div><label class="block text-sm font-medium text-gray-700 mb-1">Email</label><input type="email" name="email"
+            placeholder="john@example.com"
+            class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-800 transition"></div>
+        <div><label class="block text-sm font-medium text-gray-700 mb-1">Medical Notes</label><textarea rows="2"
+            name="medical_notes" placeholder="Allergies, conditions..."
+            class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-800 transition resize-none"></textarea>
+        </div>
       </div>
-    </div>
-    <div
-      class="px-6 py-4 border-t border-gray-100 flex items-center justify-end gap-3 sticky bottom-0 bg-white rounded-b-2xl">
-      <button type="button" class="px-5 py-2.5 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-100 transition"
-        onclick="closeModal('patientModal')">Cancel</button>
-      <button type="submit" id="savePatientBtn"
-        class="bg-gradient-to-r from-teal-500 to-teal-600 text-white px-5 py-2.5 rounded-xl text-sm font-semibold shadow-lg shadow-teal-200 hover:shadow-xl transition"
-        >Save Patient</button>
-    </div>
+      <div
+        class="px-6 py-4 border-t border-gray-100 flex items-center justify-end gap-3 sticky bottom-0 bg-white rounded-b-2xl">
+        <button type="button"
+          class="px-5 py-2.5 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-100 transition"
+          onclick="closeModal('patientModal')">Cancel</button>
+        <button type="submit" id="savePatientBtn"
+          class="bg-gradient-to-r from-teal-500 to-teal-600 text-white px-5 py-2.5 rounded-xl text-sm font-semibold shadow-lg shadow-teal-200 hover:shadow-xl transition">Save
+          Patient</button>
+      </div>
     </form>
   </div>
 </div>
@@ -265,49 +250,46 @@
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
         </svg></button>
     </div>
-    <form  id="editPatientForm" hx-post="{% url 'clinic:edit_patient' %}" hx-target="#patientsTableBody"
-       hx-swap="innerHTML"
-       hx-headers='{"X-CSRFTOKEN":"{{csrf_token}}"}'>
-      <input type="hidden" id="editPatientRowId"  name="patient_id" value="">
+    <form id="editPatientForm" hx-post="{% url 'clinic:edit_patient' %}" hx-target="#patientsTableBody"
+      hx-swap="innerHTML" hx-headers='{"X-CSRFTOKEN":"{{csrf_token}}"}'>
+      <input type="hidden" id="editPatientRowId" name="patient_id" value="">
       <div class="p-6 space-y-4">
         <div class="grid grid-cols-2 gap-4">
-          <div><label class="block text-sm font-medium text-gray-700 mb-1">First Name <span 
+          <div><label class="block text-sm font-medium text-gray-700 mb-1">First Name <span
                 class="text-red-500">*</span></label><input type="text" id="editPatientFirstName" name="first_name"
               class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-800 transition" required>
           </div>
           <div><label class="block text-sm font-medium text-gray-700 mb-1">Last Name <span
                 class="text-red-500">*</span></label><input type="text" id="editPatientLastName" name="last_name"
-              class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-800 transition" >
+              class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-800 transition">
           </div>
         </div>
         <div class="grid grid-cols-2 gap-4">
-        <div><label class="block text-sm font-medium text-gray-700 mb-1">Date of Birth <span
-              class="text-red-500">*</span></label><input type="date"required name="dob" id="editPatientDob"
-            class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-800 transition"></div>
-        <div>
-  <label class="block text-sm font-medium text-gray-700 mb-1">
-    Gender <span class="text-red-500">*</span>
-  </label>
-  <select id="editPatientGender"
-    name="gender" 
-    required
-    class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-800 transition bg-white"
-  >
-    <option value="">Select</option>
-    <option value="Male">Male</option>
-    <option value="Female">Female</option>
-  </select>
-</div>
-</div>
+          <div><label class="block text-sm font-medium text-gray-700 mb-1">Date of Birth <span
+                class="text-red-500">*</span></label><input type="date" required name="dob" id="editPatientDob"
+              class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-800 transition"></div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">
+              Gender <span class="text-red-500">*</span>
+            </label>
+            <select id="editPatientGender" name="gender" required
+              class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-800 transition bg-white">
+              <option value="">Select</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+            </select>
+          </div>
+        </div>
         <div><label class="block text-sm font-medium text-gray-700 mb-1">Phone <span
-              class="text-red-500">*</span></label><input type="tel" id="editPatientPhone" name="phone" placeholder="123456789012" maxlength="12" required
+              class="text-red-500">*</span></label><input type="tel" id="editPatientPhone" name="phone"
+            placeholder="123456789012" maxlength="12" required
             oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0,12);"
             class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-800 transition" required>
         </div>
         <div><label class="block text-sm font-medium text-gray-700 mb-1">Email</label><input type="email"
             id="editPatientEmailInput" name="email" placeholder="example@domain.com"
             class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-800 transition"></div>
-        
+
         <div><label class="block text-sm font-medium text-gray-700 mb-1">Medical Notes</label><textarea
             id="editPatientNotes" rows="2" name='medical_notes'
             class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-800 transition resize-none "></textarea>
@@ -336,23 +318,24 @@
           d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
       </svg>
     </div>
-    <form hx-post="{% url 'clinic:delete_patient' %}"  hx-target="#patientsTableBody" hx-swap="innerHTML" hx-headers='{"X-CSRFTOKEN":"{{csrf_token}}"}'>
-        
-    <h3 class="text-xl font-bold text-gray-900">Delete Patient?</h3>
-    <p class="text-sm text-gray-500 mt-2 mb-6">Are you sure you want to remove <span id="deletePatientName"
-        class="font-bold text-gray-800">this patient</span>? This action cannot be undone.</p>
-    <div class="flex gap-3">
-      <button type="button" onclick="closeModal('deletePatientModal')"
-        class="flex-1 py-2.5 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200 transition">Cancel</button>
-        
-        <button onclick="confirmDeletePatient()"  
-        class="flex-1 py-2.5 bg-red-600 text-white font-bold rounded-xl shadow-lg shadow-red-200 hover:bg-red-700 transition">Yes,
-        Delete</button>
+    <form hx-post="{% url 'clinic:delete_patient' %}" hx-target="#patientsTableBody" hx-swap="innerHTML"
+      hx-headers='{"X-CSRFTOKEN":"{{csrf_token}}"}'>
+
+      <h3 class="text-xl font-bold text-gray-900">Delete Patient?</h3>
+      <p class="text-sm text-gray-500 mt-2 mb-6">Are you sure you want to remove <span id="deletePatientName"
+          class="font-bold text-gray-800">this patient</span>? This action cannot be undone.</p>
+      <div class="flex gap-3">
+        <button type="button" onclick="closeModal('deletePatientModal')"
+          class="flex-1 py-2.5 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200 transition">Cancel</button>
+
+        <button onclick="confirmDeletePatient()"
+          class="flex-1 py-2.5 bg-red-600 text-white font-bold rounded-xl shadow-lg shadow-red-200 hover:bg-red-700 transition">Yes,
+          Delete</button>
         <input name="patient_id" value="" id="confirmDeleteButton" type="hidden">
-      </form>
-      
-    </div>
+    </form>
+
   </div>
+</div>
 </div>
 
 <div id="todayPatientConfirmModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -378,16 +361,20 @@
 </div>
 
 <!-- ==================== PATIENT HISTORY MODAL ==================== -->
-<div  id="patientHistoryModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4" onclick="if (event.target === this) closeModal('patientHistoryModal')">
+<div id="patientHistoryModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4"
+  onclick="if (event.target === this) closeModal('patientHistoryModal')">
   <div class="modal-backdrop absolute inset-0 bg-black/50" onclick="closeModal('patientHistoryModal')"></div>
-  <div class="modal-content bg-white rounded-3xl shadow-2xl w-full max-w-5xl relative z-10 max-h-[92vh] overflow-hidden flex flex-col pointer-events-auto ">
+  <div
+    class="modal-content bg-white rounded-3xl shadow-2xl w-full max-w-5xl relative z-10 max-h-[92vh] overflow-hidden flex flex-col pointer-events-auto ">
     <!-- Header -->
-    <div  class="px-5 sm:px-7 py-4 border-b border-slate-100 bg-gradient-to-r from-indigo-50 via-blue-50 to-cyan-50 flex items-center justify-between">
+    <div
+      class="px-5 sm:px-7 py-4 border-b border-slate-100 bg-gradient-to-r from-indigo-50 via-blue-50 to-cyan-50 flex items-center justify-between">
       <div>
         <h3 class="text-lg sm:text-xl font-black text-slate-900" id="patientHistoryTitle">Patient Medical History</h3>
         <p class="text-xs text-slate-500 mt-1">Complete patient visits, prescriptions, and lab work records</p>
       </div>
-      <button type="button" onclick="closeModal('patientHistoryModal')" class="p-2 rounded-xl hover:bg-slate-100 transition">
+      <button type="button" onclick="closeModal('patientHistoryModal')"
+        class="p-2 rounded-xl hover:bg-slate-100 transition">
         <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
         </svg>
@@ -396,30 +383,37 @@
 
     <!-- Tabs Navigation with Enhanced Styling -->
     <div class="border-b border-slate-200 bg-white px-5 sm:px-7 py-0 flex gap-0">
-      <button data-tab-btn="visited" onclick="switchPatientHistoryTab('visited')" class="tab-nav-btn active flex items-center gap-2 px-5 sm:px-6 py-4 border-b-2 border-indigo-600 text-indigo-600 font-bold text-sm transition hover:bg-indigo-50">
+      <button data-tab-btn="visited" onclick="switchPatientHistoryTab('visited')"
+        class="tab-nav-btn active flex items-center gap-2 px-5 sm:px-6 py-4 border-b-2 border-indigo-600 text-indigo-600 font-bold text-sm transition hover:bg-indigo-50">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
         </svg>
         <span>Visit History</span>
       </button>
-      
-      <button data-tab-btn="labwork" onclick="switchPatientHistoryTab('labwork')" class="tab-nav-btn flex items-center gap-2 px-5 sm:px-6 py-4 border-b-2 border-transparent text-slate-600 font-bold text-sm transition hover:bg-slate-50">
+
+      <button data-tab-btn="labwork" onclick="switchPatientHistoryTab('labwork')"
+        class="tab-nav-btn flex items-center gap-2 px-5 sm:px-6 py-4 border-b-2 border-transparent text-slate-600 font-bold text-sm transition hover:bg-slate-50">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
         </svg>
         <span>Lab Work</span>
       </button>
-      
-      <button data-tab-btn="prescriptions" onclick="switchPatientHistoryTab('prescriptions')" class="tab-nav-btn flex items-center gap-2 px-5 sm:px-6 py-4 border-b-2 border-transparent text-slate-600 font-bold text-sm transition hover:bg-slate-50">
+
+      <button data-tab-btn="prescriptions" onclick="switchPatientHistoryTab('prescriptions')"
+        class="tab-nav-btn flex items-center gap-2 px-5 sm:px-6 py-4 border-b-2 border-transparent text-slate-600 font-bold text-sm transition hover:bg-slate-50">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
         </svg>
         <span>Prescriptions</span>
       </button>
-      
-      <button data-tab-btn="fileupload" onclick="switchPatientHistoryTab('fileupload')" class="tab-nav-btn flex items-center gap-2 px-5 sm:px-6 py-4 border-b-2 border-transparent text-slate-600 font-bold text-sm transition hover:bg-slate-50">
+
+      <button data-tab-btn="fileupload" onclick="switchPatientHistoryTab('fileupload')"
+        class="tab-nav-btn flex items-center gap-2 px-5 sm:px-6 py-4 border-b-2 border-transparent text-slate-600 font-bold text-sm transition hover:bg-slate-50">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
         </svg>
         <span>Patient Files</span>
       </button>
@@ -431,7 +425,8 @@
       <div data-tab-content="visited" class="p-5 sm:p-7 space-y-4" id="visitedHistoryContainer">
         <div class="text-center py-12 text-slate-400">
           <svg class="w-12 h-12 mx-auto mb-3 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
           Loading visit history...
         </div>
@@ -441,7 +436,8 @@
       <div data-tab-content="labwork" class="hidden p-5 sm:p-7 space-y-4" id="labworkHistoryContainer">
         <div class="text-center py-12 text-slate-400">
           <svg class="w-12 h-12 mx-auto mb-3 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
           </svg>
           Loading lab work history...
         </div>
@@ -460,17 +456,20 @@
       <!-- File Upload Tab - Stored Files Only -->
       <div data-tab-content="fileupload" class="hidden p-5 sm:p-7 space-y-4" id="fileUploadContainer">
         <div id="patientFilesLoadingState" class="text-center py-8">
-          <svg class="w-12 h-12 mx-auto mb-3 text-blue-300 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          <svg class="w-12 h-12 mx-auto mb-3 text-blue-300 animate-spin" fill="none" stroke="currentColor"
+            viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
           <p class="text-sm text-slate-500">Loading patient files...</p>
         </div>
-        
+
         <div id="patientFilesListContainer" class="hidden space-y-5"></div>
-        
+
         <div id="patientFilesEmptyState" class="hidden text-center py-8">
           <svg class="w-12 h-12 mx-auto mb-3 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
           <p class="text-sm text-slate-500">No files found for this patient</p>
         </div>
@@ -479,26 +478,35 @@
 
     <!-- Footer -->
     <div class="px-5 sm:px-7 py-4 border-t border-slate-100 bg-slate-50 flex flex-col sm:flex-row gap-3 sm:justify-end">
-      <button type="button" onclick="closeModal('patientHistoryModal')" class="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-white border border-slate-200 text-slate-600 font-bold hover:bg-slate-100 transition">Close</button>
+      <button type="button" onclick="closeModal('patientHistoryModal')"
+        class="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-white border border-slate-200 text-slate-600 font-bold hover:bg-slate-100 transition">Close</button>
     </div>
-  </div >
+  </div>
 </div>
 
 <!-- ==================== STORED FILE PREVIEW MODAL ==================== -->
-<div id="storedFilePreviewModal" class="hidden fixed inset-0 z-[70] flex items-center justify-center p-3 sm:p-4" onclick="if (event.target === this) closeStoredFilePreviewModal()">
+<div id="storedFilePreviewModal" class="hidden fixed inset-0 z-[70] flex items-center justify-center p-3 sm:p-4"
+  onclick="if (event.target === this) closeStoredFilePreviewModal()">
   <div class="modal-backdrop absolute inset-0 bg-slate-900/70" onclick="closeStoredFilePreviewModal()"></div>
-  <div class="modal-content bg-white rounded-3xl shadow-2xl w-full max-w-6xl relative z-10 max-h-[94vh] overflow-hidden flex flex-col pointer-events-auto">
+  <div
+    class="modal-content bg-white rounded-3xl shadow-2xl w-full max-w-6xl relative z-10 max-h-[94vh] overflow-hidden flex flex-col pointer-events-auto">
     <div class="px-5 sm:px-7 py-4 border-b border-slate-100 flex items-center justify-between">
       <div class="min-w-0">
         <h3 class="text-base sm:text-lg font-black text-slate-900">Stored File Preview</h3>
         <p id="storedFilePreviewName" class="text-xs text-slate-500 truncate">-</p>
       </div>
       <div class="flex items-center gap-2">
-        <button id="storedFilePreviewPrevBtn" type="button" onclick="previewPreviousStoredImage()" class="hidden px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 disabled:opacity-40" title="Previous image">Prev</button>
-        <button id="storedFilePreviewNextBtn" type="button" onclick="previewNextStoredImage()" class="hidden px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 disabled:opacity-40" title="Next image">Next</button>
+        <button id="storedFilePreviewPrevBtn" type="button" onclick="previewPreviousStoredImage()"
+          class="hidden px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 disabled:opacity-40"
+          title="Previous image">Prev</button>
+        <button id="storedFilePreviewNextBtn" type="button" onclick="previewNextStoredImage()"
+          class="hidden px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 disabled:opacity-40"
+          title="Next image">Next</button>
         <span id="storedFilePreviewImageCounter" class="hidden text-xs font-bold text-slate-500"></span>
-        <a id="storedFilePreviewOpenLink" href="#" target="_blank" rel="noopener" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-50 text-blue-700 hover:bg-blue-100">Open New Tab</a>
-        <button type="button" onclick="closeStoredFilePreviewModal()" class="p-2 rounded-xl hover:bg-slate-100 transition">
+        <a id="storedFilePreviewOpenLink" href="#" target="_blank" rel="noopener"
+          class="px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-50 text-blue-700 hover:bg-blue-100">Open New Tab</a>
+        <button type="button" onclick="closeStoredFilePreviewModal()"
+          class="p-2 rounded-xl hover:bg-slate-100 transition">
           <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
           </svg>
@@ -513,10 +521,13 @@
 <!-- ==================== PRESCRIPTION DETAILS MODAL ==================== -->
 <div id="prescriptionDetailsModal" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-3 sm:p-4">
   <div class="modal-backdrop absolute inset-0 bg-black/50" onclick="closeModal('prescriptionDetailsModal')"></div>
-  <div class="modal-content bg-white rounded-3xl shadow-2xl w-full max-w-2xl relative z-10 max-h-[85vh] overflow-y-auto">
-    <div class="sticky top-0 px-6 sm:px-8 py-4 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-indigo-50 flex items-center justify-between">
+  <div
+    class="modal-content bg-white rounded-3xl shadow-2xl w-full max-w-2xl relative z-10 max-h-[85vh] overflow-y-auto">
+    <div
+      class="sticky top-0 px-6 sm:px-8 py-4 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-indigo-50 flex items-center justify-between">
       <h3 class="text-2xl font-bold text-gray-900">Prescription Details</h3>
-      <button type="button" onclick="closeModal('prescriptionDetailsModal')" class="p-2 rounded-xl hover:bg-white transition">
+      <button type="button" onclick="closeModal('prescriptionDetailsModal')"
+        class="p-2 rounded-xl hover:bg-white transition">
         <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
         </svg>
@@ -532,9 +543,11 @@
 <div id="labworkDetailsModal" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-3 sm:p-4">
   <div class="modal-backdrop absolute inset-0 bg-black/50" onclick="closeModal('labworkDetailsModal')"></div>
   <div class="modal-content bg-white rounded-3xl shadow-2xl w-full max-w-2xl relative z-10">
-    <div class="px-6 sm:px-8 py-4 border-b border-gray-100 bg-gradient-to-r from-purple-50 to-pink-50 flex items-center justify-between">
+    <div
+      class="px-6 sm:px-8 py-4 border-b border-gray-100 bg-gradient-to-r from-purple-50 to-pink-50 flex items-center justify-between">
       <h3 class="text-2xl font-bold text-gray-900">Lab Work Details</h3>
-      <button type="button" onclick="closeModal('labworkDetailsModal')" class="p-2 rounded-xl hover:bg-white transition">
+      <button type="button" onclick="closeModal('labworkDetailsModal')"
+        class="p-2 rounded-xl hover:bg-white transition">
         <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
         </svg>
@@ -568,12 +581,12 @@
     }
     openModal('viewPatientModal');
   }
-  
+
   // ============ EDIT PATIENT ============
-  function openEditPatientModal(rowId, firstName, lastName, phone, email, gender, dob, notes,patientId) {
-    
+  function openEditPatientModal(rowId, firstName, lastName, phone, email, gender, dob, notes, patientId) {
+
     // Replace the placeholder with the actual patient ID
-    
+
     console.log("Editing patient ID:", patientId);
     document.getElementById('editPatientRowId').value = patientId; // Set the patient ID in the form's value for submission
     document.getElementById('editPatientRowId').value = patientId;
@@ -627,7 +640,7 @@
         setTimeout(function () { row.remove(); }, 500);
       }
     }
-    
+
   }
 
   function openTodayPatientConfirm(patientId, patientName) {
@@ -648,7 +661,7 @@
       headers: { 'X-CSRFToken': '{{ csrf_token }}' }
     });
 
-    
+
   }
 
   // ============ PATIENT HISTORY MODAL ============
@@ -662,16 +675,16 @@
     patientHistoryState.patientId = patientId;
     patientHistoryState.patientName = patientName;
     patientHistoryState.activeTab = 'visited';
-    
+
     document.getElementById('patientHistoryTitle').textContent = patientName || 'Patient';
-    
+
     switchPatientHistoryTab('visited');
     openModal('patientHistoryModal');
   }
 
   function switchPatientHistoryTab(tabName) {
     patientHistoryState.activeTab = tabName;
-    
+
     // Update tab buttons - slider style active tab
     document.querySelectorAll('[data-tab-btn]').forEach(btn => {
       if (btn.getAttribute('data-tab-btn') === tabName) {
@@ -683,7 +696,7 @@
         btn.classList.remove('border-b-2', 'border-indigo-600', 'text-indigo-600', 'bg-indigo-50');
       }
     });
-    
+
     // Update tab content
     document.querySelectorAll('[data-tab-content]').forEach(content => {
       if (content.getAttribute('data-tab-content') === tabName) {
@@ -709,9 +722,9 @@
   function loadPatientVisitedHistory() {
     const container = document.getElementById('visitedHistoryContainer');
     if (!container) return;
-    
+
     container.innerHTML = '<div class="text-center py-8 text-gray-400">Loading visited history...</div>';
-    
+
     const patientId = patientHistoryState.patientId;
     if (!patientId) {
       container.innerHTML = '<div class="text-center py-8 text-red-400">Patient ID not found</div>';
@@ -753,11 +766,10 @@
                   </div>
                   <p class="text-sm font-semibold text-gray-800 mb-1">Dr. ${visit.doctor || 'N/A'}</p>
                   <p class="text-xs text-gray-600 mb-2"><strong>Treatment:</strong> ${visit.treatment || 'N/A'}</p>
-                  <p class="text-xs text-gray-600"><strong>Status:</strong> <span class="inline-block px-2 py-0.5 rounded text-[11px] font-bold ${
-                    visit.status === 'confirmed' ? 'bg-green-100 text-green-700' :
-                    visit.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
-                    'bg-red-100 text-red-700'
-                  }">${visit.status || 'N/A'}</span></p>
+                  <p class="text-xs text-gray-600"><strong>Status:</strong> <span class="inline-block px-2 py-0.5 rounded text-[11px] font-bold ${visit.status === 'confirmed' ? 'bg-green-100 text-green-700' :
+              visit.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
+                'bg-red-100 text-red-700'
+            }">${visit.status || 'N/A'}</span></p>
                 </div>
                 ${canShowPrescriptionButton ? `<button onclick="loadVisitPrescription(${visit.id})" class="px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 transition whitespace-nowrap">View Rx</button>` : ''}
               </div>
@@ -776,9 +788,9 @@
   function loadPatientLabWorkHistory() {
     const container = document.getElementById('labworkHistoryContainer');
     if (!container) return;
-    
+
     container.innerHTML = '<div class="text-center py-8 text-gray-400">Loading lab work history...</div>';
-    
+
     const patientId = patientHistoryState.patientId;
     if (!patientId) {
       container.innerHTML = '<div class="text-center py-8 text-red-400">Patient ID not found</div>';
@@ -819,12 +831,11 @@
                     <span class="text-gray-600"><strong>Type:</strong> ${lab.work_type || 'N/A'}</span>
                     <span class="text-gray-600"><strong>ID:</strong> #${lab.id}</span>
                   </div>
-                  <p class="text-xs mt-2"><strong>Status:</strong> <span class="inline-block px-2 py-0.5 rounded text-[11px] font-bold ${
-                    lab.workflow_status === 'completed' ? 'bg-green-100 text-green-700' :
-                    lab.workflow_status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
-                    lab.workflow_status === 'processing' ? 'bg-blue-100 text-blue-700' :
-                    'bg-orange-100 text-orange-700'
-                  }">${lab.workflow_status || 'N/A'}</span></p>
+                  <p class="text-xs mt-2"><strong>Status:</strong> <span class="inline-block px-2 py-0.5 rounded text-[11px] font-bold ${lab.workflow_status === 'completed' ? 'bg-green-100 text-green-700' :
+              lab.workflow_status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
+                lab.workflow_status === 'processing' ? 'bg-blue-100 text-blue-700' :
+                  'bg-orange-100 text-orange-700'
+            }">${lab.workflow_status || 'N/A'}</span></p>
                 </div>
                 <button onclick="loadLabWorkDetails(${lab.id})" class="px-3 py-1.5 rounded-lg bg-purple-600 text-white text-xs font-bold hover:bg-purple-700 transition whitespace-nowrap">Details</button>
               </div>
@@ -946,12 +957,11 @@
               </div>
               <div class="bg-purple-50 border border-purple-200 rounded-xl p-4">
                 <p class="text-xs text-gray-500 mb-1">Status</p>
-                <p class="text-sm font-bold ${
-                  data.workflow_status === 'completed' ? 'text-green-600' :
-                  data.workflow_status === 'pending' ? 'text-yellow-600' :
-                  data.workflow_status === 'processing' ? 'text-blue-600' :
-                  'text-orange-600'
-                }">${data.workflow_status || 'N/A'}</p>
+                <p class="text-sm font-bold ${data.workflow_status === 'completed' ? 'text-green-600' :
+            data.workflow_status === 'pending' ? 'text-yellow-600' :
+              data.workflow_status === 'processing' ? 'text-blue-600' :
+                'text-orange-600'
+          }">${data.workflow_status || 'N/A'}</p>
               </div>
             </div>
 
@@ -987,9 +997,9 @@
   function loadPatientPrescriptionsHistory() {
     const container = document.getElementById('prescriptionsHistoryContainer');
     if (!container) return;
-    
+
     container.innerHTML = '<div class="text-center py-8 text-slate-400"><svg class="w-12 h-12 mx-auto mb-3 text-slate-300 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>Loading prescriptions...</div>';
-    
+
     const patientId = patientHistoryState.patientId;
     if (!patientId) {
       container.innerHTML = '<div class="text-center py-8 text-red-400">Patient ID not found</div>';
@@ -1009,7 +1019,7 @@
         let hasPrescriptions = false;
 
         // Fetch prescription details for each visit
-        const prescriptionPromises = visitData.map(visit => 
+        const prescriptionPromises = visitData.map(visit =>
           fetch(`/api/daily-patient/${visit.id}/prescription/`)
             .then(res => res.json())
             .catch(err => null)
@@ -1320,28 +1330,28 @@
 
   function displayFilePreview(index) {
     if (!storedImageGallery || storedImageGallery.length === 0) return;
-    
+
     const itemIndex = Math.max(0, Math.min(index, storedImageGallery.length - 1));
     const item = storedImageGallery[itemIndex];
-    
+
     if (!item) return;
-    
+
     storedImageGalleryIndex = itemIndex;
-    
+
     const safeName = item.original_name || 'Stored file';
     const safeMime = item.mime_type || '-';
-    
+
     // Set up navigation buttons
     const prevBtn = document.getElementById('storedFilePreviewPrevBtn');
     const nextBtn = document.getElementById('storedFilePreviewNextBtn');
     const counter = document.getElementById('storedFilePreviewImageCounter');
-    
+
     if (storedImageGallery.length > 1) {
       prevBtn.classList.remove('hidden');
       nextBtn.classList.remove('hidden');
       counter.classList.remove('hidden');
       counter.textContent = `${itemIndex + 1} / ${storedImageGallery.length}`;
-      
+
       prevBtn.disabled = itemIndex === 0;
       nextBtn.disabled = itemIndex === storedImageGallery.length - 1;
     } else {
@@ -1349,24 +1359,24 @@
       nextBtn.classList.add('hidden');
       counter.classList.add('hidden');
     }
-    
+
     // Set up metadata and open link
     const link = document.getElementById('storedFilePreviewOpenLink');
     const safeUrl = item.file || '';
     link.href = safeUrl;
     link.target = '_blank';
-    
+
     // Render content based on file type
     const body = document.getElementById('storedFilePreviewBody');
     body.innerHTML = '';
     body.style.display = 'block';
     body.style.alignItems = '';
     body.style.justifyContent = '';
-    
+
     const mimeType = item.mime_type || '';
     const fileType = getFileTypeFromItem(item);
     document.getElementById('storedFilePreviewName').textContent = `${safeName} • ${fileType.toUpperCase()} • ${safeMime}`;
-    
+
     if (fileType === 'image' || mimeType.startsWith('image/')) {
       body.innerHTML = `
         <div class="h-full min-h-[60vh] bg-white rounded-2xl border border-slate-200 overflow-hidden flex flex-col">
@@ -1468,7 +1478,7 @@
         </div>
       `;
     }
-    
+
     openModal('storedFilePreviewModal');
   }
 
@@ -1509,7 +1519,7 @@
 
     const ctx = canvas.getContext('2d');
     const image = new Image();
-    image.onload = function() {
+    image.onload = function () {
       const layer = document.createElement('canvas');
       layer.width = image.naturalWidth;
       layer.height = image.naturalHeight;
@@ -1548,7 +1558,7 @@
       canvas.onpointermove = imageEditorPointerMove;
       canvas.onpointerup = imageEditorPointerUp;
       canvas.onpointerleave = imageEditorPointerUp;
-      viewport.onwheel = function(event) {
+      viewport.onwheel = function (event) {
         event.preventDefault();
         if (!imageEditorState) return;
         if (event.deltaY < 0) imageEditorZoomIn();
@@ -1907,7 +1917,7 @@
     const st = imageEditorState;
     if (!st || !snapshot) return;
     const img = new Image();
-    img.onload = function() {
+    img.onload = function () {
       st.layerCtx.clearRect(0, 0, st.layer.width, st.layer.height);
       st.layerCtx.drawImage(img, 0, 0);
       imageEditorRender();
@@ -2007,22 +2017,25 @@
 {% include 'ext/appointments/appointment_modal.html' %}
 <script>
   function openPatientAppointmentModal(patientName) {
-      const modal = document.getElementById('appointmentModal');
-      if(modal) {
-          const nameInput = modal.querySelector('input[name="name"]');
-          if(nameInput) {
-              nameInput.value = patientName || '';
-          }
-          openModal('appointmentModal');
+    const modal = document.getElementById('appointmentModal');
+    if (modal) {
+      const nameInput = modal.querySelector('input[name="name"]');
+      if (nameInput) {
+        nameInput.value = patientName || '';
       }
+      openModal('appointmentModal');
+    }
   }
 
-  document.body.addEventListener("patientExistsError", function(evt){
-      const msgDiv = document.getElementById("addPatientErrorMsg");
-      if(msgDiv && evt.detail && evt.detail.message) {
-          msgDiv.innerText = evt.detail.message;
-          msgDiv.classList.remove("hidden");
-      }
+  document.body.addEventListener("patientExistsError", function (evt) {
+    const msgDiv = document.getElementById("addPatientErrorMsg");
+    if (msgDiv && evt.detail && evt.detail.message) {
+      msgDiv.innerText = evt.detail.message;
+      msgDiv.classList.remove("hidden");
+    }
   });
 </script>
-<!-- Dummy target for appointment modal --><table class="hidden"><tbody id="appointmentTableBody"></tbody></table>
+<!-- Dummy target for appointment modal -->
+<table class="hidden">
+  <tbody id="appointmentTableBody"></tbody>
+</table>

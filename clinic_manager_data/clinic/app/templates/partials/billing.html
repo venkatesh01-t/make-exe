@@ -132,6 +132,8 @@
         </thead>
         <tbody id="billingTableBody"
           hx-get="{% url 'clinic:billing_data' %}"
+          hx-trigger="load"
+          hx-include="#billingFiltersForm"
           hx-target="#billingTableBody"
           hx-swap="innerHTML"
           class="divide-y divide-gray-100">
@@ -404,6 +406,9 @@
     if (filterDateEl) {
       var today = new Date().toISOString().split('T')[0];
       filterDateEl.value = today;
+      setTimeout(function() {
+        filterDateEl.dispatchEvent(new Event('change', { bubbles: true }));
+      }, 50);
     }
     
     var billDateEl = document.getElementById('billDate');

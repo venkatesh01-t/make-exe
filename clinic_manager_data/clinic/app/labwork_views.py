@@ -33,8 +33,12 @@ class LabWorkPaginatedView(LoginRequiredMixin, TemplateView):
     
     def get(self, request):
         page_num = request.GET.get('page', 1)
+        status = request.GET.get('status')
         all_labwork = labwork.objects.all().order_by("-id")
         
+        if status:
+            all_labwork = all_labwork.filter(workflow_status=status)
+            
         paginator = Paginator(all_labwork, 10)  # 10 items per page
         page_obj = paginator.get_page(page_num)
         
@@ -42,7 +46,8 @@ class LabWorkPaginatedView(LoginRequiredMixin, TemplateView):
             'page_obj': page_obj,
             'labwork': page_obj.object_list,
             'total_pages': paginator.num_pages,
-            'is_paginated': paginator.num_pages > 1
+            'is_paginated': paginator.num_pages > 1,
+            'current_status': status
         }
         
         return render(request, self.template_name, context)
