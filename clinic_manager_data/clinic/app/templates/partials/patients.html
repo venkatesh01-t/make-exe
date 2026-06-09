@@ -765,7 +765,7 @@
                     <span class="text-xs text-gray-500">${visitDate}</span>
                   </div>
                   <p class="text-sm font-semibold text-gray-800 mb-1">Dr. ${visit.doctor || 'N/A'}</p>
-                  <p class="text-xs text-gray-600 mb-2"><strong>Treatment:</strong> ${visit.treatment || 'N/A'}</p>
+                  <p class="text-xs text-gray-600 mb-2"><strong>Treatment:</strong> ${visit.treatments || 'N/A'}</p>
                   <p class="text-xs text-gray-600"><strong>Status:</strong> <span class="inline-block px-2 py-0.5 rounded text-[11px] font-bold ${visit.status === 'confirmed' ? 'bg-green-100 text-green-700' :
               visit.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
                 'bg-red-100 text-red-700'
