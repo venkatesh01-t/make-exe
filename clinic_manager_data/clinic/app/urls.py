@@ -75,6 +75,8 @@ urlpatterns = [
     path("partials/create/", LabCreateView.as_view(), name="lab_create"),
     path("partials/work/crud/", LabWorkCRUDView.as_view(), name="lab_work_crud"),
     path("partials/order/create/", LabOrderCreateView.as_view(), name="lab_order_create"),
+    path("partials/order/edit/", LabOrderEditView.as_view(), name="lab_order_edit"),
+    path("partials/order/delete/", LabOrderDeleteView.as_view(), name="lab_order_delete"),
     path("partials/order/update/", LabOrderStatusUpdateView.as_view(), name="lab_order_update"),
     path("partials/order/<int:order_id>/details/", LabOrderDetailsPrintView.as_view(), name="lab_order_details"),
 

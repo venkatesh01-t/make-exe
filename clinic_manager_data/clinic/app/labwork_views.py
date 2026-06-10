@@ -285,4 +285,74 @@ class LabOrderDetailsPrintView(LoginRequiredMixin, TemplateView):
             "today": timezone.now().date(),
         }
         return render(request, self.template_name, context)
+
+class LabOrderEditView(LoginRequiredMixin, TemplateView):
+    def post(self, request, *args, **kwargs):
+        order_id = request.POST.get("order_id")
+        work_type = request.POST.get("in-type")
+        lab_name = request.POST.get("in-lab")
+        note = request.POST.get("in-notes")
         
+        order = get_object_or_404(labwork, id=order_id)
+        if work_type:
+            order.work_type = work_type
+        if lab_name:
+            order.lab_name = lab_name
+        if note is not None:
+            order.note = note
+        order.save()
+        
+        # Get paginated data
+        all_labwork = labwork.objects.all().order_by("-id")
+        paginator = Paginator(all_labwork, 10)
+        page_obj = paginator.get_page(1)
+        
+        context = {
+            'page_obj': page_obj,
+            'labwork': page_obj.object_list,
+            'total_pages': paginator.num_pages,
+            'is_paginated': paginator.num_pages > 1
+        }
+        
+        response = render(request, "ext/lab_work/lab_data_paginated.html", context)
+        response["HX-Trigger"] = json.dumps({
+            "showNotification": {
+                "message": "Lab order updated successfully",
+                "type": "success",
+                "duration": 4000,
+                "closemodel": "edit-lab-order-modal"
+            }
+        })
+        response["HX-Retarget"] = "#lab-orders-table-body"
+        response["HX-Reswap"] = "innerHTML"
+        return response
+
+class LabOrderDeleteView(LoginRequiredMixin, TemplateView):
+    def post(self, request, *args, **kwargs):
+        order_id = request.POST.get("order_id")
+        order = get_object_or_404(labwork, id=order_id)
+        order.delete()
+        
+        all_labwork = labwork.objects.all().order_by("-id")
+        paginator = Paginator(all_labwork, 10)
+        page_obj = paginator.get_page(1)
+        
+        context = {
+            'page_obj': page_obj,
+            'labwork': page_obj.object_list,
+            'total_pages': paginator.num_pages,
+            'is_paginated': paginator.num_pages > 1
+        }
+        
+        response = render(request, "ext/lab_work/lab_data_paginated.html", context)
+        response["HX-Trigger"] = json.dumps({
+            "showNotification": {
+                "message": "Lab order deleted successfully",
+                "type": "success",
+                "duration": 4000,
+                "closemodel": "delete-lab-order-modal"
+            }
+        })
+        response["HX-Retarget"] = "#lab-orders-table-body"
+        response["HX-Reswap"] = "innerHTML"
+        return response
