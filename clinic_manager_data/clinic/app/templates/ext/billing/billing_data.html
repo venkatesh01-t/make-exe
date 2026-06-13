@@ -1,24 +1,24 @@
 {% if invoices %}
 {% for invoice in invoices %}
 <tr class="table-row">
-  <td class="px-6 py-4">
+  <td class="px-4 sm:px-6 py-4 ">
     <p class="text-sm font-semibold text-teal-600">{{ invoice.invoice_number }}</p>
   </td>
-  <td class="px-6 py-4">
+  <td class="px-4 sm:px-6 py-4">
     <p class="text-sm font-semibold text-gray-800">{{ invoice.patient | upper }}</p>
   </td>
-  <td class="px-6 py-4 text-sm text-gray-600">{{ invoice.treatment|default:'N/A' }}</td>
-  <td class="px-6 py-4 text-sm text-gray-600">Dr. {{ invoice.doctor|default:'N/A' }}</td>
-  <td class="px-6 py-4 text-sm font-bold text-gray-800">₹{{ invoice.amount }}</td>
-  <td class="px-6 py-4 text-sm text-gray-600">{{ invoice.bill_date|date:'M d, Y h:i A' }}</td>
-  <td class="px-6 py-4">
+  <td class="px-4 sm:px-6 py-4 text-sm text-gray-600 ">{{ invoice.treatment|default:'N/A' }}</td>
+  <td class="px-4 sm:px-6 py-4 text-sm text-gray-600 ">Dr. {{ invoice.doctor|default:'N/A' }}</td>
+  <td class="px-4 sm:px-6 py-4 text-sm font-bold text-gray-800">₹{{ invoice.amount }}</td>
+  <td class="px-4 sm:px-6 py-4 text-sm text-gray-600 ">{{ invoice.bill_date|date:'M d, Y h:i A' }}</td>
+  <td class="px-4 sm:px-6 py-4">
     {% if invoice.status == 'paid' %}
     <span class="badge bg-green-100 text-green-700">Paid</span>
     {% else %}
     <span class="badge bg-amber-100 text-amber-700">Pending</span>
     {% endif %}
   </td>
-  <td class="px-6 py-4">
+  <td class="px-4 sm:px-6 py-4">
     <div class="flex items-center gap-2">
       <button
         type="button"

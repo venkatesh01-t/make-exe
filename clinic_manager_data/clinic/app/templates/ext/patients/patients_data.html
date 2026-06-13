@@ -13,9 +13,9 @@
       </div>
     </div>
   </td>
-  <td class="px-4 py-4 text-sm text-gray-600 hidden sm:table-cell">{{ patient.phone }}</td>
-  <td class="px-4 py-4 text-sm text-gray-600 hidden md:table-cell">{{ patient.age }} / {{ patient.gender }}</td>
-  <td class="px-4 py-4 text-sm text-gray-600 hidden lg:table-cell">{{patient.last_visit|date:"M-d-Y"}}
+  <td class="px-4 py-4 text-sm text-gray-600 ">{{ patient.phone }}</td>
+  <td class="px-4 py-4 text-sm text-gray-600 ">{{ patient.age }} / {{ patient.gender }}</td>
+  <td class="px-4 py-4 text-sm text-gray-600 ">{{patient.last_visit|date:"M-d-Y"}}
     <p class="text-xs text-gray-400">{{ patient.last_visit|time:"h:i A" }}</p>
   </td>
   

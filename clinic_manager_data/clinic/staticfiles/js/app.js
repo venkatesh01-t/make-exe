@@ -12,6 +12,7 @@ function toggleSidebar() {
     sidebar.classList.remove('sidebar-open');
     overlay.classList.remove('visible');
     if (hamburger) hamburger.classList.remove('is-open');
+    document.body.style.overflow = ''; // Restore background scroll
     setTimeout(() => { if (!sidebarOpen) overlay.classList.add('hidden'); }, 450);
   } else {
     sidebarOpen = true;
@@ -21,6 +22,7 @@ function toggleSidebar() {
     sidebar.classList.remove('-translate-x-full', 'sidebar-hidden');
     sidebar.classList.add('sidebar-open');
     if (hamburger) hamburger.classList.add('is-open');
+    document.body.style.overflow = 'hidden'; // Lock background scroll
   }
 }
 
@@ -58,6 +60,23 @@ function updateSidebarState() {
   const sidebar = document.getElementById('sidebar');
   const wrapper = document.getElementById('main-wrapper');
   const icon = document.getElementById('toggleIcon');
+
+  if (!sidebar) return;
+
+  if (window.innerWidth < 1024) {
+    sidebar.classList.remove('sidebar-collapsed');
+    if (wrapper) wrapper.classList.remove('content-expanded');
+    if (icon) icon.style.transform = 'rotate(0deg)';
+    return;
+  } else {
+    // Restore scroll if resizing from mobile (where it might be locked) to desktop
+    if (sidebarOpen) {
+      document.body.style.overflow = '';
+      sidebarOpen = false; // reset mobile state
+      const overlay = document.getElementById('sidebarOverlay');
+      if (overlay) overlay.classList.add('hidden');
+    }
+  }
 
   if (desktopSidebarCollapsed) {
     sidebar.classList.add('sidebar-collapsed');
@@ -223,6 +242,11 @@ function createChart(canvasId, config) {
 document.addEventListener('DOMContentLoaded', function () {
   // Initialize desktop sidebar state
   updateSidebarState();
+
+  // Update on resize
+  window.addEventListener('resize', function() {
+    updateSidebarState();
+  });
 
   // Mobile search input clear button
   const mInput = document.getElementById('mobileSearchInput');

@@ -4,7 +4,7 @@
 {% for i in appoinment %}
 <tr class="table-row">
     <!-- Patient Info -->
-    <td class="px-6 py-4">
+    <td class="px-4 sm:px-6 py-4">
         <div class="flex items-center gap-3">
             <div
                 class="w-9 h-9 rounded-full bg-gradient-to-br from-teal-400 to-teal-600 flex items-center justify-center text-white text-xs font-bold">
@@ -18,22 +18,22 @@
     </td>
 
     <!-- Date & Time -->
-    <td class="px-6 py-4">
+    <td class="px-4 py-4 ">
         <p class="text-sm text-gray-800">{{ i.date|date:"M-Y-d" }}</p>
         <p class="text-xs text-gray-400">{{ i.date|date:"D h:i A" }}</p>
     </td>
 
     <!-- Treatments -->
-    <td class="px-6 py-4 text-sm text-gray-600">{{ i.treatments | default:"N/A" }}</td>
+    <td class="px-4 py-4 text-sm text-gray-600 ">{{ i.treatments | default:"N/A" }}</td>
 
     <!-- Doctor / Status (optional if fields exist) --> 
-    <td class="px-6 py-4 text-sm text-gray-600">{{ i.doctor|default:"N/A" }}</td>
-    <td class="px-6 py-4">
+    <td class="px-4 py-4 text-sm text-gray-600 ">{{ i.doctor|default:"N/A" }}</td>
+    <td class="px-4 py-4">
         <span class="badge bg-green-100 text-green-700">{{ i.status|default:"Pending" }}</span>
     </td>
 
     <!-- Actions -->
-    <td class="px-6 py-4">
+    <td class="px-4 py-4">
         <div class="flex gap-2">
            
             <button onclick="todayPatientsOpenViewModal(

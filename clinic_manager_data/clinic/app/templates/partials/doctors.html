@@ -59,12 +59,17 @@
 
 
 <div id="addDoctorModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
-
   <div class="modal-backdrop absolute inset-0 bg-black/40 backdrop-blur-sm" onclick="closeModal('addDoctorModal')"></div>
-
-  <div class="modal-content bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl m-4">
-
-    <h3 class="text-xl font-bold mb-6 text-gray-800">Add Doctor</h3>
+  <div class="modal-content bg-white rounded-3xl shadow-2xl w-full max-w-2xl relative z-10 max-h-[90vh] overflow-y-auto flex flex-col pointer-events-auto">
+    <!-- Header -->
+    <div class="px-6 sm:px-8 py-5 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white rounded-t-3xl z-20">
+      <h3 class="text-xl font-bold text-gray-800">Add New Doctor</h3>
+      <button class="p-2 rounded-xl hover:bg-gray-100 transition" onclick="closeModal('addDoctorModal')">
+        <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
 
     <form
       hx-post="{% url 'clinic:add_doctor' %}"
@@ -73,109 +78,116 @@
       hx-headers='{"X-CSRFToken":"{{csrf_token}}"}'
       enctype="multipart/form-data"
       hx-encoding="multipart/form-data"
-      class="space-y-4">
-
-      <!-- Doctor Name -->
-      <div>
-        <label class="text-sm font-medium text-gray-700">Doctor Name</label>
-        <input type="text" name="name" placeholder="Dr. John Doe"
-        class="w-full mt-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 outline-none">
-      </div>
-
-      <!-- Specialization -->
-      <div>
-        <label class="text-sm font-medium text-gray-700">Specialization</label>
-        <input type="text" name="specialization" placeholder="General Dentistry"
-        class="w-full mt-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 outline-none">
-      </div>
-
-      <!-- Education -->
-      <div>
-        <label class="text-sm font-medium text-gray-700">Education</label>
-        <input type="text" name="education" placeholder="B.D.S, M.D.S"
-        class="w-full mt-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 outline-none">
-      </div>
-
-      <!-- Signature -->
-      <div>
-        <label class="text-sm font-medium text-gray-700">Signature</label>
-        <input type="file" name="signature" accept="image/*"
-        class="w-full mt-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 outline-none">
-        <p class="text-xs text-gray-400 mt-1">Background will be removed and signature saved in black/white.</p>
-      </div>
-
-      <!-- Experience -->
-      <div>
-        <label class="text-sm font-medium text-gray-700">Experience (Years)</label>
-        <input type="number" name="experience" min="0" placeholder="5"
-        class="w-full mt-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 outline-none">
-      </div>
-
-      <!-- Rating -->
-      <div>
-        <label class="text-sm font-medium text-gray-700">Rating</label>
-        <input type="text" name="rating" placeholder="4.8"
-        class="w-full mt-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 outline-none">
-      </div>
-
-      <!-- Working Days & Hours -->
-      <div>
-        <label class="text-sm font-medium text-gray-700">Working Days & Hours</label>
-        
-        <!-- Days selection -->
-        <div class="grid grid-cols-3 gap-2 mt-1 mb-2">
-          <label class="inline-flex items-center gap-1">
-            <input type="checkbox" name="working_days" value="Mon" class="form-checkbox text-teal-500">
-            Mon
-          </label>
-          <label class="inline-flex items-center gap-1">
-            <input type="checkbox" name="working_days" value="Tue" class="form-checkbox text-teal-500">
-            Tue
-          </label>
-          <label class="inline-flex items-center gap-1">
-            <input type="checkbox" name="working_days" value="Wed" class="form-checkbox text-teal-500">
-            Wed
-          </label>
-          <label class="inline-flex items-center gap-1">
-            <input type="checkbox" name="working_days" value="Thu" class="form-checkbox text-teal-500">
-            Thu
-          </label>
-          <label class="inline-flex items-center gap-1">
-            <input type="checkbox" name="working_days" value="Fri" class="form-checkbox text-teal-500">
-            Fri
-          </label>
-          <label class="inline-flex items-center gap-1">
-            <input type="checkbox" name="working_days" value="Sat" class="form-checkbox text-teal-500">
-            Sat
-          </label>
+      class="flex flex-col flex-1">
+      
+      <div class="p-6 sm:p-8 space-y-5 flex-1">
+        <!-- Row 1: Name and Specialization -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Doctor Name <span class="text-red-500">*</span></label>
+            <input type="text" name="name" placeholder="Dr. John Doe"
+            class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-800 focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition" required>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Specialization <span class="text-red-500">*</span></label>
+            <input type="text" name="specialization" placeholder="General Dentistry"
+            class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-800 focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition" required>
+          </div>
         </div>
 
-        <!-- Time selection -->
-        <div class="flex gap-2 mt-1">
-          <input type="time" name="start_time" placeholder="Start Time"
-          class="flex-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 outline-none">
-          <input type="time" name="end_time" placeholder="End Time"
-          class="flex-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 outline-none">
+        <!-- Row 2: Education and Experience -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Education <span class="text-red-500">*</span></label>
+            <input type="text" name="education" placeholder="B.D.S, M.D.S"
+            class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-800 focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition" required>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Experience (Years) <span class="text-red-500">*</span></label>
+            <input type="number" name="experience" min="0" placeholder="5"
+            class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-800 focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition" required>
+          </div>
         </div>
 
+        <!-- Row 3: Rating and Signature -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Rating</label>
+            <input type="text" name="rating" placeholder="4.8"
+            class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-800 focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Signature</label>
+            <input type="file" name="signature" accept="image/*"
+            class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-800 focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition bg-gray-50 file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100">
+            <p class="text-[11px] text-gray-400 mt-1.5">Background will be removed and saved in B/W.</p>
+          </div>
+        </div>
+
+        <!-- Row 4: Working Days & Hours -->
+        <div class="bg-gray-50 rounded-2xl p-5 border border-gray-100">
+          <label class="block text-sm font-semibold text-gray-800 mb-3">Working Schedule</label>
+          
+          <div class="mb-4">
+            <p class="text-xs text-gray-500 mb-2 font-medium">Select Days</p>
+            <div class="flex flex-wrap gap-2">
+              <label class="cursor-pointer">
+                <input type="checkbox" name="working_days" value="Mon" class="peer sr-only">
+                <div class="px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-xs font-medium text-gray-600 peer-checked:bg-teal-50 peer-checked:border-teal-500 peer-checked:text-teal-700 transition">Mon</div>
+              </label>
+              <label class="cursor-pointer">
+                <input type="checkbox" name="working_days" value="Tue" class="peer sr-only">
+                <div class="px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-xs font-medium text-gray-600 peer-checked:bg-teal-50 peer-checked:border-teal-500 peer-checked:text-teal-700 transition">Tue</div>
+              </label>
+              <label class="cursor-pointer">
+                <input type="checkbox" name="working_days" value="Wed" class="peer sr-only">
+                <div class="px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-xs font-medium text-gray-600 peer-checked:bg-teal-50 peer-checked:border-teal-500 peer-checked:text-teal-700 transition">Wed</div>
+              </label>
+              <label class="cursor-pointer">
+                <input type="checkbox" name="working_days" value="Thu" class="peer sr-only">
+                <div class="px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-xs font-medium text-gray-600 peer-checked:bg-teal-50 peer-checked:border-teal-500 peer-checked:text-teal-700 transition">Thu</div>
+              </label>
+              <label class="cursor-pointer">
+                <input type="checkbox" name="working_days" value="Fri" class="peer sr-only">
+                <div class="px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-xs font-medium text-gray-600 peer-checked:bg-teal-50 peer-checked:border-teal-500 peer-checked:text-teal-700 transition">Fri</div>
+              </label>
+              <label class="cursor-pointer">
+                <input type="checkbox" name="working_days" value="Sat" class="peer sr-only">
+                <div class="px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-xs font-medium text-gray-600 peer-checked:bg-teal-50 peer-checked:border-teal-500 peer-checked:text-teal-700 transition">Sat</div>
+              </label>
+            </div>
+          </div>
+
+          <div>
+            <p class="text-xs text-gray-500 mb-2 font-medium">Working Hours</p>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <input type="time" name="start_time"
+                class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-800 focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition bg-white" required>
+              </div>
+              <div>
+                <input type="time" name="end_time"
+                class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-800 focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition bg-white" required>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <!-- Buttons -->
-      <div class="flex gap-3 pt-4">
+      <!-- Footer -->
+      <div class="px-6 py-4 border-t border-gray-100 flex items-center justify-end gap-3 sticky bottom-0 bg-white rounded-b-3xl z-20">
         <button type="button"
           onclick="closeModal('addDoctorModal')"
-          class="flex-1 py-2 bg-gray-100 text-gray-700 rounded-lg font-bold">
+          class="px-5 py-2.5 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-100 transition">
           Cancel
         </button>
-
         <button type="submit"
-          class="flex-1 py-2 bg-teal-600 text-white rounded-lg font-bold hover:bg-teal-700">
-          Save
+          class="bg-gradient-to-r from-teal-500 to-teal-600 text-white px-6 py-2.5 rounded-xl text-sm font-semibold shadow-lg shadow-teal-200 hover:shadow-xl transition">
+          Save Doctor
         </button>
       </div>
 
     </form>
-
   </div>
 </div>
 

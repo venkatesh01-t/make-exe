@@ -12,6 +12,7 @@ from .labwork_views import *
 from .today_patient import *
 from .medication_views import *
 from .patient_uploads_api import PatientFileDetailAPIView
+from .notification_views import notifications_dropdown, all_notifications_modal
 
 app_name = 'clinic'
 
@@ -28,6 +29,10 @@ urlpatterns = [
     # HTMX partial views (loaded dynamically without page reload)
     path('partials/dashboard/', DashboardPartialView.as_view(), name='dashboard_partial'),
     path('partials/dashboard/chart-data/', DashboardChartDataView.as_view(), name='dashboard_chart_data'),
+    
+    # Notifications
+    path('partials/notifications/dropdown/', notifications_dropdown, name='notifications_dropdown'),
+    path('partials/notifications/modal/', all_notifications_modal, name='all_notifications_modal'),
 
 
     path('partials/appointments/', AppointmentsPartialView.as_view(), name='appointments_partial'),

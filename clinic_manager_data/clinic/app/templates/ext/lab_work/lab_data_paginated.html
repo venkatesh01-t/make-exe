@@ -1,6 +1,6 @@
 {% for item in labwork %}
 <tr id="row-{{ item.id }}" onclick="openLabModal('{{ item.id }}')" data-note="{{ item.note }}">
-    <td><span class="font-bold text-slate-400 text-xs tracking-widest uppercase">LC-{{ item.id }}</span></td>
+    <td class=""><span class="font-bold text-slate-400 text-xs tracking-widest uppercase">LC-{{ item.id }}</span></td>
     <td>
         <span class="font-bold text-slate-900">
             {% if item.patient %}
@@ -10,8 +10,8 @@
             {% endif %}
         </span>
     </td>
-    <td><span class="text-xs font-black uppercase tracking-widest text-blue-500">{{ item.work_type }}</span></td>
-    <td><span class="text-sm font-semibold text-slate-600">{{ item.lab_name }}</span></td>
+    <td class=""><span class="text-xs font-black uppercase tracking-widest text-blue-500">{{ item.work_type }}</span></td>
+    <td class=""><span class="text-sm font-semibold text-slate-600">{{ item.lab_name }}</span></td>
     <td>
         <div class="flex items-center gap-3">
             <div class="flex gap-1" id="dots-{{ item.id }}">
@@ -29,7 +29,7 @@
             </span>
         </div>
     </td>
-    <td><span class="text-xs font-bold text-slate-400 uppercase tracking-tighter">{{ item.date_sent|date:"M - d - Y" }}</span></td>
+    <td class=""><span class="text-xs font-bold text-slate-400 uppercase tracking-tighter">{{ item.date_sent|date:"M - d - Y" }}</span></td>
     <td>
        
     

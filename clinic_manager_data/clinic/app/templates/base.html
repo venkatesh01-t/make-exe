@@ -29,7 +29,7 @@
 
   <!-- Sidebar -->
   <aside id="sidebar"
-    class="sidebar-container sidebar-hidden fixed top-0 left-0 z-50 h-full w-72 bg-white shadow-xl border-r border-gray-100 transform -translate-x-full lg:translate-x-0 flex flex-col">
+    class="sidebar-container sidebar-hidden fixed top-0 left-0 z-50 h-full w-72 bg-white lg:shadow-xl border-r border-gray-100 transform -translate-x-full lg:translate-x-0 flex flex-col">
     <div class="sidebar-header flex items-center gap-3 px-6 py-5 border-b border-gray-100">
       <div class="sidebar-logo w-10 h-10 rounded-xl flex items-center justify-center shadow-lg 
     {% if not clinic.logo %}bg-gradient-to-br from-teal-500 to-teal-700 shadow-teal-200{% endif %} 
@@ -277,7 +277,7 @@
     <!-- Navbar -->
     <header class="glass-nav sticky top-0 z-30 px-4 sm:px-6 lg:px-8 py-3">
       <div class="flex items-center justify-between">
-        <div class="flex items-center gap-4">
+        <div class="flex items-center gap-3 sm:gap-4">
           <button id="hamburgerBtn" class="hamburger-btn lg:hidden p-2 rounded-xl hover:bg-gray-100 transition"
             onclick="toggleSidebar()">
             <svg class="w-6 h-6 text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -287,9 +287,26 @@
               <line class="line line-3" x1="4" y1="18" x2="20" y2="18" />
             </svg>
           </button>
-          <div>
-            <h2 id="pageTitle" class="text-lg sm:text-xl font-bold text-gray-800">Dashboard</h2>
-            <p id="breadcrumb" class="text-xs text-gray-400 hidden sm:block">Home / Dashboard</p>
+          
+          <!-- Clinic Logo & Name for Mobile -->
+          <div class="flex items-center gap-2 lg:hidden pr-2 sm:pr-4 sm:border-r border-gray-200">
+            <div class="w-8 h-8 rounded-lg flex items-center justify-center shadow-sm overflow-hidden flex-shrink-0
+              {% if not clinic.logo %}bg-gradient-to-br from-teal-500 to-teal-700{% endif %}">
+              {% if clinic.logo %}
+                <img src="{{ clinic.logo.url }}" alt="Clinic Logo" class="w-full h-full object-contain">
+              {% else %}
+                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                </svg>
+              {% endif %}
+            </div>
+            <span class="font-bold text-gray-800 text-sm sm:text-base hidden sm:block truncate max-w-[120px]">{{ clinic.clinic_name }}</span>
+          </div>
+
+          <div class="min-w-0">
+            <h2 id="pageTitle" class="text-lg sm:text-xl font-bold text-gray-800 truncate">Dashboard</h2>
+            <p id="breadcrumb" class="text-xs text-gray-400 hidden sm:block truncate">Home / Dashboard</p>
           </div>
         </div>
         <div class="flex items-center gap-2 sm:gap-4">
@@ -321,40 +338,27 @@
                 d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
           </button>
-          <button class="relative p-2.5 rounded-xl hover:bg-gray-100 transition" onclick="toggleNotifications()">
-            <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <button class="relative p-2.5 rounded-xl hover:bg-gray-100 transition" 
+                  hx-get="{% url 'clinic:notifications_dropdown' %}"
+                  hx-target="#notificationsDropdown"
+                  hx-swap="innerHTML"
+                  onclick="toggleNotifications()">
+            <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
             </svg>
-            <span class="notification-badge">5</span>
+            <span class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
           </button>
           <div id="notificationsDropdown"
             class="hidden absolute right-4 sm:right-8 top-16 w-80 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-50">
-            <div class="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
-              <h3 class="font-semibold text-gray-800">Notifications</h3>
-              <span class="text-xs text-teal-600 font-medium cursor-pointer hover:underline">Mark all read</span>
+            <!-- Content will be populated by HTMX -->
+            <div class="p-6 text-center text-gray-400">
+                <div class="animate-pulse flex flex-col items-center">
+                    <div class="h-4 bg-gray-200 rounded w-1/2 mb-4"></div>
+                    <div class="h-3 bg-gray-200 rounded w-3/4"></div>
+                </div>
             </div>
-            <div class="max-h-72 overflow-y-auto">
-              <div class="px-4 py-3 hover:bg-gray-50 cursor-pointer border-l-4 border-teal-500 bg-teal-50/50">
-                <p class="text-sm font-medium text-gray-800">New appointment booked</p>
-                <p class="text-xs text-gray-500 mt-0.5">John Doe — Root Canal — 2:30 PM</p>
-                <p class="text-xs text-gray-400 mt-1">5 min ago</p>
-              </div>
-              <div class="px-4 py-3 hover:bg-gray-50 cursor-pointer border-l-4 border-amber-500 bg-amber-50/50">
-                <p class="text-sm font-medium text-gray-800">Payment pending</p>
-                <p class="text-xs text-gray-500 mt-0.5">Invoice #1024 — $450.00</p>
-                <p class="text-xs text-gray-400 mt-1">1 hour ago</p>
-              </div>
-              <div class="px-4 py-3 hover:bg-gray-50 cursor-pointer border-l-4 border-blue-500 bg-blue-50/50">
-                <p class="text-sm font-medium text-gray-800">Patient check-in</p>
-                <p class="text-xs text-gray-500 mt-0.5">Maria Garcia has arrived</p>
-                <p class="text-xs text-gray-400 mt-1">15 min ago</p>
-              </div>
-            </div>
-            <div class="px-4 py-2.5 border-t border-gray-100 text-center">
-              <span class="text-sm text-teal-600 font-medium cursor-pointer hover:underline">View all
-                notifications</span>
-            </div>
+            
           </div>
           <div class="relative">
             <button class="flex items-center gap-2 p-1.5 rounded-xl hover:bg-gray-100 transition"
@@ -598,7 +602,7 @@
     }
   </script>
   <!-- GLOBAL MODAL -->
-
+  <div id="dynamicModalContainer"></div>
 </body>
 
 </html>

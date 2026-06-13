@@ -222,16 +222,15 @@
 
 <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden" id="patientTable">
     <div class="overflow-x-auto">
-      <table class="w-full min-w-[700px]">
+      <table class="w-full">
         <thead class="bg-gray-50">
           <tr>
-            <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-6 py-4">Patient</th>
-            <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-6 py-4">Date & Time
-            </th>
-            <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-6 py-4">Treatment</th>
-            <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-6 py-4">Doctor</th>
-            <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-6 py-4">Status</th>
-            <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-6 py-4">Actions</th>
+            <th class="text-left px-4 sm:px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Patient</th>
+            <th class="text-left px-4 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider ">Date & Time</th>
+            <th class="text-left px-4 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider ">Treatment</th>
+            <th class="text-left px-4 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider ">Doctor</th>
+            <th class="text-left px-4 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+            <th class="text-left px-4 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
           </tr>
         </thead>
         <tbody hx-get="{% url 'clinic:today_patient_data' %}"

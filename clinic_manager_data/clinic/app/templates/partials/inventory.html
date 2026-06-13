@@ -39,8 +39,6 @@
         height: 5px;
     }
     .custom-scroll {
-        -webkit-overflow-scrolling: touch;
-        overscroll-behavior: contain;
     }
     .custom-scroll::-webkit-scrollbar-track { background: #f1f5f9; }
     .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
@@ -104,14 +102,14 @@
 </div>
  <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
         <div class="overflow-x-auto custom-scroll">
-            <table class="w-full text-left border-collapse min-w-[800px] lg:min-w-0">
+            <table class="w-full text-left border-collapse">
                 <thead>
                     <tr class="bg-slate-50/50 text-slate-400 text-[11px] font-black uppercase tracking-widest border-b border-slate-100">
-                        <th class="px-6 md:px-8 py-5">Item Details</th>
-                        <th class="px-6 md:px-8 py-5">Category</th>
-                        <th class="px-6 md:px-8 py-5 text-center">Quantity</th>
-                        <th class="px-6 md:px-8 py-5">Expiry Date</th>
-                        <th class="px-6 md:px-8 py-5 text-right">Actions</th>
+                        <th class="px-4 sm:px-6 md:px-8 py-5">Item Details</th>
+                        <th class="px-4 sm:px-6 md:px-8 py-5 ">Category</th>
+                        <th class="px-4 sm:px-6 md:px-8 py-5 text-center">Quantity</th>
+                        <th class="px-4 sm:px-6 md:px-8 py-5 ">Expiry Date</th>
+                        <th class="px-4 sm:px-6 md:px-8 py-5 text-right">Actions</th>
                     </tr>
                 </thead>
                 <tbody id="appointmentTableBody" class="divide-y divide-slate-50" hx-get="{% url 'clinic:inventory_paginated' %}" hx-trigger="load" hx-swap="innerHTML">
@@ -131,7 +129,7 @@
     </div>
 <!-- ITEM MODAL (ADD/EDIT) -->
 <div id="itemModal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4">
-    <div class="fixed inset-0 modal-backdrop" onclick="closeInventoryModal('itemModal')"></div>
+    <div class="absolute inset-0 modal-backdrop" onclick="closeInventoryModal('itemModal')"></div>
     <div class="bg-white rounded-3xl md:rounded-[2rem] shadow-2xl w-full max-w-2xl relative z-10 overflow-hidden modal-content-anim max-h-[95vh] flex flex-col min-h-0" id="itemModalWrapper">
         <div class="flex flex-col h-full min-h-0">
             <!-- Header -->
@@ -196,7 +194,7 @@
 
 <!-- DELETE MODAL -->
 <div id="deleteModal" class="hidden fixed inset-0 z-[110] flex items-center justify-center p-4">
-    <div class="fixed inset-0 modal-backdrop" onclick="closeInventoryModal('deleteModal')"></div>
+    <div class="absolute inset-0 modal-backdrop" onclick="closeInventoryModal('deleteModal')"></div>
     <div class="bg-white rounded-3xl w-full max-w-sm p-6 md:p-8 shadow-2xl relative z-10 text-center modal-content-anim" id="deleteModalWrapper">
         <form id="deleteForm" 
               hx-post="{% url 'clinic:inventory_edit' %}" 
@@ -225,7 +223,7 @@
 
 <!-- INVENTORY EVENTS MODAL -->
 <div id="eventsModal" class="hidden fixed inset-0 z-[100] overflow-hidden">
-    <div class="fixed inset-0 modal-backdrop" onclick="closeInventoryModal('eventsModal')"></div>
+    <div class="absolute inset-0 modal-backdrop" onclick="closeInventoryModal('eventsModal')"></div>
     <div class="fixed inset-0 flex items-end sm:items-center justify-center p-0 sm:p-4">
         <div class="bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl w-full sm:max-w-5xl relative z-10 overflow-hidden modal-content-anim max-h-screen sm:max-h-[90vh] flex flex-col min-h-0" id="eventsModalWrapper">
             <div class="flex flex-col h-full min-h-0">

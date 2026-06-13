@@ -562,27 +562,41 @@
         document.getElementById(field).classList.replace('border-red-300', 'border-slate-200');
       }
 
-      function handleSubmit(event) {
-        event.preventDefault();
-        if (isLoading) return;
-        const email = document.getElementById('email').value.trim();
-        const password = document.getElementById('password').value;
-        if (!email || !password) {
-          if(!email) { document.getElementById('email-error-text').textContent = 'Email required'; document.getElementById('email-error').classList.remove('hidden'); }
-          if(!password) { document.getElementById('password-error-text').textContent = 'Password required'; document.getElementById('password-error').classList.remove('hidden'); }
-          return;
+      document.body.addEventListener('htmx:beforeRequest', function(evt) {
+        if (evt.target.id === 'login-form') {
+          const email = document.getElementById('email').value.trim();
+          const password = document.getElementById('password').value;
+          if (!email || !password) {
+            evt.preventDefault();
+            if(!email) { document.getElementById('email-error-text').textContent = 'Email required'; document.getElementById('email-error').classList.remove('hidden'); }
+            if(!password) { document.getElementById('password-error-text').textContent = 'Password required'; document.getElementById('password-error').classList.remove('hidden'); }
+            return;
+          }
+          if (isLoading) {
+            evt.preventDefault();
+            return;
+          }
+          isLoading = true;
+          const btn = document.getElementById('submit-btn');
+          btn.disabled = true;
+          document.getElementById('submit-content').innerHTML = `Authenticating...`;
         }
-        isLoading = true;
-        const btn = document.getElementById('submit-btn');
-        btn.disabled = true;
-        document.getElementById('submit-content').innerHTML = `Authenticating...`;
+      });
+
+      document.body.addEventListener('loginSuccess', function(evt) {
+        const email = evt.detail.email;
+        const redirectUrl = evt.detail.redirect_url;
+        const displayName = evt.detail.display_name;
+        
+        document.getElementById('login-form-container').classList.add('hidden');
+        document.getElementById('success-state').classList.remove('hidden');
+        document.getElementById('success-role').textContent = displayName;
+        document.getElementById('success-email').textContent = email;
+        
         setTimeout(() => {
-          document.getElementById('login-form-container').classList.add('hidden');
-          document.getElementById('success-state').classList.remove('hidden');
-          document.getElementById('success-role').textContent = roleLabels[currentRole];
-          document.getElementById('success-email').textContent = email;
+          window.location.href = redirectUrl;
         }, 1500);
-      }
+      });
     </script>
   </body>
 </html>

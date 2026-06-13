@@ -110,8 +110,19 @@ class HtmxLoginView(TemplateView):
         if user:
             login(request, user)
             response = HttpResponse()
-            response["HX-Redirect"] = reverse("clinic:index")
             
+            if getattr(user, 'custom_permissions', '') == "doctor" and hasattr(user, 'doctor'):
+                display_name = f"Dr. {user.doctor.name}"
+            else:
+                display_name = user.username
+
+            response["HX-Trigger"] = json.dumps({
+                "loginSuccess": {
+                    "redirect_url": reverse("clinic:index"),
+                    "email": email,
+                    "display_name": display_name
+                }
+            })
             return response
         else:
             response = HttpResponse("Invalid email or password")
