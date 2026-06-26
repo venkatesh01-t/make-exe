@@ -37,10 +37,16 @@ def run_embedded_django_server(port: int):
     os.environ.setdefault('CLINIC_WORKSPACE', str(WORKSPACE))
 
     if PYTHON_EXE.exists():
-        os.execv(str(PYTHON_EXE), [str(PYTHON_EXE), str(project_dir / 'manage.py'), 'runserver', f'0.0.0.0:{port}'])
+        python_exe = str(PYTHON_EXE)
+        manage_script = str(project_dir / 'manage.py')
+        subprocess.run([python_exe, manage_script, 'makemigrations', 'app'])
+        subprocess.run([python_exe, manage_script, 'migrate'])
+        os.execv(python_exe, [python_exe, manage_script, 'runserver', f'0.0.0.0:{port}'])
 
     from django.core.management import execute_from_command_line
 
+    execute_from_command_line([sys.argv[0], 'makemigrations', 'app'])
+    execute_from_command_line([sys.argv[0], 'migrate'])
     execute_from_command_line([sys.argv[0], 'runserver', f'0.0.0.0:{port}'])
 
 def maybe_run_server_mode():
