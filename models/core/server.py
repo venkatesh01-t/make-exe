@@ -39,7 +39,7 @@ def run_embedded_django_server(port: int):
     if PYTHON_EXE.exists():
         python_exe = str(PYTHON_EXE)
         manage_script = str(project_dir / 'manage.py')
-        subprocess.run([python_exe, manage_script, 'makemigrations', 'app'])
+        subprocess.run([python_exe, manage_script, 'makemigrations app'])
         subprocess.run([python_exe, manage_script, 'migrate'])
         os.execv(python_exe, [python_exe, manage_script, 'runserver', f'0.0.0.0:{port}'])
 
