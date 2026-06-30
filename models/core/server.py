@@ -48,7 +48,7 @@ def run_embedded_django_server(port: int):
         migration_env.setdefault('CLINIC_STATIC_ROOT', str(runtime_static_dir))
         migration_env.setdefault('CLINIC_WORKSPACE', str(WORKSPACE))
 
-        # Run full 3-layer migration pipeline (subprocess mode)
+        # Run migration pipeline: makemigrations app → migrate
         run_full_migration_pipeline(
             python_exe=python_exe,
             manage_script=manage_script,
