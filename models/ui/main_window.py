@@ -19,6 +19,7 @@ from models.core.installer import (
 )
 from models.core.downloader import download_and_extract
 from models.core.backup import backup_data, restore_data
+from models.core.migration_manager import run_full_migration_pipeline, check_migrations_needed_subprocess
 from models.ui.splash import SplashScreen
 from models.ui.components import PrimaryButton, GhostButton, DangerButton
 from models.ui.components import generate_qr
@@ -391,6 +392,32 @@ class ClinicManager(ctk.CTk):
             self.update_splash(label_text="Setting up QR Service...", status_text="Step 3/5")
             ensure_qrcode(self.append_output)
 
+            # ── Step 4: Database Migration Check ──────────────────────────────
+            # Runs BEFORE the user can press Start Server — guarantees DB is ready.
+            self.update_splash(label_text="Checking Database Schema...", status_text="Step 4/5")
+            if PYTHON_EXE.exists():
+                migration_env = os.environ.copy()
+                migration_env['DJANGO_SETTINGS_MODULE'] = 'clinic.settings'
+                migration_env['CLINIC_DATA_DIR'] = str(DATA_DIR)
+                migration_env['CLINIC_STATIC_ROOT'] = str(get_runtime_static_dir())
+                migration_env['CLINIC_WORKSPACE'] = str(WORKSPACE)
+
+                from models.config.settings import get_project_dir
+                project_dir = get_project_dir()
+                manage_script = str(project_dir / 'manage.py')
+
+                run_full_migration_pipeline(
+                    python_exe=str(PYTHON_EXE),
+                    manage_script=manage_script,
+                    project_dir=project_dir,
+                    data_dir=DATA_DIR,
+                    env=migration_env,
+                    log_cb=self.append_output,
+                )
+            else:
+                self.append_output("Bundled Python not found — skipping pre-flight migration check (will run at server start)")
+            # ─────────────────────────────────────────────────────────────────
+
             self.update_splash(label_text="Finalizing Environment...", status_text="Step 5/5")
             install_requirements(self.append_output)
             
@@ -416,6 +443,32 @@ class ClinicManager(ctk.CTk):
         self.server_port = port
         
         try:
+            # ── Pre-Server Migration Guard (Layer 3 — last-resort safety net) ──
+            # Runs a lightweight `migrate --check` to catch any unapplied migrations
+            # that may have been missed during startup (e.g., startup_checks skipped).
+            if PYTHON_EXE.exists():
+                guard_env = os.environ.copy()
+                guard_env['DJANGO_SETTINGS_MODULE'] = 'clinic.settings'
+                guard_env['CLINIC_DATA_DIR'] = str(DATA_DIR)
+                guard_env['CLINIC_STATIC_ROOT'] = str(get_runtime_static_dir())
+                guard_env['CLINIC_WORKSPACE'] = str(WORKSPACE)
+
+                from models.config.settings import get_project_dir
+                project_dir = get_project_dir()
+                manage_script = str(project_dir / 'manage.py')
+
+                if check_migrations_needed_subprocess(str(PYTHON_EXE), manage_script, guard_env):
+                    self.append_output("⚠ Pre-server: unapplied migrations detected — applying now...")
+                    run_full_migration_pipeline(
+                        python_exe=str(PYTHON_EXE),
+                        manage_script=manage_script,
+                        project_dir=project_dir,
+                        data_dir=DATA_DIR,
+                        env=guard_env,
+                        log_cb=self.append_output,
+                    )
+            # ─────────────────────────────────────────────────────────────────
+
             cmd = get_server_command(port)
             env = os.environ.copy()
             env['CLINIC_DATA_DIR'] = str(DATA_DIR)

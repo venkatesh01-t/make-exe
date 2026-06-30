@@ -5,6 +5,7 @@ import socket
 from pathlib import Path
 from models.config.settings import PROJECT_DIR, PYTHON_EXE, WORKSPACE, get_project_dir, get_runtime_data_dir, get_runtime_static_dir
 from models.utils.os_helpers import is_frozen_build
+from models.core.migration_manager import run_full_migration_pipeline, run_full_migration_pipeline_django_api
 
 def get_server_command(port: int):
     manage_py = str(PROJECT_DIR / 'manage.py')
@@ -39,14 +40,33 @@ def run_embedded_django_server(port: int):
     if PYTHON_EXE.exists():
         python_exe = str(PYTHON_EXE)
         manage_script = str(project_dir / 'manage.py')
-        subprocess.run([python_exe, manage_script, 'makemigrations app'])
-        subprocess.run([python_exe, manage_script, 'migrate'])
+
+        # Build env for subprocess migration calls
+        migration_env = os.environ.copy()
+        migration_env.setdefault('DJANGO_SETTINGS_MODULE', 'clinic.settings')
+        migration_env.setdefault('CLINIC_DATA_DIR', str(runtime_data_dir))
+        migration_env.setdefault('CLINIC_STATIC_ROOT', str(runtime_static_dir))
+        migration_env.setdefault('CLINIC_WORKSPACE', str(WORKSPACE))
+
+        # Run full 3-layer migration pipeline (subprocess mode)
+        run_full_migration_pipeline(
+            python_exe=python_exe,
+            manage_script=manage_script,
+            project_dir=project_dir,
+            data_dir=runtime_data_dir,
+            env=migration_env,
+        )
+
         os.execv(python_exe, [python_exe, manage_script, 'runserver', f'0.0.0.0:{port}'])
 
     from django.core.management import execute_from_command_line
 
-    execute_from_command_line([sys.argv[0], 'makemigrations', 'app'])
-    execute_from_command_line([sys.argv[0], 'migrate'])
+    # Run full migration pipeline via Django API (no external Python exe needed)
+    run_full_migration_pipeline_django_api(
+        project_dir=project_dir,
+        data_dir=runtime_data_dir,
+    )
+
     execute_from_command_line([sys.argv[0], 'runserver', f'0.0.0.0:{port}'])
 
 def maybe_run_server_mode():
