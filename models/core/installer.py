@@ -56,6 +56,8 @@ def install_requirements(append_output_callback):
         'django==5.2.11',
         'opencv-python',
         'pillow',
+        'requests',
+        'waitress'  
     ]
 
     if not PYTHON_EXE.exists():
