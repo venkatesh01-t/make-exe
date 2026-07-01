@@ -17,7 +17,7 @@ def ensure_runtime_directories():
             pass
 
 def get_required_setup_items():
-    items = [WORKSPACE / '3.11.9', WORKSPACE / 'data', WORKSPACE / 'requirements.txt']
+    items = [WORKSPACE / '3.11.9', WORKSPACE / 'data']
     if not is_frozen_build():
         items.append(WORKSPACE / 'clinic')
     return items
