@@ -51,17 +51,19 @@ def install_python_packages(packages, append_output_callback):
         return False
 
 def install_requirements(append_output_callback):
-    """Install all packages from requirement.txt."""
-    req = WORKSPACE / 'requirements.txt'
+    """Install all packages from the hardcoded requirements list (no requirements.txt needed)."""
+    requirements = [
+        'django==5.2.11',
+        'opencv-python',
+        'pillow',
+    ]
+
     if not PYTHON_EXE.exists():
         append_output_callback(f'Python not found at {PYTHON_EXE}')
         return False
-    if not req.exists():
-        append_output_callback('requirements.txt not found, skipping')
-        return False
-    
-    append_output_callback(f'Installing requirements with {PYTHON_EXE} -m pip install -r {req}...')
-    cmd = [str(PYTHON_EXE), '-m', 'pip', 'install', '-r', str(req)]
+
+    append_output_callback(f'Installing requirements: {requirements}')
+    cmd = [str(PYTHON_EXE), '-m', 'pip', 'install'] + requirements
     try:
         CREATE_NO_WINDOW = 0x08000000 if sys.platform == 'win32' else 0
         proc = subprocess.run(cmd, capture_output=True, text=True, timeout=600, creationflags=CREATE_NO_WINDOW)
