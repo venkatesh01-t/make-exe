@@ -17,6 +17,8 @@
   <script src="{% static 'vendor/htmx/htmx-2.0.4.min.js' %}"></script>
   <script src="{% static 'vendor/chartjs/chart.umd.min.js' %}"></script>
   <link rel="stylesheet" href="{% static 'css/style.css' %}">
+  <!-- Global UI Component Styles (Action Buttons) -->
+  {% include 'ext/general/action_buttons_css.html' %}
 </head>
 <script>
   const clinicName = "{{ clinic.clinic_name|escapejs }}";

@@ -115,13 +115,15 @@ def _doctor_display_name(raw_name):
 def _render_billing_data(request, trigger_message=None, trigger_type='success', closemodel=''):
     qs = _base_billing_queryset()
 
-    doctor = request.GET.get('doctor', '').strip()
-    status = request.GET.get('status', '').strip()
-    treatment = request.GET.get('treatment', '').strip()
-    q_date = request.GET.get('date', '').strip()
+    data = request.POST if request.method == 'POST' else request.GET
+
+    doctor = data.get('doctor', '').strip()
+    status = data.get('status', '').strip()
+    treatment = data.get('treatment', '').strip()
+    q_date = data.get('date', '').strip()
 
     try:
-        page_number = int(request.GET.get('page', 1))
+        page_number = int(data.get('page', 1))
     except (TypeError, ValueError):
         page_number = 1
 
@@ -279,11 +281,32 @@ class BillingMarkPaidView(LoginRequiredMixin, View):
         if invoice.status == BillingInvoice.STATUS_PAID:
             return _render_billing_data(request, 'Invoice is already paid', 'info')
 
+        payment_mode = request.POST.get('payment_mode')
+
         invoice.status = BillingInvoice.STATUS_PAID
+        if payment_mode:
+            existing_note = invoice.note or ""
+            invoice.note = (existing_note + f" [Paid via {payment_mode}]").strip()
+        
         invoice.paid_at = timezone.now()
-        invoice.save(update_fields=['status', 'paid_at', 'updated_at'])
+        invoice.save(update_fields=['status', 'note', 'paid_at', 'updated_at'])
 
         return _render_billing_data(request, 'Invoice marked as paid', 'success')
+
+
+class BillingDeleteView(LoginRequiredMixin, View):
+    def post(self, request, *args, **kwargs):
+        invoice_id = request.POST.get('invoice_id')
+        if invoice_id:
+            invoice = get_object_or_404(BillingInvoice, pk=invoice_id)
+            invoice.delete()
+            return _render_billing_data(
+                request,
+                trigger_message='Invoice deleted successfully',
+                trigger_type='success',
+                closemodel='deleteBillModal'
+            )
+        return _render_billing_data(request, 'Invoice ID is required', 'error')
 
 
 @method_decorator(xframe_options_exempt, name='dispatch')

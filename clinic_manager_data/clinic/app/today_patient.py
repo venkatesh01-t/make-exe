@@ -386,27 +386,31 @@ class PrescriptionSubmitView(LoginRequiredMixin, View):
                 .first()
             )
 
-            if pending_invoice:
-                pending_invoice.patient = daily_patient.patient
-                pending_invoice.treatment = treatment_summary
-                pending_invoice.doctor = doctor_name or pending_invoice.doctor
-                pending_invoice.amount = total_amount
-                pending_invoice.note = billing_note
-                pending_invoice.created_by = pending_invoice.created_by or (request.user if request.user.is_authenticated else None)
-                pending_invoice.save(update_fields=[
-                    'patient', 'treatment', 'doctor', 'amount', 'note', 'created_by', 'updated_at'
-                ])
+            if not selected_treatment_names:
+                if pending_invoice:
+                    pending_invoice.delete()
             else:
-                BillingInvoice.objects.create(
-                    patient=daily_patient.patient,
-                    daily_patient=daily_patient,
-                    treatment=treatment_summary,
-                    doctor=doctor_name or None,
-                    amount=total_amount,
-                    note=billing_note,
-                    status=BillingInvoice.STATUS_PENDING,
-                    created_by=request.user if request.user.is_authenticated else None,
-                )
+                if pending_invoice:
+                    pending_invoice.patient = daily_patient.patient
+                    pending_invoice.treatment = treatment_summary
+                    pending_invoice.doctor = doctor_name or pending_invoice.doctor
+                    pending_invoice.amount = total_amount
+                    pending_invoice.note = billing_note
+                    pending_invoice.created_by = pending_invoice.created_by or (request.user if request.user.is_authenticated else None)
+                    pending_invoice.save(update_fields=[
+                        'patient', 'treatment', 'doctor', 'amount', 'note', 'created_by', 'updated_at'
+                    ])
+                else:
+                    BillingInvoice.objects.create(
+                        patient=daily_patient.patient,
+                        daily_patient=daily_patient,
+                        treatment=treatment_summary,
+                        doctor=doctor_name or None,
+                        amount=total_amount,
+                        note=billing_note,
+                        status=BillingInvoice.STATUS_PENDING,
+                        created_by=request.user if request.user.is_authenticated else None,
+                    )
 
         return self._notification_response(
             "Prescription updated successfully" if not created else "Prescription data submitted successfully",

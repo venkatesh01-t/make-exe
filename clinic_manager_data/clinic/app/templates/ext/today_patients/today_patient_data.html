@@ -1,175 +1,374 @@
 {% load initials %}
 
-{% if appoinment %}
-{% for i in appoinment %}
-<tr class="table-row">
-    <!-- Patient Info -->
-    <td class="px-4 sm:px-6 py-4">
-        <div class="flex items-center gap-3">
-            <div
-                class="w-9 h-9 rounded-full bg-gradient-to-br from-teal-400 to-teal-600 flex items-center justify-center text-white text-xs font-bold">
-                {{ i.patient.first_name | initials }}{{ i.patient.last_name|initials }}
-            </div>
-            <div>
-                <p class="text-sm font-semibold text-gray-800">{{i.patient|upper}}</p>
-                <p class="text-xs text-gray-400">#PAT-{{ i.id }}</p>
-            </div>
-        </div>
-    </td>
+<style>
+/* ════════════════════════════════════════════
+   SELF-CONTAINED TABLE STYLES
+════════════════════════════════════════════ */
 
-    <!-- Date & Time -->
-    <td class="px-4 py-4 ">
-        <p class="text-sm text-gray-800">{{ i.date|date:"M-Y-d" }}</p>
-        <p class="text-xs text-gray-400">{{ i.date|date:"D h:i A" }}</p>
-    </td>
+/* ── Table wrapper ── */
+.tp-table {
+    width: 100%;
+    table-layout: auto;    /* browser auto-sizes each column from content */
+    border-collapse: separate;
+    border-spacing: 0;
+    font-family: inherit;
+}
 
-    <!-- Treatments -->
-    <td class="px-4 py-4 text-sm text-gray-600 ">{{ i.treatments | default:"N/A" }}</td>
+/* ── THEAD ── */
+.tp-thead {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+}
+.tp-thead th {
+    padding: 13px 16px;
+    text-align: left;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #64748b;
+    background: #f8fafc;
+    border-bottom: 1.5px solid #e2e8f0;
+    white-space: nowrap;
+    user-select: none;
+}
+.tp-thead th:first-child { padding-left: 20px; border-radius: 0; }
+.tp-thead th:last-child  { padding-right: 20px; }
 
-    <!-- Doctor / Status (optional if fields exist) --> 
-    <td class="px-4 py-4 text-sm text-gray-600 ">{{ i.doctor|default:"N/A" }}</td>
-    <td class="px-4 py-4">
-        <span class="badge bg-green-100 text-green-700">{{ i.status|default:"Pending" }}</span>
-    </td>
+/* Column accent on first th */
+.tp-thead th:first-child {
+    border-left: 3px solid #14b8a6;
+}
 
-    <!-- Actions -->
-    <td class="px-4 py-4">
-        <div class="flex gap-2">
-           
-            <button onclick="todayPatientsOpenViewModal(
-                '{{ i.patient|escapejs }}',
-                '{{ i.patient.id }}',
-                '{{ i.status|default:'Pending'|escapejs }}',
-                '{{ i.patient.phone|default_if_none:'-'|escapejs }}',
-                '{{ i.patient.email|default_if_none:'-'|escapejs }}',
-                '{{ i.patient.age|default_if_none:'-' }}',
-                '{{ i.patient.gender|default_if_none:'-'|escapejs }}',
-                '{{ i.patient.last_visit|date:'M d, Y h:i A'|escapejs }}',
-                '{{ i.patient.medical_history|default_if_none:'No notes'|escapejs }}'
-            )"
-                class="w-8 h-8 rounded-lg bg-teal-50 text-teal-600 flex items-center justify-center hover:bg-teal-100">
-                <!-- Eye icon -->
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                </svg>
-            </button>
-            <button onclick="openLabOrderModalForPatient('{{ i.patient.id }}', '{{ i.patient|escapejs }}')"
-                class="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center hover:bg-purple-100 transition"
-                title="Prescription">
+/* ── TBODY ── */
+.tp-tbody tr {
+    position: relative;
+    transition: background 0.20s ease;
+}
+.tp-tbody tr::after {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: linear-gradient(180deg, #14b8a6, #0ea5e9);
+    opacity: 0;
+    transform: scaleY(0.3);
+    transition: opacity 0.22s ease, transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+    border-radius: 0 3px 3px 0;
+}
+.tp-tbody tr:hover {
+    background: linear-gradient(90deg, #f0fdf9 0%, #f8faff 100%);
+}
+.tp-tbody tr:hover::after {
+    opacity: 1;
+    transform: scaleY(1);
+}
+.tp-tbody td {
+    padding: 12px 16px;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: middle;
+}
+.tp-tbody td:first-child { padding-left: 20px; }
+.tp-tbody td:last-child  { padding-right: 20px; }
+.tp-tbody tr:last-child td { border-bottom: none; }
 
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M9 3h6M10 3v5l-5 8a4 4 0 003.5 6h7a4 4 0 003.5-6l-5-8V3" />
-                </svg>
-            </button>
-            
-             {% if user.custom_permissions == "admin" or user.custom_permissions == "doctor" %}
-             {% if  i.doctor == user.doctor.name or i.doctor == ""  or user.custom_permissions == "admin" %}
-            <button onclick="todayPatientsOpenPrescriptionModalFromPatient('{{ i.id }}', '{{ i.patient.id }}', '{{ i.patient|escapejs }}', '{{ i.patient.age|default_if_none:'' }}', '{{ i.patient.gender|default_if_none:''|escapejs }}')"
-                class="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center hover:bg-purple-100 transition"
-                title="Prescription">
+/* ── Patient Avatar ── */
+.tp-avatar {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #2dd4bf 0%, #0f766e 100%);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 800;
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(13,148,136,0.26);
+    letter-spacing: 0.03em;
+    transition: box-shadow 0.26s ease, transform 0.26s cubic-bezier(0.34,1.56,0.64,1);
+}
+.tp-tbody tr:hover .tp-avatar {
+    box-shadow: 0 0 0 3px rgba(20,184,166,0.22), 0 4px 14px rgba(13,148,136,0.34);
+    transform: scale(1.08);
+}
 
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M9 12h6m-6 4h6M7 4h8l4 4v12a1 1 0 01-1 1H7a1 1 0 01-1-1V5a1 1 0 011-1z" />
-                </svg>
-            </button>
-            {% endif %}
-            <button onclick="openPrescriptionGeneratorFromRow('{{ i.id }}', '{{ i.patient.id }}', '{{ i.patient|escapejs }}', '{{ i.patient.age|default_if_none:'' }}', '{{ i.patient.gender|default_if_none:''|escapejs }}')"
-                class="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center hover:bg-purple-100 transition"
-                title="Prescription">
+/* ── Status Badge ── */
+.tp-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 9px 3px 7px;
+    border-radius: 99px;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: capitalize;
+    border: 1px solid transparent;
+    white-space: nowrap;
+}
+.tp-badge .tp-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+@keyframes tp-pulse {
+    0%,100% { transform:scale(1); opacity:1; }
+    50%      { transform:scale(1.7); opacity:0.45; }
+}
+.tp-dot-pulse { animation: tp-pulse 1.8s ease-in-out infinite; }
 
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M6 9V4h12v5M6 14H5a1 1 0 00-1 1v4h16v-4a1 1 0 00-1-1h-1M8 14h8v6H8v-6z" />
-                </svg>
-            </button>
-            {% if  i.doctor == user.doctor.name or i.doctor == ""  or user.custom_permissions == "admin" %}
-            
+.tp-badge.pending   { background:#fef9ec; color:#92400e; border-color:#fde68a; }
+.tp-badge.pending   .tp-dot { background:#f59e0b; }
+.tp-badge.completed { background:#ecfdf5; color:#065f46; border-color:#a7f3d0; }
+.tp-badge.completed .tp-dot { background:#10b981; }
+.tp-badge.cancelled { background:#fff1f2; color:#9f1239; border-color:#fecdd3; }
+.tp-badge.cancelled .tp-dot { background:#f43f5e; }
+.tp-badge.active    { background:#eff6ff; color:#1e3a8a; border-color:#bfdbfe; }
+.tp-badge.active    .tp-dot { background:#3b82f6; }
 
-            <button onclick="todayPatientsOpenPatientUploadModal('{{ i.id }}', '{{ i.patient.id }}', '{{ i.patient|escapejs }}')"
-                class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center hover:bg-blue-100 transition"
-                title="Upload Files">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M7 16a4 4 0 01.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0-3 3m3-3v12" />
-                </svg>
-            </button>
-            <button onclick="todayPatientsOpenPatientCameraCaptureModal('{{ i.id }}', '{{ i.patient.id }}', '{{ i.patient|escapejs }}')"
-                class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center hover:bg-amber-100 transition"
-                title="Camera Capture">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M3 7a2 2 0 012-2h2l1.2-1.6A2 2 0 0110.8 2h2.4a2 2 0 011.6.8L16 5h3a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" />
-                    <circle cx="12" cy="12" r="3.5" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></circle>
-                </svg>
-            </button>
-           {% endif %}
-           
-            
-            {% endif %}
-            
-            {% if user.custom_permissions == "admin" %}
-            <button onclick="todayPatientsOpenDeleteModal('{{ i.id }}', '{{ i.patient|escapejs }}')"
-                class="w-8 h-8 rounded-lg bg-red-50 text-red-600 flex items-center justify-center hover:bg-red-100">
-                <!-- Delete icon -->
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
-            </button>
-            {% endif %}
-            
-        </div>
-    </td>
-</tr>
-{% endfor %}
+/* ════════════════════════════════════════════
+   EMPTY STATE
+════════════════════════════════════════════ */
+.tp-empty td {
+    padding: 56px 20px;
+}
+</style>
 
-<!-- Pagination -->
-{% if has_previous or has_next %}
-<tr>
-    <td colspan="6" class="px-5 sm:px-6 py-4 border-t border-gray-100">
-        <div class="flex flex-col sm:flex-row items-center justify-between gap-3">
-            <p class="text-sm text-gray-500">
-                Showing {{ appoinment|length }} of {{ total_count }} matching patients
+<table class="tp-table">
+
+  <!-- ── THEAD ── -->
+  <thead class="tp-thead">
+    <tr>
+      <th>Patient</th>
+      <th>Date &amp; Time</th>
+      <th>Treatment</th>
+      <th>Doctor</th>
+      <th>Status</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+
+  <!-- ── TBODY ── -->
+  <tbody class="tp-tbody">
+
+    {% if appoinment %}
+    {% for i in appoinment %}
+    <tr>
+
+      <!-- Patient Info -->
+      <td>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="tp-avatar">
+            {{ i.patient.first_name|initials }}{{ i.patient.last_name|initials }}
+          </div>
+          <div>
+            <p style="font-size:13px;font-weight:700;color:#1e293b;line-height:1.3;margin:0;">
+              {{ i.patient|upper }}
             </p>
-            <div class="flex items-center gap-1">
-                <!-- Prev button: show only if not first page -->
-                {% if has_previous %}
-                <button hx-get="{% url 'clinic:today_patient_data' %}?page={{ previous_page_number }}"
-                    hx-target="#appointmentTableBody" hx-swap="innerHTML"
-                    class="px-3 py-1.5 rounded-lg text-sm text-gray-500 hover:bg-gray-100">
-                    Prev
-                </button>
-                {% endif %}
-
-                <!-- Current page indicator -->
-                <span class="px-3 py-1.5 rounded-lg text-sm bg-teal-500 text-white font-medium">
-                    {{ current_page }}
-                </span>
-
-                <!-- Next button: show only if not last page -->
-                {% if has_next %}
-                <button hx-get="{% url 'clinic:today_patient_data' %}?page={{ next_page_number }}"
-                    hx-target="#appointmentTableBody" hx-swap="innerHTML"
-                    class="px-3 py-1.5 rounded-lg text-sm text-gray-500 hover:bg-gray-100">
-                    Next
-                </button>
-                {% endif %}
-            </div>
+            <p style="font-size:11px;color:#94a3b8;font-weight:500;margin:2px 0 0;">
+              #PAT-{{ i.id }}
+            </p>
+          </div>
         </div>
-    </td>
-</tr>
-{% endif %}
-{% else %}
-<tr>
-    <td colspan="6" class="px-5 sm:px-6 py-4 border-t border-gray-100">
-        <p class="text-sm text-gray-500 text-center">
-            No matching patients found.
+      </td>
+
+      <!-- Date & Time -->
+      <td>
+        <p style="font-size:12.5px;font-weight:600;color:#334155;margin:0;">
+          {{ i.date|date:"M d, Y" }}
         </p>
-    </td>
-</tr>
-{% endif %}
+        <p style="font-size:11px;color:#94a3b8;margin:2px 0 0;">
+          {{ i.date|date:"D · h:i A" }}
+        </p>
+      </td>
+
+      <!-- Treatment -->
+      <td style="font-size:12.5px;color:#475569;font-weight:500;">
+        {{ i.treatments|default:"—" }}
+      </td>
+
+      <!-- Doctor -->
+      <td style="font-size:12.5px;color:#475569;font-weight:500;">
+        {{ i.doctor|default:"—" }}
+      </td>
+
+      <!-- Status -->
+      <td>
+        {% with status=i.status|default:"Pending"|lower %}
+        <span class="tp-badge {{ status }}">
+          <span class="tp-dot {% if status == 'pending' or status == 'active' %}tp-dot-pulse{% endif %}"></span>
+          {{ i.status|default:"Pending" }}
+        </span>
+        {% endwith %}
+      </td>
+
+      <!-- Actions -->
+      <td style="position:relative; min-width: 250px;">
+        <!-- Invisible placeholder to give the column its base width for the collapsed buttons -->
+        <div style="width: 240px; height: 30px; pointer-events: none; visibility: hidden;"></div>
+        <div class="tp-actions">
+
+          <!-- View -->
+          <button class="tp-btn tp-view" title="View Patient"
+            onclick="todayPatientsOpenViewModal(
+              '{{ i.patient|escapejs }}',
+              '{{ i.patient.id }}',
+              '{{ i.status|default:'Pending'|escapejs }}',
+              '{{ i.patient.phone|default_if_none:'-'|escapejs }}',
+              '{{ i.patient.email|default_if_none:'-'|escapejs }}',
+              '{{ i.patient.age|default_if_none:'-' }}',
+              '{{ i.patient.gender|default_if_none:'-'|escapejs }}',
+              '{{ i.patient.last_visit|date:'M d, Y h:i A'|escapejs }}',
+              '{{ i.patient.medical_history|default_if_none:'No notes'|escapejs }}'
+            )">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+            </svg>
+            <span class="tp-lbl">View</span>
+          </button>
+
+          <!-- Lab Order -->
+          <button class="tp-btn tp-lab" title="Lab Order"
+            onclick="openLabOrderModalForPatient('{{ i.patient.id }}', '{{ i.patient|escapejs }}')">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 3h6M10 3v5l-5 8a4 4 0 003.5 6h7a4 4 0 003.5-6l-5-8V3"/>
+            </svg>
+            <span class="tp-lbl">Lab</span>
+          </button>
+
+          {% if user.custom_permissions == "admin" or user.custom_permissions == "doctor" %}
+          {% if i.doctor == user.doctor.name or i.doctor == "" or user.custom_permissions == "admin" %}
+
+          <!-- Prescription -->
+          <button class="tp-btn tp-rx" title="Prescription"
+            onclick="todayPatientsOpenPrescriptionModalFromPatient('{{ i.id }}', '{{ i.patient.id }}', '{{ i.patient|escapejs }}', '{{ i.patient.age|default_if_none:'' }}', '{{ i.patient.gender|default_if_none:''|escapejs }}')">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 12h6m-6 4h6M7 4h8l4 4v12a1 1 0 01-1 1H7a1 1 0 01-1-1V5a1 1 0 011-1z"/>
+            </svg>
+            <span class="tp-lbl">Rx</span>
+          </button>
+
+          {% endif %}
+
+          <!-- Print Prescription -->
+          <button class="tp-btn tp-print" title="Print Prescription"
+            onclick="openPrescriptionGeneratorFromRow('{{ i.id }}', '{{ i.patient.id }}', '{{ i.patient|escapejs }}', '{{ i.patient.age|default_if_none:'' }}', '{{ i.patient.gender|default_if_none:''|escapejs }}')">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M6 9V4h12v5M6 14H5a1 1 0 00-1 1v4h16v-4a1 1 0 00-1-1h-1M8 14h8v6H8v-6z"/>
+            </svg>
+            <span class="tp-lbl">Print</span>
+          </button>
+
+          {% if i.doctor == user.doctor.name or i.doctor == "" or user.custom_permissions == "admin" %}
+
+          <!-- Upload -->
+          <button class="tp-btn tp-upload" title="Upload Files"
+            onclick="todayPatientsOpenPatientUploadModal('{{ i.id }}', '{{ i.patient.id }}', '{{ i.patient|escapejs }}')">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M7 16a4 4 0 01.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0-3 3m3-3v12"/>
+            </svg>
+            <span class="tp-lbl">Upload</span>
+          </button>
+
+          <!-- Camera -->
+          <button class="tp-btn tp-cam" title="Camera"
+            onclick="todayPatientsOpenPatientCameraCaptureModal('{{ i.id }}', '{{ i.patient.id }}', '{{ i.patient|escapejs }}')">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M3 7a2 2 0 012-2h2l1.2-1.6A2 2 0 0110.8 2h2.4a2 2 0 011.6.8L16 5h3a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/>
+              <circle cx="12" cy="12" r="3.5" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></circle>
+            </svg>
+            <span class="tp-lbl">Cam</span>
+          </button>
+
+          {% endif %}
+          {% endif %}
+
+          {% if user.custom_permissions == "admin" %}
+          <!-- Delete -->
+          <button class="tp-btn tp-del" title="Delete"
+            onclick="todayPatientsOpenDeleteModal('{{ i.id }}', '{{ i.patient|escapejs }}')">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+            </svg>
+            <span class="tp-lbl">Delete</span>
+          </button>
+          {% endif %}
+
+        </div>
+      </td>
+    </tr>
+    {% endfor %}
+
+    <!-- ── Pagination row ── -->
+    {% if has_previous or has_next %}
+    <tr class="tp-pg-row">
+      <td colspan="6">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <p style="font-size:11.5px;color:#94a3b8;margin:0;">
+            Showing <strong style="color:#475569;">{{ appoinment|length }}</strong>
+            of <strong style="color:#475569;">{{ total_count }}</strong> patients
+          </p>
+          <div style="display:flex;align-items:center;gap:6px;">
+            {% if has_previous %}
+            <button class="tp-pg-btn"
+              hx-get="{% url 'clinic:today_patient_data' %}?page={{ previous_page_number }}"
+              hx-target="#appointmentTableBody" hx-swap="innerHTML">
+              <svg width="11" height="11" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/>
+              </svg>
+              Prev
+            </button>
+            {% endif %}
+
+            <span class="tp-pg-cur">{{ current_page }}</span>
+
+            {% if has_next %}
+            <button class="tp-pg-btn"
+              hx-get="{% url 'clinic:today_patient_data' %}?page={{ next_page_number }}"
+              hx-target="#appointmentTableBody" hx-swap="innerHTML">
+              Next
+              <svg width="11" height="11" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/>
+              </svg>
+            </button>
+            {% endif %}
+          </div>
+        </div>
+      </td>
+    </tr>
+    {% endif %}
+
+    {% else %}
+    <!-- ── Empty State ── -->
+    <tr class="tp-empty">
+      <td colspan="6">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center;">
+          <div style="width:52px;height:52px;border-radius:50%;
+              background:linear-gradient(135deg,#f0fdf9,#ecfdf5);
+              border:2px dashed #a7f3d0;
+              display:flex;align-items:center;justify-content:center;">
+            <svg width="22" height="22" fill="none" stroke="#34d399" stroke-width="1.5" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0"/>
+            </svg>
+          </div>
+          <div>
+            <p style="font-size:13.5px;font-weight:700;color:#374151;margin:0;">No patients found</p>
+            <p style="font-size:12px;color:#9ca3af;margin:4px 0 0;">Try adjusting your search or filters.</p>
+          </div>
+        </div>
+      </td>
+    </tr>
+    {% endif %}
+
+  </tbody>
+</table>

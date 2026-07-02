@@ -540,7 +540,17 @@
                     <div><strong>Bill Time</strong> {{ invoice.bill_date|date:"h:i A" }}</div>
                     <div><strong>Status</strong>
                         <span class="status-badge {% if invoice.status == 'paid' %}status-paid{% else %}status-pending{% endif %}">
-                            {{ invoice.status|upper }}
+                            {% if invoice.status == 'paid' and invoice.note %}
+                                {% if 'Paid via CASH' in invoice.note %}
+                                    PAID (CASH)
+                                {% elif 'Paid via UPI' in invoice.note %}
+                                    PAID (UPI)
+                                {% else %}
+                                    {{ invoice.status|upper }}
+                                {% endif %}
+                            {% else %}
+                                {{ invoice.status|upper }}
+                            {% endif %}
                         </span>
                     </div>
                 </div>
@@ -569,7 +579,17 @@
                 <div class="section-head">
                     <h3>Invoice Details</h3>
                     <span class="status-badge {% if invoice.status == 'paid' %}status-paid{% else %}status-pending{% endif %}">
-                        {{ invoice.status|upper }}
+                            {% if invoice.status == 'paid' and invoice.note %}
+                                {% if 'Paid via CASH' in invoice.note %}
+                                    PAID (CASH)
+                                {% elif 'Paid via UPI' in invoice.note %}
+                                    PAID (UPI)
+                                {% else %}
+                                    {{ invoice.status|upper }}
+                                {% endif %}
+                            {% else %}
+                                {{ invoice.status|upper }}
+                            {% endif %}
                     </span>
                 </div>
                 <div class="section-body">
@@ -604,7 +624,19 @@
                         {% endif %}
                         <tr>
                             <th>Payment Status</th>
-                            <td>{{ invoice.status|title }}</td>
+                            <td>
+                                {% if invoice.status == 'paid' and invoice.note %}
+                                    {% if 'Paid via CASH' in invoice.note %}
+                                        Paid (CASH)
+                                    {% elif 'Paid via UPI' in invoice.note %}
+                                        Paid (UPI)
+                                    {% else %}
+                                        {{ invoice.status|title }}
+                                    {% endif %}
+                                {% else %}
+                                    {{ invoice.status|title }}
+                                {% endif %}
+                            </td>
                         </tr>
                         <tr>
                             <th>Created By</th>

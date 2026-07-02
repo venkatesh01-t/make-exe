@@ -53,6 +53,7 @@ urlpatterns = [
     path('partials/billing/data/', BillingDataView.as_view(), name='billing_data'),
     path('partials/billing/create/', BillingCreateView.as_view(), name='billing_create'),
     path('partials/billing/<int:invoice_id>/mark-paid/', BillingMarkPaidView.as_view(), name='billing_mark_paid'),
+    path('partials/billing/delete/', BillingDeleteView.as_view(), name='billing_delete'),
     path('billing/invoice/<int:invoice_id>/a4/', BillingA4View.as_view(), name='billing_a4'),
 
     path('partials/reports/', ReportsPartialView.as_view(), name='reports_partial'),

@@ -30,36 +30,39 @@
         </div>
     </td>
     <td><span class="text-xs font-bold text-slate-400 uppercase tracking-tighter">{{ item.date_sent|date:"M - d - Y" }}</span></td>
-    <td>
-        <div class="flex items-center gap-2">
+    <td style="position:relative; min-width: 170px;">
+        <div style="width: 160px; height: 30px; pointer-events: none; visibility: hidden;"></div>
+        <div class="tp-actions">
             <!-- Edit Button -->
             <button
                 onclick="event.stopPropagation(); openEditLabOrderModal('{{ item.id }}', '{{ item.work_type|escapejs }}', '{{ item.lab_name|escapejs }}', '{{ item.note|escapejs }}');"
-                class="text-amber-600 p-2 hover:bg-amber-50 rounded-lg transition"
+                class="tp-btn tp-edit"
                 title="Edit Lab Order"
                 type="button">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                     <path d="M12 20h9"></path>
                     <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
                 </svg>
+                <span class="tp-lbl">Edit</span>
             </button>
             
             <!-- Delete Button -->
             <button
                 onclick="event.stopPropagation(); openDeleteLabOrderModal('{{ item.id }}');"
-                class="text-red-600 p-2 hover:bg-red-50 rounded-lg transition"
+                class="tp-btn tp-del"
                 title="Delete Lab Order"
                 type="button">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                     <polyline points="3 6 5 6 21 6"></polyline>
                     <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                 </svg>
+                <span class="tp-lbl">Delete</span>
             </button>
 
             <!-- Print Button -->
             <button
                 onclick="event.stopPropagation(); openLabWorkPrintModal('{{ item.id }}');"
-                class="text-blue-600 p-2 hover:bg-blue-50 rounded-lg transition"
+                class="tp-btn tp-print"
                 title="Open A4 details"
                 type="button">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -67,6 +70,7 @@
                     <path d="M12 16v-4" />
                     <path d="M12 8h.01" />
                 </svg>
+                <span class="tp-lbl">Details</span>
             </button>
         </div>
     </td>

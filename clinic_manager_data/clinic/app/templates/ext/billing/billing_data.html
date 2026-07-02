@@ -13,30 +13,46 @@
   <td class="px-4 sm:px-6 py-4 text-sm text-gray-600 ">{{ invoice.bill_date|date:'M d, Y h:i A' }}</td>
   <td class="px-4 sm:px-6 py-4">
     {% if invoice.status == 'paid' %}
-    <span class="badge bg-green-100 text-green-700">Paid</span>
+        {% if invoice.note and 'Paid via CASH' in invoice.note %}
+            <span class="badge bg-green-100 text-green-800 border border-green-200">Paid (CASH)</span>
+        {% elif invoice.note and 'Paid via UPI' in invoice.note %}
+            <span class="badge bg-blue-100 text-blue-800 border border-blue-200">Paid (UPI)</span>
+        {% else %}
+            <span class="badge bg-green-100 text-green-700 border border-green-200">Paid</span>
+        {% endif %}
     {% else %}
-    <span class="badge bg-amber-100 text-amber-700">Pending</span>
+        <span class="badge bg-amber-100 text-amber-700 border border-amber-200">Pending</span>
     {% endif %}
   </td>
-  <td class="px-4 sm:px-6 py-4">
-    <div class="flex items-center gap-2">
+  <td style="position:relative; min-width: 170px;">
+    <div style="width: 160px; height: 30px; pointer-events: none; visibility: hidden;"></div>
+    <div class="tp-actions">
       <button
         type="button"
         onclick="openBillingPreviewModal({{ invoice.id }})"
-        class="px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition">
-        A4 Bill
+        class="tp-btn tp-print" title="A4 Bill">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+        <span class="tp-lbl">A4 Bill</span>
       </button>
 
       {% if invoice.status != 'paid' %}
       <button
         type="button"
-        hx-post="{% url 'clinic:billing_mark_paid' invoice.id %}"
-        hx-target="#billingTableBody"
-        hx-swap="innerHTML"
-        hx-include="#billingFiltersForm"
-        hx-headers='{"X-CSRFToken":"{{ csrf_token }}"}'
-        class="px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-700 transition">
-        Mark Paid
+        onclick="openPaymentModeModal({{ invoice.id }})"
+        class="tp-btn tp-view" title="Mark Paid">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+        <span class="tp-lbl">Mark Paid</span>
+      </button>
+      {% endif %}
+      {% if user.custom_permissions == "admin"  %}
+      <button
+        type="button"
+        onclick="openDeleteBillModal({{ invoice.id }}, '{{ invoice.invoice_number|escapejs }}')"
+        class="tp-btn tp-del" title="Delete Invoice">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+        </svg>
+        <span class="tp-lbl">Delete</span>
       </button>
       {% endif %}
     </div>
