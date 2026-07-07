@@ -87,21 +87,21 @@ class CustomLogoutView(TemplateView):
         return response
 
     def get(self, request):
+        clinic = ClinicInformation.objects.first()
         if request.user.is_authenticated:
             return TemplateView.as_view(template_name="base.html")(request)
         else:
-            return TemplateView.as_view(template_name="login.html")(request)
-        
+            return render(request, "login.html", {"clinic": clinic})
 
 class HtmxLoginView(TemplateView):
     
     @csrf_exempt
     def get(self, request):
+        clinic = ClinicInformation.objects.first()
         if request.user.is_authenticated:
             return TemplateView.as_view(template_name="base.html")(request)
         else:
-            return TemplateView.as_view(template_name="login.html")(request)
-        
+            return render(request, "login.html", {"clinic": clinic})
     @csrf_exempt    
     def post(self, request):
         email = request.POST.get("email")
@@ -128,15 +128,15 @@ class HtmxLoginView(TemplateView):
             response = HttpResponse("Invalid email or password")
             response["HX-Retarget"] = "#email-error-text"
             response["HX-Reswap"] = "innerHTML"
-            response["HX-Trigger"] = "loginFailed"
             response["HX-Trigger"] = json.dumps({
-                    "showNotification": {
-                        "message": f"Login failed ",
-                        "type": "error",
-                        "duration": 4000,
-                        "closemodel":""
-                    }
-                })
+                "loginFailed": "",
+                "showNotification": {
+                    "message": "Login failed ",
+                    "type": "error",
+                    "duration": 4000,
+                    "closemodel": ""
+                }
+            })
             return response
 
 

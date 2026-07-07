@@ -417,6 +417,14 @@
         </svg>
         <span>Patient Files</span>
       </button>
+
+      <button data-tab-btn="billing" onclick="switchPatientHistoryTab('billing')"
+        class="tab-nav-btn flex items-center gap-2 px-5 sm:px-6 py-4 border-b-2 border-transparent text-slate-600 font-bold text-sm transition hover:bg-slate-50 whitespace-nowrap">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span>Billing</span>
+      </button>
     </div>
 
     <!-- Content Area with Tab Contents -->
@@ -453,7 +461,7 @@
         </div>
       </div>
 
-      <!-- File Upload Tab - Stored Files Only -->
+    <!-- File Upload Tab - Stored Files Only -->
       <div data-tab-content="fileupload" class="hidden p-5 sm:p-7 space-y-4" id="fileUploadContainer">
         <div id="patientFilesLoadingState" class="text-center py-8">
           <svg class="w-12 h-12 mx-auto mb-3 text-blue-300 animate-spin" fill="none" stroke="currentColor"
@@ -472,6 +480,16 @@
               d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
           <p class="text-sm text-slate-500">No files found for this patient</p>
+        </div>
+      </div>
+
+      <!-- Billing Tab -->
+      <div data-tab-content="billing" class="hidden p-5 sm:p-7 space-y-4" id="billingHistoryContainer">
+        <div class="text-center py-12 text-slate-400">
+          <svg class="w-12 h-12 mx-auto mb-3 text-slate-300 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          Loading billing history...
         </div>
       </div>
     </div>
@@ -716,7 +734,86 @@
       initializePatientHistoryFileUpload();
       // Auto-load stored files when tab is clicked
       loadPatientHistoryStoredFiles();
+    } else if (tabName === 'billing') {
+      loadPatientBillingHistory();
     }
+  }
+
+  function loadPatientBillingHistory() {
+    const container = document.getElementById('billingHistoryContainer');
+    if (!container) return;
+
+    container.innerHTML = '<div class="text-center py-8 text-gray-400">Loading billing history...</div>';
+
+    const patientId = patientHistoryState.patientId;
+    if (!patientId) {
+      container.innerHTML = '<div class="text-center py-8 text-red-400">Patient ID not found</div>';
+      return;
+    }
+
+    fetch(`/api/patient/${patientId}/billing/`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.error) throw new Error(data.error);
+        if (!data || data.length === 0) {
+          container.innerHTML = '<div class="text-center py-8 text-gray-400">No billing records found</div>';
+          return;
+        }
+
+        let html = '<div class="space-y-3">';
+        data.forEach(bill => {
+          const dateObj = new Date(bill.bill_date);
+          const dateStr = !isNaN(dateObj) ? dateObj.toLocaleDateString('en-US', {
+            year: 'numeric', month: 'short', day: 'numeric'
+          }) : 'Unknown Date';
+          
+          let statusBadge = '';
+          let paymentMode = '';
+          if (bill.note) {
+              const match = bill.note.match(/\[Paid via (.*?)\]/i);
+              if (match) {
+                  paymentMode = match[1];
+              }
+          }
+
+          if (bill.status === 'paid') {
+            statusBadge = '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">Paid</span>';
+            if (paymentMode) {
+                statusBadge += ` <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 ml-1 border border-blue-200 shadow-sm">${paymentMode}</span>`;
+            }
+          } else {
+            statusBadge = '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800">Pending</span>';
+          }
+
+          html += `
+            <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm hover:shadow-md transition">
+              <div class="flex justify-between items-start mb-2">
+                <div>
+                  <h4 class="font-bold text-slate-800">${bill.invoice_number || 'Invoice #' + bill.id}</h4>
+                  <p class="text-sm text-slate-500">${dateStr}</p>
+                </div>
+                <div>${statusBadge}</div>
+              </div>
+              <div class="grid grid-cols-2 gap-2 mt-3 text-sm">
+                <div>
+                  <span class="text-slate-400 block text-xs uppercase tracking-wider">Amount</span>
+                  <span class="font-semibold text-slate-700">₹${parseFloat(bill.amount).toFixed(2)}</span>
+                </div>
+                <div>
+                  <span class="text-slate-400 block text-xs uppercase tracking-wider">Treatment</span>
+                  <span class="font-semibold text-slate-700">${bill.treatment || '-'}</span>
+                </div>
+              </div>
+            </div>
+          `;
+        });
+        html += '</div>';
+        container.innerHTML = html;
+      })
+      .catch(err => {
+        console.error('Error loading billing history:', err);
+        container.innerHTML = '<div class="text-center py-8 text-red-500">Error loading billing history</div>';
+      });
   }
 
   function loadPatientVisitedHistory() {
@@ -2012,6 +2109,96 @@
     if (mimeType === 'application/pdf') return 'pdf';
     if (mimeType.includes('word') || mimeType.includes('docx')) return 'docx';
     return 'unknown';
+  }
+</script>
+
+<!-- Patient Full Report Modal -->
+<div id="patientFullReportModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4"
+  onclick="if (event.target === this) closeModal('patientFullReportModal')">
+  <div class="modal-backdrop absolute inset-0 bg-black/50" onclick="closeModal('patientFullReportModal')"></div>
+  <div class="modal-content bg-white rounded-3xl shadow-2xl w-full max-w-lg relative z-10 overflow-hidden flex flex-col pointer-events-auto">
+    <!-- Header -->
+    <div class="px-5 sm:px-7 py-4 border-b border-slate-100 bg-gradient-to-r from-indigo-50 via-blue-50 to-cyan-50 flex items-center justify-between">
+      <div>
+        <h3 class="text-lg sm:text-xl font-black text-slate-900">Generate Full Report</h3>
+        <p class="text-xs text-slate-500 mt-1" id="reportPatientNameLabel">Select sections to include</p>
+      </div>
+      <button type="button" onclick="closeModal('patientFullReportModal')"
+        class="p-2 rounded-xl hover:bg-slate-100 transition">
+        <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+
+    <!-- Body -->
+    <form id="fullReportForm" class="p-5 sm:p-7 space-y-4">
+      <input type="hidden" id="reportPatientId" name="patient_id">
+      
+      <label class="flex items-center gap-3 p-3 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50 transition">
+        <input type="checkbox" name="sections" value="visited" checked class="w-5 h-5 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500">
+        <span class="font-bold text-slate-700">Visit History</span>
+      </label>
+      
+      <label class="flex items-center gap-3 p-3 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50 transition">
+        <input type="checkbox" name="sections" value="labwork" checked class="w-5 h-5 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500">
+        <span class="font-bold text-slate-700">Lab Work</span>
+      </label>
+      
+      <label class="flex items-center gap-3 p-3 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50 transition">
+        <input type="checkbox" name="sections" value="prescriptions" checked class="w-5 h-5 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500">
+        <span class="font-bold text-slate-700">Prescriptions</span>
+      </label>
+      
+      <label class="flex items-center gap-3 p-3 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50 transition">
+        <input type="checkbox" name="sections" value="fileupload" checked class="w-5 h-5 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500">
+        <span class="font-bold text-slate-700">Patient Files (List)</span>
+      </label>
+      
+      <label class="flex items-center gap-3 p-3 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50 transition">
+        <input type="checkbox" name="sections" value="billing" checked class="w-5 h-5 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500">
+        <span class="font-bold text-slate-700">Billing Records</span>
+      </label>
+    </form>
+
+    <!-- Footer -->
+    <div class="px-5 sm:px-7 py-4 border-t border-slate-100 bg-slate-50 flex gap-3 justify-end">
+      <button type="button" onclick="closeModal('patientFullReportModal')"
+        class="px-5 py-2.5 rounded-xl font-bold text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 hover:text-slate-900 transition">
+        Cancel
+      </button>
+      <button type="button" onclick="generateFullReport()"
+        class="px-5 py-2.5 rounded-xl font-bold text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm shadow-indigo-200 transition flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+        </svg>
+        Generate & Print
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  function openPatientFullReportModal(patientId, patientName) {
+    document.getElementById('reportPatientId').value = patientId;
+    document.getElementById('reportPatientNameLabel').textContent = `Select sections for ${patientName || 'Patient'}`;
+    openModal('patientFullReportModal');
+  }
+
+  function generateFullReport() {
+    const patientId = document.getElementById('reportPatientId').value;
+    const checkboxes = document.querySelectorAll('#fullReportForm input[name="sections"]:checked');
+    const selectedSections = Array.from(checkboxes).map(cb => cb.value).join(',');
+    
+    if (!selectedSections) {
+        showNotification({ message: 'Please select at least one section', type: 'error' });
+        return;
+    }
+    
+    // Open print view in new tab
+    const url = `/patient/${patientId}/full-report/?sections=${selectedSections}`;
+    window.open(url, '_blank');
+    closeModal('patientFullReportModal');
   }
 </script>
 {% include 'ext/appointments/appointment_modal.html' %}

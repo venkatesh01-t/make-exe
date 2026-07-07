@@ -9,7 +9,7 @@ from django.db.models import Q, Value
 from django.db.models.functions import Concat
 from datetime import date, datetime
 from django.http import HttpResponse, JsonResponse
-from .models import Patient, labdetails, labtest, DailyPatient, Prescription, labwork, PatientUpload, Doctor, Treatment
+from .models import Patient, labdetails, labtest, DailyPatient, Prescription, labwork, PatientUpload, Doctor, Treatment, BillingInvoice, ClinicInformation
 from django.utils import timezone
 
 
@@ -277,6 +277,17 @@ class PatientDailyVisitsAPIView(LoginRequiredMixin, View):
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=400)
 
+class PatientBillingAPIView(LoginRequiredMixin, View):
+    """Get all billing invoices for a patient"""
+    def get(self, request, patient_id):
+        try:
+            invoices = BillingInvoice.objects.filter(patient_id=patient_id).order_by('-bill_date').values(
+                'id', 'invoice_number', 'treatment', 'doctor', 'amount', 'status', 'note', 'bill_date', 'paid_at'
+            )
+            return JsonResponse(list(invoices), safe=False)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
+
 
 class PatientLabWorkAPIView(LoginRequiredMixin, View):
     """Get all lab work ordered for a patient"""
@@ -383,4 +394,31 @@ class CheckPatientExistsView(LoginRequiredMixin, View):
             """
             return HttpResponse(html)
 
-
+class PatientFullReportView(LoginRequiredMixin, View):
+    def get(self, request, patient_id):
+        patient = get_object_or_404(Patient, pk=patient_id)
+        sections = request.GET.get('sections', '').split(',')
+        
+        context = {
+            'patient': patient,
+            'clinic': ClinicInformation.objects.first(),
+            'sections': sections,
+            'today': timezone.now()
+        }
+        
+        if 'visited' in sections:
+            context['visits'] = DailyPatient.objects.filter(patient=patient).order_by('-date')
+        
+        if 'labwork' in sections:
+            context['labworks'] = labwork.objects.filter(patient=patient).order_by('-date_sent')
+            
+        if 'prescriptions' in sections:
+            context['prescriptions'] = Prescription.objects.filter(daily_patient__patient=patient).order_by('-created_at')
+            
+        if 'fileupload' in sections:
+            context['files'] = PatientUpload.objects.filter(patient=patient).order_by('-created_at')
+            
+        if 'billing' in sections:
+            context['bills'] = BillingInvoice.objects.filter(patient=patient).order_by('-bill_date')
+            
+        return render(request, 'ext/patients/patient_full_report_print.html', context)
