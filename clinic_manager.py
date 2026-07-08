@@ -13,6 +13,14 @@ def main():
     hide_console_window()
 
     # Import UI here to keep server mode lightweight
+    from models.ui.login_window import LoginWindow
+    
+    login_app = LoginWindow()
+    login_app.mainloop()
+    
+    if not login_app.login_successful:
+        sys.exit(0)
+        
     from models.ui.main_window import ClinicManager
     
     app = ClinicManager()

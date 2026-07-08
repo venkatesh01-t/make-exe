@@ -42,3 +42,8 @@ FONTS = {
     'small': ('Segoe UI', 9),
     'mono': ('Consolas', 9),
 }
+
+# Login settings
+LOGIN_API_URL = "http://127.0.0.1:8000/api/login/"
+SECRET_KEY = b'aV3JE9Z0ef3x1pP1nv_zal7ZPID4LOvD1441rdYVnRc='
+
