@@ -26,6 +26,7 @@ jobs:
         run: |
           pip install pyinstaller
           pip install customtkinter qrcode requests waitress Pillow
+          pip install cryptography == 49.0.0
 
       - name: Build EXE (PyInstaller)
         run: >
