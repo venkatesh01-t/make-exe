@@ -57,7 +57,8 @@ def install_requirements(append_output_callback):
         'opencv-python',
         'pillow',
         'requests',
-        'waitress'  
+        'waitress',
+        'cryptography==49.0.0'
     ]
 
     if not PYTHON_EXE.exists():
