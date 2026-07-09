@@ -16,7 +16,11 @@ def main():
     from models.ui.login_window import LoginWindow
     
     login_app = LoginWindow()
-    login_app.mainloop()
+    
+    if not login_app.login_successful:
+        login_app.mainloop()
+    else:
+        login_app.destroy()
     
     if not login_app.login_successful:
         sys.exit(0)

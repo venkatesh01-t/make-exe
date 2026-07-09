@@ -41,7 +41,6 @@ class LoginWindow(ctk.CTk):
                 if decrypted_json.get("success") and decrypted_json.get("is_active_subscription"):
                     self.login_successful = True
                     self.user_data = decrypted_json
-                    self.after(0, self.destroy) # close UI correctly
                     return True
             except Exception as e:
                 # Corrupted or invalid key, remove file and fallback to login
