@@ -77,6 +77,7 @@ jobs:
       - name: Build EXE (Nuitka)
         run: >
           nuitka --standalone --onefile
+          --assume-yes-for-downloads
           --enable-plugin=tk-inter
           --windows-console-mode=disable
           --windows-icon-from-ico=logo.ico
@@ -84,12 +85,8 @@ jobs:
           --include-data-dir=clinic_manager_data/clinic/staticfiles=staticfiles
           --include-data-file=logo.ico=logo.ico
           --output-dir=dist-nuitka
+          --output-filename=clinic_manager_nuitka.exe
           clinic_manager.py
-
-      - name: Rename Nuitka EXE
-        run: |
-          mv dist-nuitka/clinic_manager.exe dist-nuitka/clinic_manager_nuitka.exe
-        shell: bash
 
       - name: Upload Nuitka artifact
         uses: actions/upload-artifact@v4
