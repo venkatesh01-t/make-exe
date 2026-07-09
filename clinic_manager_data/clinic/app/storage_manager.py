@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import os
 import re
+import json
 from pathlib import Path
+from cryptography.fernet import Fernet
 
 from django.conf import settings
 
@@ -20,7 +22,8 @@ def get_project_root() -> Path:
 
 
 PROJECT_ROOT = get_project_root()
-STORAGE_FILE_NAME = "storage.txt"
+AUTH_FILE_NAME = "login_data.enc"
+SECRET_KEY = b'aV3JE9Z0ef3x1pP1nv_zal7ZPID4LOvD1441rdYVnRc='
 
 
 def get_data_dir() -> Path:
@@ -28,7 +31,7 @@ def get_data_dir() -> Path:
 
 
 def get_storage_file_path() -> Path:
-    return PROJECT_ROOT / STORAGE_FILE_NAME
+    return PROJECT_ROOT / AUTH_FILE_NAME
 
 
 def parse_storage_limit_mb(raw_text: str | None) -> int:
@@ -48,20 +51,25 @@ def parse_storage_limit_mb(raw_text: str | None) -> int:
 
 
 def read_storage_limit_mb() -> int:
-    storage_file = get_storage_file_path()
-    if not storage_file.exists():
+    auth_file = get_storage_file_path()
+    if not auth_file.exists():
         return 0
 
     try:
-        return parse_storage_limit_mb(storage_file.read_text(encoding="utf-8"))
-    except OSError:
+        encrypted_response = auth_file.read_text(encoding="utf-8").strip()
+        cipher = Fernet(SECRET_KEY)
+        decrypted_bytes = cipher.decrypt(encrypted_response.encode('utf-8'))
+        decrypted_json = json.loads(decrypted_bytes.decode('utf-8'))
+        
+        storage_size_str = decrypted_json.get("storage_size", "0MB")
+        return parse_storage_limit_mb(str(storage_size_str))
+    except Exception as e:
         return 0
 
 
 def write_storage_limit_mb(limit_mb: int) -> Path:
-    storage_file = get_storage_file_path()
-    storage_file.write_text(f"size = {int(limit_mb)} MB\n", encoding="utf-8")
-    return storage_file
+    # No longer supported as storage size is tied to authentication payload
+    return get_storage_file_path()
 
 
 def get_file_size_bytes(file_obj) -> int:
