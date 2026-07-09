@@ -38,10 +38,64 @@ class LoginWindow(ctk.CTk):
                 decrypted_bytes = cipher.decrypt(encrypted_response.encode('utf-8'))
                 decrypted_json = json.loads(decrypted_bytes.decode('utf-8'))
                 
-                if decrypted_json.get("success") and decrypted_json.get("is_active_subscription"):
-                    self.login_successful = True
-                    self.user_data = decrypted_json
-                    return True
+                if decrypted_json.get("success"):
+                    # 1. Local Expiration Check
+                    from datetime import datetime, timezone, timedelta
+                    ist = timezone(timedelta(hours=5, minutes=30))
+                    current_time_ist = datetime.now(ist)
+                    expire_date_str = decrypted_json.get('expire_date')
+                    is_expired_locally = False
+                    
+                    if expire_date_str:
+                        try:
+                            if len(expire_date_str) > 10:
+                                expire_dt = datetime.strptime(expire_date_str, "%Y-%m-%d %H:%M:%S")
+                            else:
+                                expire_dt = datetime.strptime(expire_date_str, "%Y-%m-%d")
+                            expire_dt = expire_dt.replace(tzinfo=ist)
+                            if current_time_ist > expire_dt:
+                                is_expired_locally = True
+                        except:
+                            pass
+
+                    # 2. Network Sync Check
+                    username = decrypted_json.get("username")
+                    password = decrypted_json.get("password")
+                    
+                    if username and password:
+                        try:
+                            data = {"username": username, "password": password}
+                            # Fast network timeout
+                            response = requests.post(LOGIN_API_URL, json=data, timeout=3)
+                            if response.status_code == 200:
+                                new_encrypted_response = response.json().get('data')
+                                if new_encrypted_response:
+                                    # Overwrite local file with fresh data
+                                    with open(AUTH_FILE, 'w') as f:
+                                        f.write(new_encrypted_response)
+                                        
+                                    new_decrypted_bytes = cipher.decrypt(new_encrypted_response.encode('utf-8'))
+                                    new_decrypted_json = json.loads(new_decrypted_bytes.decode('utf-8'))
+                                    
+                                    if new_decrypted_json.get("success") and new_decrypted_json.get("is_active_subscription"):
+                                        self.login_successful = True
+                                        self.user_data = new_decrypted_json
+                                        return True
+                                    else:
+                                        self.after(100, lambda: self.show_error("Subscription is expired or inactive on the server."))
+                                        return False
+                        except requests.exceptions.RequestException:
+                            pass # Offline, fallback to local checks
+                            
+                    # 3. Handle Offline Fallback
+                    if is_expired_locally:
+                        self.after(100, lambda: self.show_error("Plan expired locally. Connect to internet to verify renewal."))
+                        return False
+                    else:
+                        if decrypted_json.get("is_active_subscription"):
+                            self.login_successful = True
+                            self.user_data = decrypted_json
+                            return True
             except Exception as e:
                 # Corrupted or invalid key, remove file and fallback to login
                 try:
