@@ -35,8 +35,8 @@ def get_application_root():
     return app_root
 
 def get_bundle_root():
-    if is_frozen_build():
-        return Path(getattr(sys, '_MEIPASS', Path(sys.executable).parent))
+    if hasattr(sys, '_MEIPASS'):
+        return Path(sys._MEIPASS)
     return Path(__file__).resolve().parent.parent.parent
 
 def hide_console_window():

@@ -154,36 +154,21 @@ def run_full_migration_pipeline(
     # Backup existing DB before touching anything
     backup_db_before_migrate(data_dir, log_cb)
 
-    # ── Step 1: makemigrations app ──────────────────────────────
-    _log(log_cb, "[Migration] Step 1/2 — makemigrations app")
-    _log(log_cb, f"[Migration]   Running: python manage.py makemigrations app")
-    ok1 = _run_cmd(
-        [python_exe, manage_script, "makemigrations", "app"],
-        env=env,
-        timeout=60,
-        log_cb=log_cb,
-    )
-    if ok1:
-        _log(log_cb, "[Migration] ✓ makemigrations app complete")
-    else:
-        _log(log_cb, "[Migration] ⚠ makemigrations app had issues (continuing to migrate anyway)")
-
-    # ── Step 2: migrate ─────────────────────────────────────────
-    _log(log_cb, "[Migration] Step 2/2 — migrate")
-    _log(log_cb, f"[Migration]   Running: python manage.py migrate")
-    ok2 = _run_cmd(
+    # ── Step: migrate ─────────────────────────────────────────
+    _log(log_cb, "[Migration] Running: python manage.py migrate")
+    ok = _run_cmd(
         [python_exe, manage_script, "migrate"],
         env=env,
         timeout=120,
         log_cb=log_cb,
     )
-    if ok2:
+    if ok:
         _log(log_cb, "[Migration] ✓ migrate complete — database is ready")
     else:
         _log(log_cb, "[Migration] ⚠ migrate had issues — check logs above")
 
     _log(log_cb, "[Migration] " + "─" * 46)
-    return ok1 and ok2
+    return ok
 
 
 # ─────────────────────────────────────────────────────────────────
@@ -225,24 +210,9 @@ def run_full_migration_pipeline_django_api(
     # Backup before touching anything
     backup_db_before_migrate(data_dir, log_cb)
 
-    # ── Step 1: makemigrations app ──────────────────────────────
-    _log(log_cb, "[Migration] Step 1/2 — makemigrations app")
-    ok1 = False
-    try:
-        out = StringIO()
-        call_command("makemigrations", "app", stdout=out, verbosity=1)
-        output = out.getvalue().strip()
-        for line in output.splitlines():
-            if line.strip():
-                _log(log_cb, f"    {line}")
-        _log(log_cb, "[Migration] ✓ makemigrations app complete")
-        ok1 = True
-    except Exception as e:
-        _log(log_cb, f"[Migration] ⚠ makemigrations app error: {e} (continuing)")
-
-    # ── Step 2: migrate ─────────────────────────────────────────
-    _log(log_cb, "[Migration] Step 2/2 — migrate")
-    ok2 = False
+    # ── Step: migrate ─────────────────────────────────────────
+    _log(log_cb, "[Migration] Running database migrate...")
+    ok = False
     try:
         out = StringIO()
         call_command("migrate", stdout=out, verbosity=1)
@@ -251,12 +221,12 @@ def run_full_migration_pipeline_django_api(
             if line.strip():
                 _log(log_cb, f"    {line}")
         _log(log_cb, "[Migration] ✓ migrate complete — database is ready")
-        ok2 = True
+        ok = True
     except Exception as e:
         _log(log_cb, f"[Migration] ⚠ migrate error: {e}")
 
     _log(log_cb, "[Migration] " + "─" * 46)
-    return ok1 and ok2
+    return ok
 
 
 # ─────────────────────────────────────────────────────────────────

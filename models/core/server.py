@@ -3,11 +3,10 @@ import sys
 import subprocess
 import socket
 from pathlib import Path
-from models.config.settings import PROJECT_DIR, PYTHON_EXE, WORKSPACE, get_project_dir, get_runtime_data_dir, get_runtime_static_dir
 from models.utils.os_helpers import is_frozen_build
-from models.core.migration_manager import run_full_migration_pipeline, run_full_migration_pipeline_django_api
 
 def get_server_command(port: int):
+    from models.config.settings import PROJECT_DIR, PYTHON_EXE
     manage_py = str(PROJECT_DIR / 'manage.py')
     if is_frozen_build():
         if PYTHON_EXE.exists() and Path(manage_py).exists():
@@ -16,6 +15,9 @@ def get_server_command(port: int):
     return [str(PYTHON_EXE), manage_py, 'runserver', f'0.0.0.0:{port}']
 
 def run_embedded_django_server(port: int):
+    from models.config.settings import PYTHON_EXE, WORKSPACE, get_project_dir, get_runtime_data_dir, get_runtime_static_dir
+    from models.core.migration_manager import run_full_migration_pipeline, run_full_migration_pipeline_django_api
+
     project_dir = get_project_dir()
     if not project_dir.exists():
         raise FileNotFoundError(f'Bundled clinic project not found at {project_dir}')

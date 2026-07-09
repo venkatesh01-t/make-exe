@@ -18,8 +18,6 @@ from models.core.installer import (
     install_python_packages, install_requirements, ensure_qrcode
 )
 from models.core.downloader import download_and_extract
-from models.core.backup import backup_data, restore_data
-from models.core.migration_manager import run_full_migration_pipeline, check_migrations_needed_subprocess
 from models.ui.splash import SplashScreen
 from models.ui.components import PrimaryButton, GhostButton, DangerButton
 from models.ui.components import generate_qr
@@ -326,8 +324,16 @@ class ClinicManager(ctk.CTk):
         btn_box = ctk.CTkFrame(backup_frame, fg_color="transparent")
         btn_box.pack(side="right", padx=10)
         
-        GhostButton(btn_box, text="Backup", command=self.threaded(lambda: backup_data(self.append_output))).pack(side="left", padx=5, pady=10)
-        GhostButton(btn_box, text="Restore", command=self.threaded(lambda: restore_data(self.append_output))).pack(side="left", padx=5, pady=10)
+        def run_backup():
+            from models.core.backup import backup_data
+            backup_data(self.append_output)
+
+        def run_restore():
+            from models.core.backup import restore_data
+            restore_data(self.append_output)
+
+        GhostButton(btn_box, text="Backup", command=self.threaded(run_backup)).pack(side="left", padx=5, pady=10)
+        GhostButton(btn_box, text="Restore", command=self.threaded(run_restore)).pack(side="left", padx=5, pady=10)
 
         # 4. About
         self._add_settings_header(settings_container, "ℹ️  About")
@@ -392,44 +398,18 @@ class ClinicManager(ctk.CTk):
             self.append_output("System check initiated...")
             ensure_runtime_directories()
             
-            self.update_splash(label_text="Checking Resources...", status_text="Step 1/5")
+            self.update_splash(label_text="Checking Resources...", status_text="Step 1/4")
             required = get_required_setup_items()
             if any(not p.exists() for p in required):
                 download_and_extract(get_required_setup_items, self.append_output, self.update_splash, self.update_progress, self.install_python_packages)
 
-            self.update_splash(label_text="Validating Components...", status_text="Step 2/5")
+            self.update_splash(label_text="Validating Components...", status_text="Step 2/4")
             check_folders(self.append_output)
 
-            self.update_splash(label_text="Setting up QR Service...", status_text="Step 3/5")
+            self.update_splash(label_text="Setting up QR Service...", status_text="Step 3/4")
             ensure_qrcode(self.append_output)
 
-            # ── Step 4: Database Migration Check ──────────────────────────────
-            # Runs BEFORE the user can press Start Server — guarantees DB is ready.
-            self.update_splash(label_text="Checking Database Schema...", status_text="Step 4/5")
-            if PYTHON_EXE.exists():
-                migration_env = os.environ.copy()
-                migration_env['DJANGO_SETTINGS_MODULE'] = 'clinic.settings'
-                migration_env['CLINIC_DATA_DIR'] = str(DATA_DIR)
-                migration_env['CLINIC_STATIC_ROOT'] = str(get_runtime_static_dir())
-                migration_env['CLINIC_WORKSPACE'] = str(WORKSPACE)
-
-                from models.config.settings import get_project_dir
-                project_dir = get_project_dir()
-                manage_script = str(project_dir / 'manage.py')
-
-                run_full_migration_pipeline(
-                    python_exe=str(PYTHON_EXE),
-                    manage_script=manage_script,
-                    project_dir=project_dir,
-                    data_dir=DATA_DIR,
-                    env=migration_env,
-                    log_cb=self.append_output,
-                )
-            else:
-                self.append_output("Bundled Python not found — skipping pre-flight migration check (will run at server start)")
-            # ─────────────────────────────────────────────────────────────────
-
-            self.update_splash(label_text="Finalizing Environment...", status_text="Step 5/5")
+            self.update_splash(label_text="Finalizing Environment...", status_text="Step 4/4")
             install_requirements(self.append_output)
             
             self.append_output("System ready.")
@@ -494,6 +474,7 @@ class ClinicManager(ctk.CTk):
                 guard_env['CLINIC_WORKSPACE'] = str(WORKSPACE)
 
                 from models.config.settings import get_project_dir
+                from models.core.migration_manager import check_migrations_needed_subprocess, run_full_migration_pipeline
                 project_dir = get_project_dir()
                 manage_script = str(project_dir / 'manage.py')
 

@@ -50,8 +50,32 @@ def install_python_packages(packages, append_output_callback):
         append_output_callback('Package install failed: ' + str(e))
         return False
 
+def are_requirements_installed():
+    """Check if the required packages are already imported successfully in the bundled Python environment."""
+    if not PYTHON_EXE.exists():
+        return False
+    cmd = [
+        str(PYTHON_EXE),
+        '-c',
+        'import django; import cv2; import PIL; import requests; import waitress; import cryptography'
+    ]
+    try:
+        CREATE_NO_WINDOW = 0x08000000 if sys.platform == 'win32' else 0
+        proc = subprocess.run(cmd, capture_output=True, timeout=10, creationflags=CREATE_NO_WINDOW)
+        return proc.returncode == 0
+    except Exception:
+        return False
+
 def install_requirements(append_output_callback):
     """Install all packages from the hardcoded requirements list (no requirements.txt needed)."""
+    if not PYTHON_EXE.exists():
+        append_output_callback(f'Python not found at {PYTHON_EXE}')
+        return False
+
+    if are_requirements_installed():
+        append_output_callback('All requirements are already satisfied (verified).')
+        return True
+
     requirements = [
         'django==5.2.11',
         'opencv-python',
@@ -60,10 +84,6 @@ def install_requirements(append_output_callback):
         'waitress',
         'cryptography==49.0.0'
     ]
-
-    if not PYTHON_EXE.exists():
-        append_output_callback(f'Python not found at {PYTHON_EXE}')
-        return False
 
     append_output_callback(f'Installing requirements: {requirements}')
     cmd = [str(PYTHON_EXE), '-m', 'pip', 'install'] + requirements
