@@ -23,7 +23,7 @@ def main():
         
     from models.ui.main_window import ClinicManager
     
-    app = ClinicManager()
+    app = ClinicManager(user_data=login_app.user_data)
     app.mainloop()
 
 if __name__ == '__main__':

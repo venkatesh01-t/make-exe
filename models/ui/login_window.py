@@ -2,7 +2,8 @@ import json
 import requests
 import customtkinter as ctk
 from cryptography.fernet import Fernet
-from models.config.settings import LOGIN_API_URL, SECRET_KEY
+import os
+from models.config.settings import LOGIN_API_URL, SECRET_KEY, AUTH_FILE
 from models.design_system.tokens import Colors
 from models.design_system.fonts import make_font, Fonts
 from models.ui.components import PrimaryButton
@@ -22,7 +23,33 @@ class LoginWindow(ctk.CTk):
         
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
         
+        if self._check_offline_login():
+            return
+            
         self._setup_ui()
+
+    def _check_offline_login(self):
+        if os.path.exists(AUTH_FILE):
+            try:
+                with open(AUTH_FILE, 'r') as f:
+                    encrypted_response = f.read().strip()
+                
+                cipher = Fernet(SECRET_KEY)
+                decrypted_bytes = cipher.decrypt(encrypted_response.encode('utf-8'))
+                decrypted_json = json.loads(decrypted_bytes.decode('utf-8'))
+                
+                if decrypted_json.get("success") and decrypted_json.get("is_active_subscription"):
+                    self.login_successful = True
+                    self.user_data = decrypted_json
+                    self.after(0, self.destroy) # close UI correctly
+                    return True
+            except Exception as e:
+                # Corrupted or invalid key, remove file and fallback to login
+                try:
+                    os.remove(AUTH_FILE)
+                except:
+                    pass
+        return False
 
     def _setup_ui(self):
         # Container
@@ -115,6 +142,12 @@ class LoginWindow(ctk.CTk):
                     if decrypted_json.get("is_active_subscription"):
                         self.login_successful = True
                         self.user_data = decrypted_json
+                        
+                        # Save encrypted response to file
+                        os.makedirs(os.path.dirname(AUTH_FILE), exist_ok=True)
+                        with open(AUTH_FILE, 'w') as f:
+                            f.write(encrypted_response)
+                            
                         self.destroy()
                     else:
                         self.show_error("Subscription is inactive or expired")

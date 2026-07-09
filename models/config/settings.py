@@ -7,6 +7,7 @@ DATA_SUBFOLDER = APP_ROOT / 'clinic_manager_data'
 WORKSPACE = DATA_SUBFOLDER  # All downloads/clinic go here
 PYTHON_EXE = WORKSPACE / '3.11.9' / 'python.exe'
 LOG_FILE = WORKSPACE / 'manager.log'
+AUTH_FILE = WORKSPACE / 'login_data.enc'
 
 def get_project_dir():
     if is_frozen_build():
@@ -44,6 +45,6 @@ FONTS = {
 }
 
 # Login settings
-LOGIN_API_URL = "http://127.0.0.1:8000/api/login/"
+LOGIN_API_URL = "https://login-api-qduo.vercel.app/api/login/"
 SECRET_KEY = b'aV3JE9Z0ef3x1pP1nv_zal7ZPID4LOvD1441rdYVnRc='
 

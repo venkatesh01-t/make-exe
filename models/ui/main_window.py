@@ -27,8 +27,9 @@ from models.design_system.tokens import Colors
 from models.design_system.fonts import make_font, Fonts
 
 class ClinicManager(ctk.CTk):
-    def __init__(self):
+    def __init__(self, user_data=None):
         super().__init__()
+        self.user_data = user_data
         self.title("Clinic Manager")
         
         # Ensure icon is loaded from bundle root if possible
@@ -281,6 +282,16 @@ class ClinicManager(ctk.CTk):
         settings_container = ctk.CTkScrollableFrame(parent, fg_color="transparent")
         settings_container.pack(fill="both", expand=True)
 
+        if hasattr(self, 'user_data') and self.user_data:
+            self._add_settings_header(settings_container, "👤  Account & Plan")
+            acc_frame = self._add_settings_card(settings_container)
+            
+            username = self.user_data.get("username", "Unknown")
+            expire_date = self.user_data.get("expire_date", "Unknown")
+            
+            ctk.CTkLabel(acc_frame, text=f"Username: {username}", font=make_font(Fonts.SM, "bold")).pack(side="left", padx=20, pady=15)
+            ctk.CTkLabel(acc_frame, text=f"Plan Expires: {expire_date}", font=make_font(Fonts.SM), text_color=Colors.PRIMARY).pack(side="right", padx=20, pady=15)
+
         # 1. User Interface
         self._add_settings_header(settings_container, "🎨  Appearance")
         
@@ -438,6 +449,35 @@ class ClinicManager(ctk.CTk):
     def start_server(self):
         if self.server_running: return
         
+        # Check plan expiration
+        if hasattr(self, 'user_data') and self.user_data and 'expire_date' in self.user_data:
+            from datetime import datetime, timezone, timedelta
+            try:
+                ist = timezone(timedelta(hours=5, minutes=30))
+                current_time_ist = datetime.now(ist)
+                expire_date_str = self.user_data.get('expire_date')
+                
+                if len(expire_date_str) > 10:
+                    expire_dt = datetime.strptime(expire_date_str, "%Y-%m-%d %H:%M:%S")
+                else:
+                    expire_dt = datetime.strptime(expire_date_str, "%Y-%m-%d")
+                    
+                expire_dt = expire_dt.replace(tzinfo=ist)
+                
+                if current_time_ist > expire_dt:
+                    popup = ctk.CTkToplevel(self)
+                    popup.title("Plan Expired")
+                    popup.geometry("350x150")
+                    popup.transient(self)
+                    popup.grab_set()
+                    
+                    ctk.CTkLabel(popup, text="Subscription Expired", font=make_font(Fonts.MD, "bold"), text_color=Colors.DANGER).pack(pady=(20, 5))
+                    ctk.CTkLabel(popup, text=f"Your plan expired on {expire_date_str}.\nPlease renew to use the server.", font=make_font(Fonts.SM)).pack(pady=5)
+                    ctk.CTkButton(popup, text="Close", command=popup.destroy, fg_color=Colors.DANGER).pack(pady=10)
+                    return
+            except Exception as e:
+                self.append_output(f"Warning: Could not check expiration: {e}")
+
         port = self.port_var.get()
         while is_port_in_use(port): port += 1
         self.server_port = port
