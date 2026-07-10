@@ -1,0 +1,465 @@
+<!-- Medication Management Modal -->
+<div id="medicationManageModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4">
+  <div class="modal-backdrop absolute inset-0" onclick="closeMedicationModal()"></div>
+
+  <div class="modal-content animate-in bg-white rounded-3xl shadow-2xl w-full max-w-5xl relative z-10 max-h-[90vh] flex flex-col overflow-hidden">
+    <!-- Modal Header -->
+    <div class="px-5 sm:px-8 py-4 sm:py-6 border-b border-gray-100 flex items-center justify-between bg-white">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center">
+          <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 6v2m0 4v2m0 4v2M9 7h.01M9 11h.01M9 15h.01M17 7a4 4 0 11-8 0 4 4 0 018 0z" />
+          </svg>
+        </div>
+        <div>
+          <h3 class="text-lg sm:text-xl font-bold text-gray-800">Medication Template Manager</h3>
+          <p class="text-[10px] sm:text-xs text-gray-400">Create keywords and add drugs to templates</p>
+        </div>
+      </div>
+      <button class="p-2 rounded-xl hover:bg-gray-100 transition" onclick="closeMedicationModal()">
+        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+
+    <!-- Modal Body -->
+    <div class="modal-body overflow-y-auto p-5 sm:p-8 flex-grow space-y-8">
+      <!-- Step 1: Create Keyword/Category -->
+      <div class="bg-gradient-to-r from-blue-50 to-blue-100 rounded-2xl p-5 sm:p-6 border border-blue-200">
+        <div class="flex items-center gap-2 mb-4">
+          <div class="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-bold">1</div>
+          <h4 class="text-sm font-bold text-blue-700 uppercase tracking-widest">Create Keyword / Category</h4>
+        </div>
+        <div class="flex gap-3">
+          <input type="text" id="med_category" placeholder="e.g. Painkiller, Antibiotic, Extraction..." class="flex-1 input-styled text-sm" required>
+          <button type="button" onclick="addNewCategory()" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg font-semibold text-sm transition whitespace-nowrap flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+            Add Category
+          </button>
+        </div>
+      </div>
+
+      <!-- Step 2: Add Drugs to Category -->
+      <div class="bg-gradient-to-r from-purple-50 to-purple-100 rounded-2xl p-5 sm:p-6 border border-purple-200">
+        <div class="flex items-center gap-2 mb-4">
+          <div class="w-6 h-6 bg-purple-600 text-white rounded-full flex items-center justify-center text-xs font-bold">2</div>
+          <h4 class="text-sm font-bold text-purple-700 uppercase tracking-widest">Add Drugs to Category</h4>
+        </div>
+        <form id="medicationForm" class="grid grid-cols-1 sm:grid-cols-5 gap-3" onsubmit="return addMedication(event);">
+          {% csrf_token %}
+          <select id="med_category_select" class="input-styled text-sm" required>
+            <option value="">Select Category...</option>
+            <!-- Options will be populated by JavaScript -->
+          </select>
+          <input type="text" id="med_name" placeholder="Drug Name" class="input-styled text-sm" required>
+          <input type="text" id="med_dosage" placeholder="Dosage" class="input-styled text-sm" required>
+          <input type="text" id="med_frequency" placeholder="Frequency" class="input-styled text-sm" required>
+          <input type="text" id="med_duration" placeholder="Duration" class="input-styled text-sm" required>
+          <button type="submit" class="col-span-1 sm:col-span-5 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2.5 rounded-lg font-semibold text-sm transition flex items-center justify-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+            Add Drug to Selected Category
+          </button>
+        </form>
+      </div>
+
+      <!-- Step 3: View All Medications -->
+      <div class="bg-gray-50 rounded-2xl p-5 sm:p-6 border border-gray-200">
+        <div class="flex items-center gap-2 mb-4">
+          <div class="w-6 h-6 bg-gray-600 text-white rounded-full flex items-center justify-center text-xs font-bold">3</div>
+          <h4 class="text-sm font-bold text-gray-700 uppercase tracking-widest">All Medications</h4>
+        </div>
+        
+        <div class="border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead class="bg-gray-100 border-b border-gray-200">
+                <tr>
+                  <th class="px-4 sm:px-6 py-4 text-left font-bold text-gray-700">Category/Keyword</th>
+                  <th class="px-4 sm:px-6 py-4 text-left font-bold text-gray-700">Drug Name</th>
+                  <th class="px-4 sm:px-6 py-4 text-left font-bold text-gray-700">Dosage</th>
+                  <th class="px-4 sm:px-6 py-4 text-left font-bold text-gray-700">Frequency</th>
+                  <th class="px-4 sm:px-6 py-4 text-left font-bold text-gray-700">Duration</th>
+                  <th class="px-4 sm:px-6 py-4 text-center font-bold text-gray-700">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="medicationTableBody" class="divide-y divide-gray-100"
+                hx-get="{% url 'clinic:medication_list' %}"
+                hx-trigger="load"
+                hx-swap="innerHTML">
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Footer -->
+    <div class="px-6 sm:px-8 py-4 sm:py-6 border-t border-gray-100 bg-gray-50/50 flex gap-3">
+      <button type="button" onclick="closeMedicationModal()" class="flex-1 px-6 py-2.5 rounded-xl text-sm font-semibold text-gray-500 hover:bg-white transition">
+        Close
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+let allCategories = [];
+
+function dispatchHxTriggerFromResponse(response) {
+  const triggerHeader = response.headers.get('HX-Trigger');
+  if (!triggerHeader) return;
+
+  try {
+    const triggerData = JSON.parse(triggerHeader);
+    Object.entries(triggerData).forEach(([eventName, detail]) => {
+      document.body.dispatchEvent(new CustomEvent(eventName, { detail }));
+    });
+  } catch (error) {
+    console.error('Invalid HX-Trigger header:', error);
+  }
+}
+
+function openMedicationModal() {
+  openModal('medicationManageModal');
+
+  // Load medication data on modal open
+  loadMedicationTableData();
+  loadCategories();
+}
+
+function closeMedicationModal() {
+  closeModal('medicationManageModal');
+}
+
+// Load all categories for the select dropdown
+function loadCategories() {
+  fetch('{% url "clinic:medication_by_category" %}')
+    .then(response => response.json())
+    .then(data => {
+      allCategories = Object.keys(data);
+      updateCategorySelectOptions();
+    })
+    .catch(error => console.error('Error loading categories:', error));
+}
+
+// Update the category select dropdown
+function updateCategorySelectOptions() {
+  const select = document.getElementById('med_category_select');
+  if (!select) return;
+  
+  const currentValue = select.value;
+  select.innerHTML = '<option value="">Select Category...</option>';
+  
+  allCategories.forEach(cat => {
+    const option = document.createElement('option');
+    option.value = cat;
+    option.textContent = cat.charAt(0).toUpperCase() + cat.slice(1);
+    select.appendChild(option);
+  });
+  
+  select.value = currentValue;
+}
+
+// Add a new category
+function addNewCategory() {
+  const categoryInput = document.getElementById('med_category');
+  const category = categoryInput.value.trim().toLowerCase();
+  
+  if (!category) {
+    alert('Please enter a category name');
+    return;
+  }
+  
+  if (allCategories.includes(category)) {
+    alert('This category already exists');
+    categoryInput.value = '';
+    return;
+  }
+  
+  // Add to local array
+  allCategories.push(category);
+  updateCategorySelectOptions();
+  
+  // Set as selected in the form
+  document.getElementById('med_category_select').value = category;
+  categoryInput.value = '';
+  
+  alert('Category "' + category + '" created! Now add drugs to it.');
+  lucide.createIcons();
+}
+
+// Add medication to selected category
+function addMedication(event) {
+  event.preventDefault();
+  
+  const categorySelect = document.getElementById('med_category_select');
+  const category = categorySelect.value;
+  
+  if (!category) {
+    alert('Please select a category first');
+    return;
+  }
+  
+  const data = {
+    category: category,
+    name: document.getElementById('med_name').value,
+    dosage: document.getElementById('med_dosage').value,
+    frequency: document.getElementById('med_frequency').value,
+    duration: document.getElementById('med_duration').value
+  };
+  
+  fetch('{% url "clinic:medication_create" %}', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
+    },
+    body: JSON.stringify(data)
+  })
+  .then(response => {
+    dispatchHxTriggerFromResponse(response);
+    return response.text();
+  })
+  .then(html => {
+    document.getElementById('medicationTableBody').insertAdjacentHTML('beforeend', html);
+    document.getElementById('medicationForm').reset();
+    document.getElementById('med_category_select').value = category;
+    alert('Drug added successfully!');
+    // Reload template buttons in prescription form
+    loadMedicationTemplates();
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    alert('Error adding medication');
+  });
+  
+  return false;
+}
+
+function loadMedicationTableData() {
+  const tableBody = document.getElementById('medicationTableBody');
+  if (tableBody) {
+    fetch('{% url "clinic:medication_list" %}')
+      .then(response => response.text())
+      .then(html => {
+        tableBody.innerHTML = html;
+        console.log('Medication table loaded');
+      })
+      .catch(error => console.error('Error loading medications:', error));
+  }
+}
+
+// Edit medication - Simple modal approach
+let currentEditMedicationId = null;
+
+function openEditMedicationModal(medId, category, name, dosage, frequency, duration) {
+  console.log('Opening edit modal for ID:', medId);
+  currentEditMedicationId = medId;
+  openModal('editMedicationModal');
+  
+  // Populate category dropdown
+  const categorySelect = document.getElementById('editMedCategory');
+  categorySelect.innerHTML = '<option value="">Select Category...</option>';
+  
+  allCategories.forEach(cat => {
+    const option = document.createElement('option');
+    option.value = cat;
+    option.textContent = cat.charAt(0).toUpperCase() + cat.slice(1);
+    categorySelect.appendChild(option);
+  });
+
+  if (category && !allCategories.includes(category)) {
+    const currentOption = document.createElement('option');
+    currentOption.value = category;
+    currentOption.textContent = category.charAt(0).toUpperCase() + category.slice(1);
+    categorySelect.appendChild(currentOption);
+  }
+  
+  // Set form values
+  document.getElementById('editMedCategory').value = category;
+  document.getElementById('editMedName').value = name;
+  document.getElementById('editMedDosage').value = dosage;
+  document.getElementById('editMedFrequency').value = frequency;
+  document.getElementById('editMedDuration').value = duration;
+}
+
+function closeEditMedicationModal() {
+  closeModal('editMedicationModal');
+  currentEditMedicationId = null;
+}
+
+function saveEditedMedication() {
+  if (!currentEditMedicationId) return;
+  
+  const data = {
+    category: document.getElementById('editMedCategory').value,
+    name: document.getElementById('editMedName').value,
+    dosage: document.getElementById('editMedDosage').value,
+    frequency: document.getElementById('editMedFrequency').value,
+    duration: document.getElementById('editMedDuration').value
+  };
+  
+  console.log('Saving medication ID:', currentEditMedicationId);
+  
+  fetch(`{% url 'clinic:medication_update' pk=0 %}`.replace('0', currentEditMedicationId), {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
+    },
+    body: JSON.stringify(data)
+  })
+  .then(response => {
+    dispatchHxTriggerFromResponse(response);
+    if (response.ok) {
+      console.log('Medication updated successfully');
+      closeEditMedicationModal();
+      loadMedicationTableData();
+      loadMedicationTemplates();
+    } else {
+      alert('Failed to update medication');
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    alert('Error updating medication');
+  });
+}
+
+// Delete Medication Modal Functions
+let pendingDeleteMedicationId = null;
+
+function openMedicationDeleteModal(medId, medName) {
+  console.log('Delete clicked for medication ID:', medId, 'Name:', medName);
+  pendingDeleteMedicationId = medId;
+  document.getElementById('deleteMedicationName').textContent = medName;
+  openModal('deleteMedicationModal');
+}
+
+function closeMedicationDeleteModal() {
+  console.log('Closing delete modal');
+  closeModal('deleteMedicationModal');
+  pendingDeleteMedicationId = null;
+}
+
+function confirmMedicationDelete() {
+  console.log('Confirm delete clicked, ID:', pendingDeleteMedicationId);
+  if (pendingDeleteMedicationId) {
+    deleteMedicationConfirmed(pendingDeleteMedicationId);
+  }
+}
+
+function deleteMedicationConfirmed(id) {
+  console.log('Deleting medication ID:', id);
+  fetch(`{% url 'clinic:medication_delete' pk=0 %}`.replace('0', id), {
+    method: 'DELETE',
+    headers: {
+      'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
+    }
+  })
+  .then(response => {
+    dispatchHxTriggerFromResponse(response);
+    console.log('Delete response status:', response.status);
+    if (response.ok) {
+      const row = document.getElementById(`med-row-${id}`);
+      if (row) row.remove();
+      closeMedicationDeleteModal();
+      loadMedicationTableData();
+      loadMedicationTemplates();
+    } else {
+      alert('Failed to delete medication');
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    alert('Error deleting medication');
+    closeMedicationDeleteModal();
+  });
+}
+</script>
+
+<!-- Delete Medication Confirmation Modal -->
+<div id="deleteMedicationModal" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4">
+  <div class="modal-backdrop absolute inset-0 bg-black/50" onclick="closeMedicationDeleteModal()"></div>
+  <div class="modal-content bg-white rounded-2xl shadow-2xl w-full max-w-sm relative z-[70] p-6 text-center">
+    <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4 text-red-500">
+      <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+      </svg>
+    </div>
+    <h3 class="text-xl font-bold text-gray-900">Delete Medication?</h3>
+    <p class="text-sm text-gray-500 mt-2 mb-6">Are you sure you want to remove <span id="deleteMedicationName" class="font-bold text-gray-800">this medication</span>? This action cannot be undone.</p>
+    <div class="flex gap-3">
+      <button type="button" onclick="closeMedicationDeleteModal()"
+        class="flex-1 py-2.5 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200 transition">Cancel</button>
+      <button type="button" onclick="confirmMedicationDelete()"
+        class="flex-1 py-2.5 bg-red-600 text-white font-bold rounded-xl shadow-lg shadow-red-200 hover:bg-red-700 transition">Yes, Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Medication Modal -->
+<div id="editMedicationModal" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4">
+  <div class="modal-backdrop absolute inset-0 bg-black/50" onclick="closeEditMedicationModal()"></div>
+  <div class="modal-content bg-white rounded-2xl shadow-2xl w-full max-w-2xl relative z-[70] p-6">
+    <div class="flex items-center justify-between mb-6">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center">
+          <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+          </svg>
+        </div>
+        <h3 class="text-xl font-bold text-gray-800">Edit Medication</h3>
+      </div>
+      <button type="button" onclick="closeEditMedicationModal()" class="p-2 rounded-xl hover:bg-gray-100">
+        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+    
+    <div class="space-y-4">
+      <div>
+        <label class="text-xs font-bold text-gray-600 uppercase">Category</label>
+        <select id="editMedCategory" class="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm mt-1" required>
+          <option value="">Select Category...</option>
+          <!-- Options will be populated by JavaScript -->
+        </select>
+      </div>
+      <div>
+        <label class="text-xs font-bold text-gray-600 uppercase">Drug Name</label>
+        <input type="text" id="editMedName" placeholder="Drug Name" class="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm mt-1" required>
+      </div>
+      <div class="grid grid-cols-3 gap-3">
+        <div>
+          <label class="text-xs font-bold text-gray-600 uppercase">Dosage</label>
+          <input type="text" id="editMedDosage" placeholder="Dosage" class="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm mt-1" required>
+        </div>
+        <div>
+          <label class="text-xs font-bold text-gray-600 uppercase">Frequency</label>
+          <input type="text" id="editMedFrequency" placeholder="Frequency" class="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm mt-1" required>
+        </div>
+        <div>
+          <label class="text-xs font-bold text-gray-600 uppercase">Duration</label>
+          <input type="text" id="editMedDuration" placeholder="Duration" class="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm mt-1" required>
+        </div>
+      </div>
+    </div>
+    
+    <div class="flex gap-3 mt-8">
+      <button type="button" onclick="closeEditMedicationModal()" class="flex-1 py-2.5 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200 transition">Cancel</button>
+      <button type="button" onclick="saveEditedMedication()" class="flex-1 py-2.5 bg-blue-600 text-white font-bold rounded-xl shadow-lg shadow-blue-200 hover:bg-blue-700 transition flex items-center justify-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+        </svg>
+        Save Changes
+      </button>
+    </div>
+  </div>
+</div>

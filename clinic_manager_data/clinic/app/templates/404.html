@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>404 - Page Not Found | {% if clinic %}{{ clinic.clinic_name }}{% else %}DentaCare Pro{% endif %}</title>
+    {% load static %}
+    <script src="{% static 'vendor/tailwindcss/tailwind.js' %}"></script>
+    <script src="{% static 'vendor/three/three.min.js' %}"></script>
+    <script src="{% static 'vendor/gsap/gsap.min.js' %}"></script>
+    <link href="{% static 'vendor/fontawesome/all.min.css' %}" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        html, body { width: 100%; height: 100%; overflow: hidden; }
+
+        body {
+            background: linear-gradient(135deg, #000814 0%, #001d3d 25%, #003d82 50%, #001d3d 75%, #000814 100%);
+            background-size: 400% 400%;
+            animation: gradientShift 20s ease infinite;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            position: relative;
+            min-height: 100vh;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Advanced Background */
+        .scene-background {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: 0;
+        }
+
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.6;
+        }
+
+        .orb-1 { width: 600px; height: 600px; top: -200px; left: -200px; background: radial-gradient(circle, rgba(59, 130, 246, 0.4), transparent); animation: float 15s ease-in-out infinite; }
+        .orb-2 { width: 500px; height: 500px; bottom: -100px; right: -100px; background: radial-gradient(circle, rgba(6, 182, 212, 0.3), transparent); animation: float 20s ease-in-out infinite reverse; animation-delay: 3s; }
+        .orb-3 { width: 400px; height: 400px; top: 50%; left: 50%; transform: translate(-50%, -50%); background: radial-gradient(circle, rgba(34, 197, 94, 0.2), transparent); animation: float 18s ease-in-out infinite; animation-delay: 6s; }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0); }
+            25% { transform: translate(30px, -30px); }
+            50% { transform: translate(-20px, 20px); }
+            75% { transform: translate(20px, 30px); }
+        }
+
+        /* Grid Background */
+        .grid-bg {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(0deg, transparent 24%, rgba(59, 130, 246, .05) 25%, rgba(59, 130, 246, .05) 26%, transparent 27%, transparent 74%, rgba(59, 130, 246, .05) 75%, rgba(59, 130, 246, .05) 76%, transparent 77%, transparent),
+                linear-gradient(90deg, transparent 24%, rgba(59, 130, 246, .05) 25%, rgba(59, 130, 246, .05) 26%, transparent 27%, transparent 74%, rgba(59, 130, 246, .05) 75%, rgba(59, 130, 246, .05) 76%, transparent 77%, transparent);
+            background-size: 100px 100px;
+            opacity: 0.5;
+        }
+
+        /* Main Container */
+        .container-main {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .content-box {
+            display: flex;
+            align-items: center;
+            gap: 60px;
+            max-width: 1200px;
+            width: 100%;
+            animation: slideUp 0.8s ease-out;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(50px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 3D Canvas */
+        .canvas-wrapper {
+            flex: 1;
+            height: 500px;
+            position: relative;
+            border-radius: 24px;
+            overflow: hidden;
+            background: linear-gradient(135deg, rgba(15, 23, 42, 0.8), rgba(15, 23, 42, 0.5));
+            border: 2px solid rgba(59, 130, 246, 0.3);
+            box-shadow: 0 25px 50px rgba(59, 130, 246, 0.1),
+                        inset 0 1px 1px rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            animation: glowPulse 3s ease-in-out infinite;
+        }
+
+        /* Clinic Info Overlay */
+        .clinic-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(15, 23, 42, 0.95));
+            padding: 40px;
+            border-radius: 24px;
+            pointer-events: auto;
+        }
+
+        .clinic-logo-small {
+            max-width: 100%;
+            max-height: 100%;
+            width: auto;
+            height: auto;
+            border-radius: 16px;
+            filter: drop-shadow(0 8px 24px rgba(59, 130, 246, 0.4));
+            object-fit: contain;
+        }
+
+        .clinic-info-text {
+            display: none;
+        }
+
+        @keyframes glowPulse {
+            0%, 100% { box-shadow: 0 25px 50px rgba(59, 130, 246, 0.1), inset 0 1px 1px rgba(255, 255, 255, 0.1), 0 0 30px rgba(59, 130, 246, 0.2); }
+            50% { box-shadow: 0 25px 50px rgba(59, 130, 246, 0.2), inset 0 1px 1px rgba(255, 255, 255, 0.1), 0 0 60px rgba(59, 130, 246, 0.4); }
+        }
+
+        #canvas-3d {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* Text Content */
+        .text-content {
+            flex: 1;
+            animation: slideUpDelay 0.8s ease-out 0.2s both;
+        }
+
+        @keyframes slideUpDelay {
+            from { opacity: 0; transform: translateY(50px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .error-code {
+            font-size: 280px;
+            font-weight: 900;
+            line-height: 1;
+            background: linear-gradient(135deg, #3b82f6 0%, #0ea5e9 50%, #06b6d4 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: -20px;
+            animation: codeGlow 2s ease-in-out infinite;
+        }
+
+        @keyframes codeGlow {
+            0%, 100% { text-shadow: 0 0 30px rgba(59, 130, 246, 0.3); }
+            50% { text-shadow: 0 0 60px rgba(59, 130, 246, 0.6); }
+        }
+
+        h1 {
+            color: white;
+            font-size: 48px;
+            margin-bottom: 16px;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .highlight { background: linear-gradient(135deg, #3b82f6, #0ea5e9); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+
+        p {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 18px;
+            line-height: 1.6;
+            margin-bottom: 32px;
+        }
+
+        /* Button Styles */
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 32px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 14px 32px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            position: relative;
+            overflow: hidden;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6, #0ea5e9);
+            color: white;
+            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 20px 50px rgba(59, 130, 246, 0.6);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: #0ea5e9;
+            border: 2px solid rgba(59, 130, 246, 0.5);
+            backdrop-filter: blur(10px);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(59, 130, 246, 0.15);
+            border-color: rgba(59, 130, 246, 1);
+            transform: translateY(-3px);
+        }
+
+        /* Quick Links */
+        .quick-links {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+        }
+
+        .quick-link {
+            padding: 16px;
+            background: rgba(59, 130, 246, 0.05);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            border-radius: 12px;
+            color: rgba(255, 255, 255, 0.8);
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .quick-link:hover {
+            background: rgba(59, 130, 246, 0.15);
+            border-color: rgba(59, 130, 246, 0.4);
+            transform: translateY(-3px);
+            color: white;
+        }
+
+        .quick-link i { display: block; font-size: 24px; margin-bottom: 8px; }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .content-box {
+                flex-direction: column;
+                gap: 40px;
+            }
+
+            .canvas-wrapper {
+                width: 100%;
+                max-width: 400px;
+                height: 400px;
+            }
+
+            .text-content {
+                width: 100%;
+            }
+
+            .error-code {
+                font-size: 180px;
+            }
+
+            h1 {
+                font-size: 36px;
+            }
+
+            p {
+                font-size: 16px;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .content-box {
+                gap: 24px;
+            }
+
+            .canvas-wrapper {
+                max-width: 100%;
+                height: 300px;
+            }
+
+            .error-code {
+                font-size: 120px;
+                margin-bottom: -10px;
+            }
+
+            h1 {
+                font-size: 28px;
+            }
+
+            p {
+                font-size: 14px;
+            }
+
+            .btn {
+                padding: 12px 24px;
+                font-size: 14px;
+            }
+
+            .quick-links {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Background Scene -->
+    <div class="scene-background">
+        <div class="grid-bg"></div>
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="container-main">
+        <div class="content-box">
+            <!-- 3D Canvas -->
+            <div class="canvas-wrapper">
+                {% if clinic and clinic.logo %}
+                <div class="clinic-overlay">
+                    <img src="{{ clinic.logo.url }}" alt="{{ clinic.clinic_name }}" class="clinic-logo-small">
+                    <div class="clinic-info-text">
+                        <h3>{{ clinic.clinic_name }}</h3>
+                        {% if clinic.phone %}<p>{{ clinic.phone }}</p>{% endif %}
+                    </div>
+                </div>
+                {% else %}
+                <div class="clinic-overlay" style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(6, 182, 212, 0.1));">
+                    <div style="text-align: center; color: rgba(255, 255, 255, 0.5);">
+                        <i class="fas fa-hospital" style="font-size: 80px; margin-bottom: 20px; color: rgba(59, 130, 246, 0.4);"></i>
+                        <p style="font-size: 14px; margin: 0;">No clinic logo uploaded</p>
+                        <p style="font-size: 12px; margin: 4px 0 0 0; color: rgba(59, 130, 246, 0.6);">Upload logo in admin panel</p>
+                    </div>
+                </div>
+                {% endif %}
+                <canvas id="canvas-3d"></canvas>
+            </div>
+
+            <!-- Text Content -->
+            <div class="text-content">
+               
+                <div class="error-code">404</div>
+                <h1>Page Not <span class="highlight">Found</span></h1>
+                <p>The page you're looking for seems to have taken a different route. Let's get you back on track with our helpful navigation options below.</p>
+
+                <div class="btn-group">
+                    <a href="/" class="btn btn-primary">
+                        <i class="fas fa-home"></i>
+                        <span>Dashboard</span>
+                    </a>
+                    <a href="/login/" class="btn btn-secondary">
+                        <i class="fas fa-sign-in-alt"></i>
+                        <span>Login</span>
+                    </a>
+                </div>
+
+                <div class="quick-links">
+                    <a href="/" class="quick-link">
+                        <i class="fas fa-calendar"></i>
+                        Appointments
+                    </a>
+                    <a href="/" class="quick-link">
+                        <i class="fas fa-users"></i>
+                        Patients
+                    </a>
+                    <a href="/" class="quick-link">
+                        <i class="fas fa-stethoscope"></i>
+                        Doctors
+                    </a>
+                    <a href="/" class="quick-link">
+                        <i class="fas fa-file-medical"></i>
+                        Records
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Three.js Script -->
+    <script>
+        // Initialize Three.js with advanced settings
+        const container = document.querySelector('.canvas-wrapper'); // Changed to get wrapper, not canvas element
+        const width = container.clientWidth;
+        const height = container.clientHeight;
+
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x0f172a);
+        scene.fog = new THREE.Fog(0x0f172a, 15, 100);
+
+        const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
+        camera.position.z = 3.5;
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
+        renderer.setSize(width, height);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFShadowShadowMap;
+        renderer.shadowMap.resolution = 2048;
+        
+        // Insert renderer canvas before the clinic-overlay
+        const clinicOverlay = container.querySelector('.clinic-overlay');
+        if (clinicOverlay) {
+            container.insertBefore(renderer.domElement, clinicOverlay);
+        } else {
+            container.appendChild(renderer.domElement);
+        }
+
+        // Create Premium Tooth
+        const tooth = new THREE.Group();
+
+        // Main body with glossy appearance
+        const bodyGeo = new THREE.ConeGeometry(0.7, 2.5, 128);
+        const bodyMat = new THREE.MeshStandardMaterial({
+            color: 0xffffff,
+            metalness: 0.2,
+            roughness: 0.2,
+            emissive: 0x3b82f6,
+            emissiveIntensity: 0.2,
+            normalScale: new THREE.Vector2(1, 1)
+        });
+        const body = new THREE.Mesh(bodyGeo, bodyMat);
+        body.castShadow = true;
+        body.receiveShadow = true;
+        tooth.add(body);
+
+        // Root
+        const rootGeo = new THREE.ConeGeometry(0.5, 1.3, 128);
+        const rootMat = new THREE.MeshStandardMaterial({
+            color: 0xf5d9c4,
+            metalness: 0.05,
+            roughness: 0.4,
+            emissive: 0x0ea5e9,
+            emissiveIntensity: 0.1
+        });
+        const root = new THREE.Mesh(rootGeo, rootMat);
+        root.position.y = -1.9;
+        root.castShadow = true;
+        root.receiveShadow = true;
+        tooth.add(root);
+
+        // Main highlight
+        const highlight1Geo = new THREE.SphereGeometry(0.4, 64, 64);
+        const highlightMat = new THREE.MeshBasicMaterial({
+            color: 0xffffff,
+            transparent: true,
+            opacity: 0.6
+        });
+        const highlight1 = new THREE.Mesh(highlight1Geo, highlightMat);
+        highlight1.position.set(-0.25, 0.5, 1);
+        tooth.add(highlight1);
+
+        // Secondary glow
+        const glowGeo = new THREE.SphereGeometry(0.3, 64, 64);
+        const glowMat = new THREE.MeshBasicMaterial({
+            color: 0x06b6d4,
+            transparent: true,
+            opacity: 0.4
+        });
+        const glow = new THREE.Mesh(glowGeo, glowMat);
+        glow.position.set(0.4, -0.3, 0.6);
+        tooth.add(glow);
+
+        scene.add(tooth);
+
+        // Advanced Lighting
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+        scene.add(ambientLight);
+
+        const mainLight = new THREE.DirectionalLight(0x3b82f6, 1.2);
+        mainLight.position.set(8, 8, 10);
+        mainLight.castShadow = true;
+        mainLight.shadow.mapSize.width = 2048;
+        mainLight.shadow.mapSize.height = 2048;
+        mainLight.shadow.camera.far = 30;
+        mainLight.shadow.camera.left = -15;
+        mainLight.shadow.camera.right = 15;
+        mainLight.shadow.camera.top = 15;
+        mainLight.shadow.camera.bottom = -15;
+        scene.add(mainLight);
+
+        const fillLight = new THREE.DirectionalLight(0x0ea5e9, 0.6);
+        fillLight.position.set(-5, 3, 5);
+        scene.add(fillLight);
+
+        const rimLight = new THREE.PointLight(0x06b6d4, 0.8);
+        rimLight.position.set(-8, 0, 3);
+        scene.add(rimLight);
+
+        const topLight = new THREE.PointLight(0x3b82f6, 0.4);
+        topLight.position.set(0, 10, 0);
+        scene.add(topLight);
+
+        // Animation
+        let animationFrameId;
+        let time = 0;
+
+        const animate = () => {
+            animationFrameId = requestAnimationFrame(animate);
+            time += 0.01;
+
+            // Smooth rotation
+            tooth.rotation.x = Math.sin(time * 0.5) * 0.3 + 0.2;
+            tooth.rotation.y += 0.005;
+            tooth.rotation.z = Math.cos(time * 0.4) * 0.15;
+
+            // Gentle bob
+            tooth.position.y = Math.sin(time * 0.8) * 0.4;
+            tooth.position.x = Math.cos(time * 0.6) * 0.2;
+
+            // Pulsing emissive
+            const pulse = 0.15 + Math.sin(time * 1.5) * 0.08;
+            bodyMat.emissiveIntensity = pulse;
+
+            // Light animation
+            mainLight.intensity = 1.2 + Math.sin(time * 0.8) * 0.3;
+
+            renderer.render(scene, camera);
+        };
+
+        animate();
+
+        // Responsive
+        window.addEventListener('resize', () => {
+            const wrapper = document.querySelector('.canvas-wrapper');
+            if (!wrapper || !wrapper.parentElement) return;
+            const newWidth = wrapper.clientWidth;
+            const newHeight = wrapper.clientHeight;
+            if (newWidth > 0 && newHeight > 0) {
+                camera.aspect = newWidth / newHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(newWidth, newHeight);
+            }
+        });
+
+        // Error time
+        document.getElementById('error-time') && (document.getElementById('error-time').textContent = new Date().toLocaleTimeString());
+    </script>
+
+    <!-- Interactions -->
+    <script>
+        document.querySelectorAll('.btn, .quick-link').forEach(el => {
+            el.addEventListener('click', function(e) {
+                const rect = this.getBoundingClientRect();
+                for (let i = 0; i < 3; i++) {
+                    const particle = document.createElement('div');
+                    particle.style.position = 'fixed';
+                    particle.style.left = (rect.left + rect.width / 2) + 'px';
+                    particle.style.top = (rect.top + rect.height / 2) + 'px';
+                    particle.style.width = '6px';
+                    particle.style.height = '6px';
+                    particle.style.background = '#3b82f6';
+                    particle.style.borderRadius = '50%';
+                    particle.style.pointerEvents = 'none';
+                    particle.style.zIndex = '9999';
+                    document.body.appendChild(particle);
+
+                    const angle = (Math.PI * 2 * i) / 3;
+                    const speed = 4;
+                    const vx = Math.cos(angle) * speed;
+                    const vy = Math.sin(angle) * speed;
+                    let x = rect.left + rect.width / 2;
+                    let y = rect.top + rect.height / 2;
+                    let life = 1;
+
+                    const tick = () => {
+                        x += vx;
+                        y += vy;
+                        life -= 0.03;
+                        particle.style.left = x + 'px';
+                        particle.style.top = y + 'px';
+                        particle.style.opacity = life;
+
+                        if (life > 0) requestAnimationFrame(tick);
+                        else particle.remove();
+                    };
+                    tick();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

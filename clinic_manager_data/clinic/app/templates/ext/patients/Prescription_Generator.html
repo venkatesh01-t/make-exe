@@ -1,0 +1,861 @@
+<!-- 
+  PREMIUM PRESCRIPTION GENERATOR MODAL
+  Usage: openModal('Prescription_Generator')
+-->
+
+
+<style>
+    :root {
+        --rx-watermark-opacity: 0.20;
+        --rx-watermark-blur: 0.4px;
+    }
+
+    /* PREVIEW TERMINAL STYLES */
+    .a4-container {
+        background: white;
+        width: 210mm;
+        height: 297mm;
+        padding: 10mm;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        position: relative;
+        transform-origin: top center;
+        box-sizing: border-box;
+        overflow: hidden;
+    }
+
+    .page-border {
+        border: 2px solid #1e293b;
+        height: 100%;
+        padding: 5mm 8mm 8mm;
+        display: flex;
+        flex-direction: column;
+        box-sizing: border-box;
+        position: relative;
+        z-index: 1;
+    }
+
+    .rx-watermark {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .rx-watermark-logo {
+        width: clamp(92px, 34vmin, 370px);
+        height: clamp(92px, 34vmin, 370px);
+        object-fit: contain;
+        opacity: var(--rx-watermark-opacity);
+        filter: blur(var(--rx-watermark-blur));
+    }
+
+    .rx-watermark {
+        pointer-events: none;
+        user-select: none;
+        z-index: 0;
+    }
+
+    #outMedicineList td:last-child {
+        white-space: normal;
+        word-break: break-word;
+        padding-right: 2px;
+    }
+
+    /* Modal Visible State Logic */
+    .modal-visible {
+        opacity: 1 !important;
+        transform: scale(1) translateY(0) !important;
+    }
+
+    /* Responsive scaling for the preview dashboard */
+    @media (max-width: 1024px) {
+        .a4-container {
+            transform: scale(0.8);
+            margin-bottom: -60mm;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .a4-container {
+            transform: scale(0.65);
+            margin-bottom: -100mm;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .a4-container {
+            transform: scale(0.42);
+            margin-bottom: -170mm;
+        }
+    }
+
+    /* STRICT SINGLE-PAGE PRINT LOGIC - REMOVES ALL GAPS */
+    @media print {
+        @page {
+            size: A4;
+            margin: 0mm !important;
+        }
+
+        /* Reset and hide dashboard clutter to prevent blank page bug */
+        html,
+        body {
+            height: 297mm !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            background: #fff !important;
+            overflow: hidden !important;
+        }
+
+        /* Use visibility toggle combined with strict isolation */
+        body {
+            visibility: hidden !important;
+        }
+
+        /* Force modal and content to be visible */
+        #Prescription_Generator,
+        #Prescription_Generator *,
+        #prescription-content,
+        #prescription-content * {
+            visibility: visible !important;
+        }
+
+        /* Isolate modal as root element for print */
+        #Prescription_Generator {
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 210mm !important;
+            height: 297mm !important;
+            display: block !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            z-index: 99999 !important;
+        }
+
+        .modal-backdrop,
+        .no-print {
+            display: none !important;
+        }
+
+        .modal-content {
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 210mm !important;
+            height: 297mm !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            transform: none !important;
+            background: #fff !important;
+            border: none !important;
+            opacity: 1 !important;
+            box-shadow: none !important;
+            overflow: visible !important;
+            border-radius: 0 !important;
+        }
+
+        .preview-scroll {
+            overflow: visible !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            width: 210mm !important;
+            height: 297mm !important;
+        }
+
+        /* The actual A4 page */
+        .a4-container {
+            display: block !important;
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 210mm !important;
+            height: 297mm !important;
+            margin: 0 !important;
+            padding: 6mm !important;
+            /* Internal paper safety margin */
+            border: none !important;
+            box-shadow: none !important;
+            transform: none !important;
+            background: white !important;
+            box-sizing: border-box !important;
+        }
+
+        .page-border {
+            border: 2px solid #000 !important;
+            height: 100% !important;
+            padding: 4mm 7mm 7mm !important;
+            /* Perfect fit minus padding */
+            margin: 0 !important;
+            box-sizing: border-box !important;
+        }
+
+        header {
+            margin-top: 0 !important;
+            padding-top: 0 !important;
+        }
+
+        .rx-watermark-logo {
+            opacity: var(--rx-watermark-opacity) !important;
+            filter: blur(var(--rx-watermark-blur)) !important;
+        }
+
+    }
+
+    /* Custom Scrollbar for Modal Body */
+    .custom-scrollbar::-webkit-scrollbar {
+        width: 5px;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+    }
+
+    /* Dedicated print-root mode: print only cloned prescription area */
+    body.rx-print-active * {
+        visibility: hidden !important;
+    }
+
+    body.rx-print-active #rx-print-root,
+    body.rx-print-active #rx-print-root * {
+        visibility: visible !important;
+    }
+
+    body.rx-print-active #rx-print-root {
+        position: fixed !important;
+        inset: 0 !important;
+        z-index: 999999 !important;
+        background: #fff !important;
+        display: flex !important;
+        justify-content: center !important;
+        align-items: flex-start !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    #rx-print-root .a4-container {
+        transform: none !important;
+        box-shadow: none !important;
+        margin: 0 !important;
+    }
+
+    .doctor-signature-slot {
+        width: 160px;
+        height: 44px;
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+        margin-bottom: 4px;
+    }
+
+    .doctor-signature-image {
+        max-width: 160px;
+        max-height: 44px;
+        object-fit: contain;
+    }
+</style>
+<div id="Prescription_Generator" class="hidden fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4">
+    <!-- Modal Backdrop -->
+    <div class="modal-backdrop absolute inset-0 bg-slate-950/80 backdrop-blur-md opacity-0 transition-opacity duration-300"
+        onclick="closeModal('Prescription_Generator')"></div>
+
+    <!-- Modal Content -->
+    <div
+        class="modal-content relative z-10 w-full max-w-5xl h-[95vh] flex flex-col bg-slate-900 rounded-[2.5rem] border border-white/10 overflow-hidden opacity-0 scale-95 translate-y-8 transition-all duration-300 ease-out">
+
+        <!-- Header Toolbar (Hidden on Print) -->
+        <div
+            class="no-print px-6 sm:px-8 py-4 border-b border-white/5 flex justify-between items-center bg-slate-900/60">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 bg-teal-500/20 rounded-lg flex items-center justify-center text-teal-400">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="text-xs font-bold text-white uppercase tracking-widest">Prescription Preview</h3>
+                    <p class="text-[10px] text-slate-400 font-medium tracking-tight">DentalRx Secure Terminal</p>
+                </div>
+            </div>
+
+            <!-- Classic Action Cluster Positioned in Header -->
+            <div class="flex items-center gap-2">
+                <div class="hidden sm:flex items-center gap-2 mr-4 bg-white/5 p-1 rounded-xl border border-white/5">
+                    <!-- Print -->
+                    <button type="button" onclick="printPrescription(this)"
+                        class="w-8 h-8 rounded-lg bg-teal-50 text-teal-600 flex items-center justify-center hover:bg-teal-100 transition shadow-sm"
+                        title="Print Prescription">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                        </svg>
+                    </button>
+                    <!-- Download -->
+                    <button type="button" onclick="downloadPDF(this)"
+                        class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center hover:bg-blue-100 transition shadow-sm"
+                        title="Download PDF">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                    </button>
+                    <!-- WhatsApp -->
+                    <button onclick="shareWhatsApp()"
+                        class="w-8 h-8 rounded-lg bg-green-50 text-green-600 flex items-center justify-center hover:bg-green-100 transition shadow-sm"
+                        title="WhatsApp Patient">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                        </svg>
+                    </button>
+                    <!-- Email -->
+                    <button onclick="shareEmail()"
+                        class="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center hover:bg-purple-100 transition shadow-sm"
+                        title="Email Rx">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                        </svg>
+                    </button>
+                </div>
+
+                <button onclick="closeModal('Prescription_Generator')"
+                    class="p-2 hover:bg-white/10 rounded-xl transition text-slate-400 hover:text-white">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Scrollable Document Area -->
+        <div class="flex-grow preview-scroll p-4 lg:p-12 overflow-y-auto custom-scrollbar">
+            <div id="prescription-wrapper" class="mx-auto">
+                <div id="prescription-content" class="a4-container text-slate-900 mx-auto">
+                    <div class="page-border">
+                        <div class="rx-watermark" aria-hidden="true">
+                            {% if clinic and clinic.logo %}
+                            <img src="{{ clinic.logo.url }}" alt="" class="rx-watermark-logo">
+                            {% endif %}
+                        </div>
+                        <!-- Clinic Header -->
+                        <header class="border-b-2 border-slate-800 pb-4 mb-6">
+                            <div class="flex items-start justify-between gap-6">
+                                <div class="flex items-center gap-3 min-w-0">
+                                    {% if clinic and clinic.logo %}
+                                    <div class="flex-shrink-0">
+                                        <img src="{{ clinic.logo.url }}" alt="Clinic Logo" class="h-14 w-14 object-cover">
+                                    </div>
+                                    {% endif %}
+                                    <div class="min-w-0">
+                                        <h1 id="outClinicName"
+                                            class="text-2xl font-bold font-serif uppercase tracking-widest leading-tight truncate">Clinic
+                                            {{clinic.clinic_name}}</h1>
+                                        <p id="outClinicAddress"
+                                            class="text-[10px] font-medium text-slate-500 uppercase tracking-widest mt-1"></p>
+                                        <div class="flex flex-wrap gap-x-4 text-[10px] font-bold text-slate-400 uppercase mt-1">
+                                            <span id="outClinicPhone"></span>
+                                            <span id="outClinicTiming"></span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="text-right flex-shrink-0 pt-1">
+                                    <h2 id="outDoctorName" class="text-lg font-bold font-serif leading-tight">{{ user.doctor.name }}</h2>
+                                    <p class="text-[9px] text-slate-400 uppercase tracking-[0.2em]">
+                                        {% if user.doctor.education %}{{ user.doctor.education }}{% endif %}
+                                        {% if user.doctor.education and user.doctor.specialization %} • {% endif %}
+                                        {% if user.doctor.specialization %}{{ user.doctor.specialization }}{% else %}Dental Surgeon{% endif %}
+                                    </p>
+                                </div>
+                            </div>
+                        </header>
+
+                        <!-- Patient Info -->
+                        <div class="bg-slate-50 p-4 rounded-sm border border-slate-100 mb-6">
+                            <div class="grid grid-cols-2 gap-y-2 text-sm">
+                                <div><span class="text-[10px] font-bold text-slate-400 uppercase mr-2">Patient:</span>
+                                    <span id="outPatientName" class="font-bold text-slate-900"></span></div>
+                                <div class="text-right"><span
+                                        class="text-[10px] font-bold text-slate-400 uppercase mr-2">Date:</span> <span
+                                        id="outVisitDate" class="font-medium text-slate-700"></span></div>
+                                <div><span class="text-[10px] font-bold text-slate-400 uppercase mr-2">Age/Sex:</span>
+                                    <span id="outPatientAgeGender" class="font-medium text-slate-700"></span></div>
+                                <div class="text-right"><span
+                                        class="text-[10px] font-bold text-slate-400 uppercase mr-2">RX No:</span> <span
+                                        id="outRxId" class="font-mono text-xs text-slate-900"></span></div>
+                            </div>
+                            <div class="mt-3 pt-3 border-t border-slate-200">
+                                <div class="grid grid-cols-1 gap-2 text-xs">
+                                    <div>
+                                        <span class="text-[10px] font-bold text-slate-400 uppercase mr-2">Chief Complaint:</span>
+                                        <span id="outChiefComplaint" class="font-medium text-slate-700">-</span>
+                                    </div>
+                                    <div>
+                                        <span class="text-[10px] font-bold text-slate-400 uppercase mr-2">Diagnosis:</span>
+                                        <span id="outDiagnosis" class="font-medium text-slate-700">-</span>
+                                    </div>
+                                    <div>
+                                        <span class="text-[10px] font-bold text-red-500 uppercase mr-2">Allergies:</span>
+                                        <span id="outPatientAllergies" class="font-semibold text-red-600">-</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Medical Content -->
+                        <div class="flex-grow overflow-hidden">
+                            <div class="mb-4"><span
+                                    class="text-5xl font-serif italic font-bold text-slate-800 leading-none">Rx</span>
+                            </div>
+                            <table class="w-full text-left border-collapse table-fixed">
+                                <thead>
+                                    <tr
+                                        class="border-b-2 border-slate-800 text-[10px] font-bold text-slate-400 uppercase">
+                                        <th class="py-2 w-8">#</th>
+                                        <th class="py-2">Medicine & Dosage</th>
+                                        <th class="py-2 text-center w-16">Frequency</th>
+                                        <th class="py-2 text-right w-20">Duration</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="outMedicineList" class="text-sm font-medium divide-y divide-slate-100">
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Footer -->
+                        <footer class="mt-auto pt-6 border-t-2 border-slate-800">
+                            <div class="grid grid-cols-2 gap-8 mb-4">
+                                <div>
+                                    <h4 class="text-[10px] font-bold text-slate-400 uppercase mb-2">Advice &
+                                        Instructions</h4>
+                                    <ul id="outAdvice"
+                                        class="text-xs text-slate-700 space-y-1 list-disc pl-4 leading-relaxed"></ul>
+                                </div>
+                                <div class="flex flex-col items-center justify-end">
+                                    <div class="doctor-signature-slot">
+                                        {% if user.doctor and user.doctor.signature %}
+                                        <img src="{{ user.doctor.signature.url }}" alt="Doctor Signature" class="doctor-signature-image">
+                                        {% else %}
+                                        <span aria-hidden="true"></span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="w-40 border-b border-slate-900 mb-1"></div>
+                                    <p class="text-[10px] font-bold uppercase tracking-tighter text-slate-400">
+                                        Authorized Signature</p>
+                                </div>
+                            </div>
+                            <div
+                                class="flex justify-between items-center text-[7px] text-slate-300 uppercase tracking-widest border-t border-slate-50 pt-2">
+                                <span>Digital Prescription Document • Page 1 of 1</span>
+                                <span id="footerTimeStamp"></span>
+                            </div>
+                        </footer>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MOBILE ACTION BAR (Classic Style with SVG) -->
+        <div class="no-print sm:hidden flex justify-center gap-4 py-6 bg-slate-900/90 border-t border-white/10">
+            <button type="button" onclick="printPrescription(this)"
+                class="w-10 h-10 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center shadow-lg">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                </svg>
+            </button>
+            <button type="button" onclick="downloadPDF(this)"
+                class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shadow-lg">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+            </button>
+            <button onclick="shareWhatsApp()"
+                class="w-10 h-10 rounded-xl bg-green-50 text-green-600 flex items-center justify-center shadow-lg">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                </svg>
+            </button>
+            <button onclick="shareEmail()"
+                class="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center shadow-lg">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+            </button>
+        </div>
+    </div>
+</div>
+
+
+
+<script>
+    function setText(id, value, fallback = '---') {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.textContent = value && String(value).trim() ? value : fallback;
+    }
+
+    function renderMedicines(medicines) {
+        const tbody = document.getElementById('outMedicineList');
+        if (!tbody) return;
+
+        tbody.innerHTML = '';
+        const rows = Array.isArray(medicines) ? medicines : [];
+        if (!rows.length) {
+            tbody.innerHTML = '<tr><td colspan="4" class="py-3 text-center text-xs text-slate-400">No medicines listed</td></tr>';
+            return;
+        }
+
+        rows.forEach((m, i) => {
+            const tr = document.createElement('tr');
+            tr.className = 'border-b border-slate-50';
+            tr.innerHTML = `
+                <td class="py-3 text-slate-300 font-mono text-[10px]">${(i + 1).toString().padStart(2, '0')}</td>
+                <td class="py-3 pr-2">
+                    <div class="font-bold text-slate-900 text-xs sm:text-sm">${m.name || '-'}</div>
+                    <div class="text-[9px] text-slate-400 uppercase tracking-tighter">${m.dosage || ''}</div>
+                </td>
+                <td class="py-3 px-1 text-center text-xs text-slate-600">${m.frequency || m.freq || '-'}</td>
+                <td class="py-3 pl-1 text-right text-xs text-slate-600 font-mono whitespace-normal break-words">${m.duration || '-'}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function renderAdvice(adviceText) {
+        const adviceList = document.getElementById('outAdvice');
+        if (!adviceList) return;
+
+        const lines = (adviceText || '').split('\n').map(line => line.trim()).filter(Boolean);
+        adviceList.innerHTML = lines.length
+            ? lines.map(line => `<li class="pl-2">${line}</li>`).join('')
+            : '<li>Standard dental clinical follow-up protocol.</li>';
+    }
+
+    function renderAllergy(allergies) {
+        const allergyText = document.getElementById('outPatientAllergies');
+        if (!allergyText) return;
+
+        const value = (allergies || '').trim();
+        if (value && value.toLowerCase() !== 'none') {
+            allergyText.textContent = value;
+        } else {
+            allergyText.textContent = '-';
+        }
+    }
+
+    function renderClinicalInfo(chiefComplaint, diagnosis) {
+        const complaintEl = document.getElementById('outChiefComplaint');
+        const diagnosisEl = document.getElementById('outDiagnosis');
+
+        if (complaintEl) complaintEl.textContent = normalizeText(chiefComplaint) || '-';
+        if (diagnosisEl) diagnosisEl.textContent = normalizeText(diagnosis) || '-';
+    }
+
+    function buildPreviewData(source = {}) {
+        const visitDateInput = document.getElementById('visitDate');
+        const patientNameInput = document.getElementById('patientName');
+        const ageGenderInput = document.getElementById('patientAgeGender');
+        const allergiesInput = document.getElementById('patientAllergies');
+        const adviceInput = document.getElementById('advice');
+
+        return {
+            clinicName: source.clinicName || '{{ clinic.clinic_name|default:"Clinic"|escapejs }}',
+            clinicAddress: source.clinicAddress || '{{ clinic.address|default:""|escapejs }}',
+            clinicPhone: source.clinicPhone || '{{ clinic.phone|default:""|escapejs }}',
+            clinicTiming: source.clinicTiming || '{{ clinic.open_time|default_if_none:""|time:"H:i"|escapejs }}{% if clinic.open_time and clinic.close_time %} - {% endif %}{{ clinic.close_time|default_if_none:""|time:"H:i"|escapejs }}',
+            doctorName: source.doctorName || 'Dr.{{ user.doctor.name|default:user.get_full_name|default:user.username|escapejs }}',
+            patientName: source.patientName || (patientNameInput ? patientNameInput.value : ''),
+            patientAgeGender: source.patientAgeGender || (ageGenderInput ? ageGenderInput.value : ''),
+            visitDate: source.visitDate || (visitDateInput ? visitDateInput.value : ''),
+            patientId: source.patientId || '',
+            rxNumber: source.rxNumber || '',
+            allergies: source.allergies !== undefined ? source.allergies : (allergiesInput ? allergiesInput.value : ''),
+            chiefComplaint: source.chiefComplaint !== undefined ? source.chiefComplaint : '',
+            diagnosis: source.diagnosis !== undefined ? source.diagnosis : '',
+            advice: source.advice !== undefined ? source.advice : (adviceInput ? adviceInput.value : ''),
+            medicines: Array.isArray(source.medicines) ? source.medicines : []
+        };
+    }
+
+    function applyPrescriptionPreview(source = {}) {
+        const data = buildPreviewData(source);
+
+        setText('outClinicName', data.clinicName, 'Clinic');
+        setText('outDoctorName', data.doctorName, 'Doctor');
+        setText('outClinicAddress', data.clinicAddress, '');
+        setText('outClinicPhone', data.clinicPhone, '');
+        setText('outClinicTiming', data.clinicTiming, '');
+        setText('outPatientName', data.patientName);
+        setText('outPatientAgeGender', data.patientAgeGender);
+        setText('outVisitDate', data.visitDate);
+
+        renderClinicalInfo(data.chiefComplaint, data.diagnosis);
+        renderAllergy(data.allergies);
+        renderMedicines(data.medicines);
+        renderAdvice(data.advice);
+
+        const rxIdEl = document.getElementById('outRxId');
+        if (rxIdEl) {
+            const normalizedRx = normalizeText(data.rxNumber);
+            if (normalizedRx) {
+                rxIdEl.textContent = normalizedRx;
+            } else if (data.patientId) {
+                rxIdEl.textContent = `#RX-${data.patientId}`;
+            } else {
+                rxIdEl.textContent = '#RX-0000';
+            }
+        }
+        const stamp = document.getElementById('footerTimeStamp');
+        if (stamp) stamp.textContent = 'SECURE RX: ' + Date.now().toString().slice(-8) + ' • ' + new Date().toLocaleDateString();
+    }
+
+    let prescriptionPrefillAbortController = null;
+
+    function normalizeText(value) {
+        if (value === null || value === undefined) return '';
+        return String(value).trim();
+    }
+
+    function getTodayIsoDate() {
+        const now = new Date();
+        const local = new Date(now.getTime() - (now.getTimezoneOffset() * 60000));
+        return local.toISOString().split('T')[0];
+    }
+
+    function loadPrefillData(url, timeoutMs = 9000) {
+        if (typeof fetch === 'function') {
+            if (prescriptionPrefillAbortController && typeof prescriptionPrefillAbortController.abort === 'function') {
+                prescriptionPrefillAbortController.abort();
+            }
+
+            prescriptionPrefillAbortController = (typeof AbortController === 'function') ? new AbortController() : null;
+            let timeoutId = null;
+
+            if (prescriptionPrefillAbortController) {
+                timeoutId = setTimeout(() => prescriptionPrefillAbortController.abort(), timeoutMs);
+            }
+
+            return fetch(url, {
+                method: 'GET',
+                credentials: 'same-origin',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                signal: prescriptionPrefillAbortController ? prescriptionPrefillAbortController.signal : undefined
+            })
+                .then(response => {
+                    if (!response.ok) throw new Error('Failed to load prescription data');
+                    return response.json();
+                })
+                .finally(() => {
+                    if (timeoutId) clearTimeout(timeoutId);
+                });
+        }
+
+        // Old-browser fallback when fetch is not available.
+        return new Promise((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+            xhr.open('GET', url, true);
+            xhr.withCredentials = true;
+            xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+            xhr.timeout = timeoutMs;
+
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState !== 4) return;
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    try {
+                        resolve(JSON.parse(xhr.responseText));
+                    } catch (err) {
+                        reject(new Error('Invalid prescription response'));
+                    }
+                } else {
+                    reject(new Error('Failed to load prescription data'));
+                }
+            };
+
+            xhr.ontimeout = function () {
+                reject(new Error('Prescription request timed out'));
+            };
+
+            xhr.onerror = function () {
+                reject(new Error('Prescription request failed'));
+            };
+
+            xhr.send();
+        });
+    }
+
+    function openPrescriptionGeneratorFromRow(dailyPatientId, patientId, patientName, patientAge, patientGender) {
+        const age = normalizeText(patientAge);
+        const gender = normalizeText(patientGender);
+        const safePatientName = normalizeText(patientName);
+        const ageGender = age && gender ? `${age} / ${gender}` : (age || gender);
+        const defaultVisitDate = getTodayIsoDate();
+
+        applyPrescriptionPreview({
+            patientId: patientId || '',
+            rxNumber: patientId ? `#RX-${patientId}` : '',
+            patientName: safePatientName,
+            patientAgeGender: ageGender || '',
+            visitDate: defaultVisitDate,
+            medicines: []
+        });
+
+        openModal('Prescription_Generator');
+
+        if (!dailyPatientId) return;
+        const prefillUrl = "{% url 'clinic:daily_patient_prescription' 0 %}".replace('/0/', `/${encodeURIComponent(dailyPatientId)}/`);
+        loadPrefillData(prefillUrl)
+            .then(data => {
+                if (!data || !data.exists) return;
+                applyPrescriptionPreview({
+                    patientId: patientId || data.patientId || '',
+                    rxNumber: data.rxNumber || (patientId ? `#RX-${patientId}-${data.dailyPatientId}-${data.id}` : ''),
+                    patientName: safePatientName,
+                    patientAgeGender: data.ageGender || ageGender,
+                    visitDate: data.visitDate || defaultVisitDate,
+                    allergies: data.allergies || '',
+                    chiefComplaint: data.chiefComplaint || data.chief_complaint || '',
+                    diagnosis: data.diagnosis || '',
+                    advice: data.advice || '',
+                    medicines: data.medicines || []
+                });
+            })
+            .catch(error => {
+                // Preserve usable preview even if prefill API fails.
+                console.warn('Error loading prescription preview:', error);
+            });
+    }
+
+    // Offline-safe export: opens print dialog where user can choose Save as PDF.
+    let isPdfGenerating = false;
+    let isPrintRunning = false;
+
+    function removePrintRoot() {
+        const root = document.getElementById('rx-print-root');
+        if (root) root.remove();
+    }
+
+    function printPrescription(triggerButton = null) {
+        if (isPrintRunning) return;
+
+        const source = document.getElementById('prescription-content');
+        if (!source) {
+            window.print();
+            return;
+        }
+
+        isPrintRunning = true;
+        if (triggerButton) {
+            triggerButton.disabled = true;
+            triggerButton.classList.add('opacity-70', 'cursor-not-allowed');
+        }
+
+        const originalTitle = document.title;
+        const patientName = (document.getElementById('outPatientName')?.textContent || '').trim();
+        if (patientName) {
+            document.title = `Prescription_${patientName.replace(/\s+/g, '_')}`;
+        } else {
+            document.title = 'Prescription';
+        }
+
+        const finishPrint = () => {
+            document.body.classList.remove('rx-print-active');
+            removePrintRoot();
+            window.removeEventListener('afterprint', handleAfterPrint);
+            document.title = originalTitle;
+            if (triggerButton) {
+                triggerButton.disabled = false;
+                triggerButton.classList.remove('opacity-70', 'cursor-not-allowed');
+            }
+            isPrintRunning = false;
+        };
+
+        const handleAfterPrint = () => {
+            finishPrint();
+        };
+
+        removePrintRoot();
+
+        const printRoot = document.createElement('div');
+        printRoot.id = 'rx-print-root';
+        const clone = source.cloneNode(true);
+        clone.id = 'prescription-content-print';
+        printRoot.appendChild(clone);
+        document.body.appendChild(printRoot);
+
+        document.body.classList.add('rx-print-active');
+        window.addEventListener('afterprint', handleAfterPrint, { once: true });
+
+        // Fallback for browsers that do not consistently fire afterprint.
+        setTimeout(() => {
+            if (isPrintRunning) finishPrint();
+        }, 60000);
+
+        requestAnimationFrame(() => {
+            window.print();
+        });
+    }
+
+    async function downloadPDF(triggerButton = null) {
+        if (isPdfGenerating) return;
+
+        const element = document.getElementById('prescription-content');
+        if (!element) {
+            console.error('Prescription content element not found.');
+            return;
+        }
+
+        isPdfGenerating = true;
+        if (triggerButton) {
+            triggerButton.disabled = true;
+            triggerButton.classList.add('opacity-70', 'cursor-not-allowed');
+        }
+
+        const unlock = () => {
+            if (triggerButton) {
+                triggerButton.disabled = false;
+                triggerButton.classList.remove('opacity-70', 'cursor-not-allowed');
+            }
+            isPdfGenerating = false;
+        };
+
+        try {
+            const handleAfterPrint = () => {
+                window.removeEventListener('afterprint', handleAfterPrint);
+                unlock();
+            };
+
+            window.addEventListener('afterprint', handleAfterPrint, { once: true });
+
+            // Fallback unlock for browsers where afterprint is unreliable.
+            setTimeout(() => {
+                if (isPdfGenerating) {
+                    unlock();
+                }
+            }, 4000);
+
+            printPrescription();
+        } catch (error) {
+            console.error('PDF export failed:', error);
+            unlock();
+        }
+    }
+
+    function shareWhatsApp() {
+        const name = document.getElementById('outPatientName')?.textContent || 'Patient';
+        const text = encodeURIComponent(`Prescription for ${name} generated by DentalRx. Access your secure PDF now.`);
+        window.open(`https://wa.me/?text=${text}`, '_blank');
+    }
+
+    function shareEmail() {
+        const name = document.getElementById('outPatientName')?.textContent || 'Patient';
+        window.location.href = `mailto:?subject=Dental Prescription: ${name}&body=The clinical prescription has been generated and is ready for your review.`;
+    }
+</script>
