@@ -422,3 +422,15 @@ class PatientFullReportView(LoginRequiredMixin, View):
             context['bills'] = BillingInvoice.objects.filter(patient=patient).order_by('-bill_date')
             
         return render(request, 'ext/patients/patient_full_report_print.html', context)
+
+
+class PatientCardPrintView(LoginRequiredMixin, View):
+    def get(self, request, patient_id):
+        patient = get_object_or_404(Patient, pk=patient_id)
+        context = {
+            'patient': patient,
+            'clinic': ClinicInformation.objects.first(),
+            'today': timezone.now()
+        }
+        return render(request, 'ext/patients/patient_card_print.html', context)
+

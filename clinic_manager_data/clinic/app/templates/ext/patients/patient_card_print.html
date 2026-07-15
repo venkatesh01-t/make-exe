@@ -1,0 +1,568 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient Card Print - {{ patient.first_name }} {{ patient.last_name }}</title>
+    <script src="{% static 'js/tailwind.js' %}"></script>
+    
+    <style id="print-page-style">
+        @page {
+            size: A4 portrait;
+            margin: 0;
+        }
+    </style>
+    
+    <style>
+        /* CSS reset & box-sizing */
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+        
+        html, body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        /* Screen View Setup (Hide main scrollbars) */
+        body {
+            background-color: #0f172a; /* Slate 900 for dark premium preview background */
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden; /* Prevent screen scrollbars */
+        }
+        
+        .print-sheet {
+            box-sizing: content-box !important; /* Ensure border is drawn on the outside of 210x297mm */
+            background-color: #ffffff;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            border: 2px solid #334155;
+            position: relative;
+            transform-origin: center center;
+            flex-shrink: 0;
+        }
+
+        /* Orientation specific layouts - using fractional units to prevent subpixel overflows */
+        .sheet-portrait {
+            width: 210mm;
+            height: 297mm;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: repeat(4, 1fr);
+        }
+
+        .sheet-landscape {
+            width: 297mm;
+            height: 210mm;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #1e293b;
+        }
+
+        .sheet-landscape .rotated-grid {
+            width: 210mm;
+            height: 297mm;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: repeat(4, 1fr);
+            transform: rotate(-90deg);
+            transform-origin: center;
+            background-color: #ffffff;
+        }
+
+        /* Label slots */
+        .label-slot {
+            width: 105mm;
+            height: 74.25mm;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            background-color: transparent;
+        }
+
+        /* Safe printable shifts to clear printer feed rollers & margins */
+        #slot-1, #slot-2 {
+            align-items: flex-end;
+            padding-bottom: 0.8mm; /* Shift Row 1 down slightly to clear top printer margin */
+        }
+        
+        #slot-7, #slot-8 {
+            align-items: flex-start;
+            padding-top: 0.8mm; /* Shift Row 4 up slightly to clear bottom printer margin */
+        }
+
+        /* Dotted borders for visual guide only on screen */
+        .show-guides .label-slot {
+            border: 1px dotted #e2e8f0;
+        }
+        
+        .show-guides .label-slot.has-card {
+            border: none;
+        }
+
+        /* Print media overrides */
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            html, body {
+                background-color: #ffffff !important;
+                min-height: auto !important;
+                height: 100% !important;
+                overflow: hidden !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            .print-sheet {
+                margin: 0 !important;
+                border: none !important;
+                box-shadow: none !important;
+                transform: none !important;
+                page-break-inside: avoid !important;
+                page-break-before: avoid !important;
+                page-break-after: avoid !important;
+            }
+            .sheet-portrait {
+                width: 210mm !important;
+                height: 297mm !important;
+            }
+            .sheet-landscape {
+                width: 297mm !important;
+                height: 210mm !important;
+                background-color: transparent !important;
+            }
+            /* Hide visual dotted guides during print */
+            .show-guides .label-slot {
+                border: none !important;
+            }
+            /* High-clarity SVG strokes for print */
+            .print-sheet svg {
+                stroke: #115e59 !important; /* Force a dark teal-800 color for crisp print contrast */
+                stroke-width: 2.75 !important; /* Thicken SVG paths to prevent fading/dropping on print */
+            }
+        }
+    </style>
+</head>
+<body class="flex flex-col">
+
+    <!-- CONTROL PANEL (NO-PRINT) -->
+    <div class="no-print w-full bg-slate-900 border-b border-slate-800 text-slate-100 p-4 shadow-xl z-20 sticky top-0 flex-shrink-0">
+        <div class="max-w-6xl mx-auto flex flex-col lg:flex-row items-center justify-between gap-4">
+            
+            <!-- Logo & Title -->
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-teal-500 flex items-center justify-center text-white shadow-md shadow-teal-500/20">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.333 0 4 1 4 3v1H5v-1c0-2 2.667-3 4-3z" />
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-base font-extrabold tracking-tight text-white flex items-center gap-2">
+                        Patient Card Print <span class="text-xs bg-teal-500/20 text-teal-300 font-semibold px-2 py-0.5 rounded-full">Double 8-Label Sheet</span>
+                    </h1>
+                    <p class="text-xs text-slate-400">Prints <strong>Patient Details Card</strong> on the left and <strong>Clinic Information Card</strong> on the right.</p>
+                </div>
+            </div>
+
+            <!-- Configuration & Actions -->
+            <div class="flex flex-wrap items-center gap-6">
+                
+                <!-- Layout Controls -->
+                <div class="flex items-center gap-3">
+                    <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Sheet Layout:</span>
+                    <div class="inline-flex rounded-lg border border-slate-700 p-0.5 bg-slate-950">
+                        <button onclick="setOrientation('portrait')" id="btn-portrait" class="px-3 py-1 text-xs font-bold rounded-md transition-all bg-teal-500 text-white">
+                            Portrait (2x4)
+                        </button>
+                        <button onclick="setOrientation('landscape')" id="btn-landscape" class="px-3 py-1 text-xs font-bold rounded-md transition-all text-slate-400 hover:text-slate-200">
+                            Landscape (Rotated)
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Interactive Row Selector Grid -->
+                <div class="flex items-center gap-3 border-l border-slate-800 pl-6">
+                    <div class="flex flex-col leading-none">
+                        <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Select Row</span>
+                        <span class="text-[8px] text-slate-500 mt-1">Click a row to shift cards</span>
+                    </div>
+                    <div class="grid grid-cols-2 grid-rows-4 gap-0.5 w-12 h-[72px] border border-slate-700 p-0.5 rounded bg-slate-950 shadow-inner">
+                        <button onclick="selectRow(1)" id="control-box-1" class="text-[8px] font-black rounded transition-all bg-white text-gray-700 flex items-center justify-center">1</button>
+                        <button onclick="selectRow(1)" id="control-box-2" class="text-[8px] font-black rounded transition-all bg-white text-gray-700 flex items-center justify-center">2</button>
+                        <button onclick="selectRow(2)" id="control-box-3" class="text-[8px] font-black rounded transition-all bg-white text-gray-700 flex items-center justify-center">3</button>
+                        <button onclick="selectRow(2)" id="control-box-4" class="text-[8px] font-black rounded transition-all bg-white text-gray-700 flex items-center justify-center">4</button>
+                        <button onclick="selectRow(3)" id="control-box-5" class="text-[8px] font-black rounded transition-all bg-white text-gray-700 flex items-center justify-center">5</button>
+                        <button onclick="selectRow(3)" id="control-box-6" class="text-[8px] font-black rounded transition-all bg-white text-gray-700 flex items-center justify-center">6</button>
+                        <button onclick="selectRow(4)" id="control-box-7" class="text-[8px] font-black rounded transition-all bg-teal-500 text-white flex items-center justify-center">7</button>
+                        <button onclick="selectRow(4)" id="control-box-8" class="text-[8px] font-black rounded transition-all bg-teal-500 text-white flex items-center justify-center">8</button>
+                    </div>
+                </div>
+
+                <!-- Print & Close Action Buttons -->
+                <div class="flex items-center gap-2 border-l border-slate-800 pl-6">
+                    <button onclick="window.print()" class="px-4 py-2 bg-teal-500 hover:bg-teal-600 text-white font-extrabold text-xs rounded-lg shadow-lg hover:shadow-teal-500/20 transition flex items-center gap-1.5 uppercase tracking-wider">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                        </svg>
+                        Print Card
+                    </button>
+                    <button onclick="window.close()" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs rounded-lg border border-slate-700 transition uppercase tracking-wider">
+                        Close
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN PRINT SHEET CONTAINER -->
+    <div class="flex-grow flex items-center justify-center p-4 overflow-hidden relative">
+        <!-- Default A4 portrait. Grid 2x4. Dotted guides are shown only on screen. -->
+        <div id="printSheet" class="print-sheet sheet-portrait show-guides">
+            <div class="label-slot" id="slot-1"></div>
+            <div class="label-slot" id="slot-2"></div>
+            <div class="label-slot" id="slot-3"></div>
+            <div class="label-slot" id="slot-4"></div>
+            <div class="label-slot" id="slot-5"></div>
+            <div class="label-slot" id="slot-6"></div>
+            <div class="label-slot" id="slot-7"></div>
+            <div class="label-slot" id="slot-8"></div>
+        </div>
+    </div>
+
+    <!-- 1. TEMPLATE FOR PATIENT DETAILS CARD (Slot 7 / Left Side) -->
+    <template id="patient-card-template">
+        <!-- Inset label size: 100mm x 69.25mm (centered inside 105mm x 74.25mm slot with clearance for printer margins) -->
+        <div class="w-[100mm] h-[69.25mm] border-[2px] border-teal-600 rounded-xl bg-gradient-to-br from-teal-50/60 via-white to-teal-50/30 p-3.5 box-border flex flex-col justify-between relative overflow-hidden select-none shadow-sm shadow-teal-100/30">
+            
+            <!-- Faded Clinic Logo Watermark in Center of Patient Card (Increased Visibility) -->
+            {% if clinic and clinic.logo %}
+                <img src="{{ clinic.logo.url }}" class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[50%] opacity-[0.60] pointer-events-none z-0 object-contain" alt="">
+            {% endif %}
+            
+            <!-- Secondary Decorative Border -->
+            <div class="absolute inset-1 border border-teal-150 rounded-lg pointer-events-none z-0"></div>
+            
+            <!-- Top Branding Accent Strip -->
+            <div class="h-1.5 bg-gradient-to-r from-teal-600 via-teal-400 to-teal-600 w-full rounded-t absolute top-0 left-0"></div>
+            
+            <!-- Content -->
+            <div class="flex flex-col justify-between h-full z-10 pt-0.5 font-sans text-slate-800">
+                <div>
+                    <!-- Header with Initials Circle and Large Patient Name -->
+                    <div class="flex items-center justify-between border-b border-teal-200 pb-1.5 mb-2.5">
+                        <div class="flex items-center gap-1.5">
+                            <div class="w-8 h-8 rounded-full bg-teal-600 text-white font-extrabold text-[11px] flex items-center justify-center shadow shadow-teal-600/20 flex-shrink-0 uppercase">
+                                {{ patient.first_name|slice:":1" }}{{ patient.last_name|slice:":1" }}
+                            </div>
+                            <div class="leading-none">
+                                <h3 class="font-black text-teal-900 text-[13px] tracking-tight uppercase truncate max-w-[150px]" title="{{ patient.first_name }} {{ patient.last_name }}">
+                                    {{ patient.first_name }} {{ patient.last_name }}
+                                </h3>
+                                <span class="text-[7.5px] text-teal-700 font-extrabold uppercase tracking-wider">Patient ID Card</span>
+                            </div>
+                        </div>
+                        <div>
+                            <span class="text-[8px] bg-teal-600 text-white font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider">RECORD</span>
+                        </div>
+                    </div>
+
+                    <!-- Info Grid: 2 Columns for spacious clean look -->
+                    <div class="grid grid-cols-2 gap-x-3 gap-y-1.5 text-[10px] leading-snug">
+                        <div class="flex flex-col">
+                            <span class="text-teal-700 font-extrabold text-[7.5px] uppercase tracking-wider">Patient ID</span>
+                            <strong class="text-teal-950 font-black text-[12px] mt-0.5">#{{ patient.id }}</strong>
+                        </div>
+                        <div class="flex flex-col">
+                            <span class="text-teal-700 font-extrabold text-[7.5px] uppercase tracking-wider">Mobile Number</span>
+                            <strong class="text-slate-900 font-black text-[11px] mt-0.5">{{ patient.phone }}</strong>
+                        </div>
+                        <div class="flex flex-col mt-0.5">
+                            <span class="text-teal-700 font-extrabold text-[7.5px] uppercase tracking-wider">Date of Birth</span>
+                            <strong class="text-slate-900 font-black text-[10px] mt-0.5">{{ patient.date_of_birth|date:"F d, Y" }}</strong>
+                        </div>
+                        <div class="flex flex-col mt-0.5">
+                            <span class="text-teal-700 font-extrabold text-[7.5px] uppercase tracking-wider">Gender / Sex</span>
+                            <strong class="text-slate-900 font-black text-[10px] mt-0.5 uppercase tracking-wide">{{ patient.gender }}</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bottom metadata -->
+                <div class="text-[8.5px] text-slate-500 border-t border-slate-150 pt-1.5 flex items-center justify-between font-bold leading-none">
+                    <span class="flex items-center gap-0.5">
+                        <svg class="w-2.5 h-2.5 text-teal-800" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        Created: <strong class="text-slate-900 font-black ml-0.5">{{ patient.created_at|date:"M d, Y" }}</strong>
+                    </span>
+                    <span class="text-teal-600 font-extrabold uppercase tracking-widest text-[7.5px]">Secure</span>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <!-- 2. TEMPLATE FOR CLINIC INFORMATION CARD (Slot 8 / Right Side) -->
+    <template id="clinic-card-template">
+        <!-- Inset label size: 100mm x 69.25mm (centered inside 105mm x 74.25mm slot with clearance for printer margins) -->
+        <div class="w-[100mm] h-[69.25mm] border-[2px] border-teal-600 rounded-xl bg-gradient-to-br from-teal-50/60 via-white to-teal-50/30 p-3.5 box-border flex flex-col justify-between relative overflow-hidden select-none shadow-sm shadow-teal-100/30">
+            
+            <!-- Faded Clinic Logo Watermark in Center of Clinic Card (Increased Visibility) -->
+            {% if clinic and clinic.logo %}
+                <img src="{{ clinic.logo.url }}" class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[50%] opacity-[0.60] pointer-events-none z-0 object-contain" alt="">
+            {% endif %}
+            
+            <!-- Secondary Decorative Border -->
+            <div class="absolute inset-1 border border-teal-150 rounded-lg pointer-events-none z-0"></div>
+            
+            <!-- Top Branding Accent Strip -->
+            <div class="h-1.5 bg-gradient-to-r from-teal-600 via-teal-400 to-teal-600 w-full rounded-t absolute top-0 left-0"></div>
+            
+            <!-- Content -->
+            <div class="flex flex-col justify-between h-full z-10 pt-0.5 font-sans text-slate-800">
+                <div>
+                    <!-- Header with Clinic Logo and Name -->
+                    <div class="flex items-center justify-between border-b border-teal-200 pb-1.5 mb-2.5">
+                        <div class="flex items-center gap-1.5">
+                            {% if clinic and clinic.logo %}
+                                <img src="{{ clinic.logo.url }}" class="w-8 h-8 object-contain flex-shrink-0" alt="Logo">
+                            {% else %}
+                                <div class="w-8 h-8 rounded bg-gradient-to-br from-teal-500 to-teal-700 text-white flex items-center justify-center font-extrabold text-[12px] flex-shrink-0 shadow shadow-teal-500/20">
+                                    +
+                                </div>
+                            {% endif %}
+                            <div class="leading-none">
+                                <h3 class="font-black text-teal-950 text-[12px] uppercase tracking-wider truncate max-w-[130px]" title="{% if clinic %}{{ clinic.clinic_name }}{% else %}Clinic Pro{% endif %}">
+                                    {% if clinic %}{{ clinic.clinic_name }}{% else %}Clinic Pro{% endif %}
+                                </h3>
+                                <span class="text-[7.5px] text-teal-700 font-extrabold uppercase tracking-widest block mt-0.5">Medical Center</span>
+                            </div>
+                        </div>
+                        {% if clinic.doctor_name %}
+                            <div class="text-right leading-none">
+                                <span class="text-[8.5px] text-slate-700 font-extrabold block">{{ clinic.doctor_name }}</span>
+                                {% if clinic.doctor_specialist %}
+                                    <span class="text-[7px] text-slate-400 font-extrabold uppercase block mt-0.5">{{ clinic.doctor_specialist }}</span>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Info Details list -->
+                    <div class="space-y-2 text-[10px] leading-snug">
+                        <!-- Phone -->
+                        <div class="flex items-start gap-1.5">
+                            <svg class="w-3.5 h-3.5 text-teal-800 mt-[1px] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.94.725l.548 2.2a1 1 0 01-.321.988l-1.305.98a10.582 10.582 0 004.872 4.872l.98-1.305a1 1 0 01.988-.321l2.2.548a1 1 0 01.725.94V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                            </svg>
+                            <div class="flex flex-col">
+                                <span class="text-teal-700 font-extrabold text-[7.5px] uppercase tracking-wider leading-none mb-0.5">Phone Contact</span>
+                                <span class="font-black text-slate-900 text-[11px]">{% if clinic %}{{ clinic.phone }}{% else %}N/A{% endif %}</span>
+                            </div>
+                        </div>
+
+                        <!-- Address -->
+                        <div class="flex items-start gap-1.5">
+                            <svg class="w-3.5 h-3.5 text-teal-800 mt-[1px] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                            <div class="flex flex-col">
+                                <span class="text-teal-700 font-extrabold text-[7.5px] uppercase tracking-wider leading-none mb-0.5">Address</span>
+                                <span class="font-black text-slate-900 leading-tight text-[9.5px] line-clamp-2" title="{% if clinic %}{{ clinic.address }}{% else %}N/A{% endif %}">
+                                    {% if clinic %}{{ clinic.address }}{% else %}N/A{% endif %}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bottom Timing -->
+                <div class="border-t border-slate-150 pt-1.5 flex items-center justify-between font-bold">
+                    <div class="flex items-center gap-0.5 text-[8.5px] text-slate-500 font-bold leading-none">
+                        <svg class="w-2.5 h-2.5 text-teal-800 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span>Hours: <strong class="text-slate-900 font-black ml-0.5">
+                            {% if clinic.open_time and clinic.close_time %}
+                                {{ clinic.open_time|time:"h:i A" }} - {{ clinic.close_time|time:"h:i A" }}
+                            {% else %}
+                                9:00 AM - 9:00 PM
+                            {% endif %}
+                        </strong></span>
+                    </div>
+                    {% if clinic.email %}
+                        <span class="text-[8.5px] text-teal-700 font-extrabold tracking-tight">{{ clinic.email }}</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <!-- SCRIPT FOR DYNAMIC INTERACTIVE BEHAVIORS -->
+    <script>
+        // State variables
+        let currentOrientation = 'portrait';
+        let currentRow = 4; // Default is Row 4 (Slots 7 & 8)
+
+        // Set orientation on click
+        function setOrientation(orientation) {
+            currentOrientation = orientation;
+            const sheet = document.getElementById('printSheet');
+            const btnPortrait = document.getElementById('btn-portrait');
+            const btnLandscape = document.getElementById('btn-landscape');
+
+            if (orientation === 'portrait') {
+                sheet.className = 'print-sheet sheet-portrait show-guides';
+                document.getElementById('print-page-style').textContent = '@page { size: A4 portrait; margin: 0; }';
+                
+                btnPortrait.className = 'px-3 py-1 text-xs font-bold rounded-md transition-all bg-teal-500 text-white';
+                btnLandscape.className = 'px-3 py-1 text-xs font-bold rounded-md transition-all text-slate-400 hover:text-slate-200';
+                
+                rebuildGridStructure(false);
+            } else {
+                sheet.className = 'print-sheet sheet-landscape show-guides';
+                document.getElementById('print-page-style').textContent = '@page { size: A4 landscape; margin: 0; }';
+                
+                btnLandscape.className = 'px-3 py-1 text-xs font-bold rounded-md transition-all bg-teal-500 text-white';
+                btnPortrait.className = 'px-3 py-1 text-xs font-bold rounded-md transition-all text-slate-400 hover:text-slate-200';
+                
+                rebuildGridStructure(true);
+            }
+
+            selectRow(currentRow);
+            adjustPreviewScale();
+        }
+
+        // Rebuild DOM nodes inside sheet container depending on orientation
+        function rebuildGridStructure(isLandscape) {
+            const sheet = document.getElementById('printSheet');
+            
+            if (isLandscape) {
+                sheet.innerHTML = `
+                    <div class="rotated-grid">
+                        <div class="label-slot" id="slot-1"></div>
+                        <div class="label-slot" id="slot-2"></div>
+                        <div class="label-slot" id="slot-3"></div>
+                        <div class="label-slot" id="slot-4"></div>
+                        <div class="label-slot" id="slot-5"></div>
+                        <div class="label-slot" id="slot-6"></div>
+                        <div class="label-slot" id="slot-7"></div>
+                        <div class="label-slot" id="slot-8"></div>
+                    </div>
+                `;
+            } else {
+                sheet.innerHTML = `
+                    <div class="label-slot" id="slot-1"></div>
+                    <div class="label-slot" id="slot-2"></div>
+                    <div class="label-slot" id="slot-3"></div>
+                    <div class="label-slot" id="slot-4"></div>
+                    <div class="label-slot" id="slot-5"></div>
+                    <div class="label-slot" id="slot-6"></div>
+                    <div class="label-slot" id="slot-7"></div>
+                    <div class="label-slot" id="slot-8"></div>
+                `;
+            }
+        }
+
+        // Position Patient Details in the left slot of the row, and Clinic Info in the right slot
+        // To select row 4: left is 7, right is 8.
+        function selectRow(rowNumber) {
+            currentRow = rowNumber;
+            const leftSlotNum = 2 * rowNumber - 1;
+            const rightSlotNum = 2 * rowNumber;
+
+            // Clear all label slots on sheet
+            for (let i = 1; i <= 8; i++) {
+                const slotEl = document.getElementById('slot-' + i);
+                if (slotEl) {
+                    slotEl.innerHTML = '';
+                    slotEl.classList.remove('has-card');
+                }
+            }
+
+            // Copy Patient Details Card to left slot
+            const leftSlotEl = document.getElementById('slot-' + leftSlotNum);
+            const patientTemplate = document.getElementById('patient-card-template');
+            if (leftSlotEl && patientTemplate) {
+                leftSlotEl.innerHTML = patientTemplate.innerHTML;
+                leftSlotEl.classList.add('has-card');
+            }
+
+            // Copy Clinic Details Card to right slot
+            const rightSlotEl = document.getElementById('slot-' + rightSlotNum);
+            const clinicTemplate = document.getElementById('clinic-card-template');
+            if (rightSlotEl && clinicTemplate) {
+                rightSlotEl.innerHTML = clinicTemplate.innerHTML;
+                rightSlotEl.classList.add('has-card');
+            }
+
+            // Update interactive selector highlighting
+            for (let i = 1; i <= 8; i++) {
+                const controlBox = document.getElementById('control-box-' + i);
+                if (controlBox) {
+                    if (i === leftSlotNum || i === rightSlotNum) {
+                        controlBox.className = 'text-[8px] font-black rounded transition-all bg-teal-500 text-white flex items-center justify-center';
+                    } else {
+                        controlBox.className = 'text-[8px] font-black rounded transition-all bg-white text-gray-700 hover:bg-teal-50 flex items-center justify-center border border-slate-800';
+                    }
+                }
+            }
+        }
+
+        // DPI-aware responsive scaling of the page preview to fit screen without scrollbars
+        function adjustPreviewScale() {
+            const sheet = document.getElementById('printSheet');
+            if (!sheet) return;
+            
+            // If in print mode, clear transform styles
+            if (window.matchMedia('print').matches) {
+                sheet.style.transform = 'none';
+                sheet.style.margin = '0';
+                return;
+            }
+
+            const isLandscape = currentOrientation === 'landscape';
+            const sheetWidth = 210; // in mm
+            const sheetHeight = 297; // in mm
+            
+            // Dimensions in mm
+            const wMm = isLandscape ? sheetHeight : sheetWidth;
+            const hMm = isLandscape ? sheetWidth : sheetHeight;
+
+            // Convert mm to pixels at 96 DPI
+            const mmToPx = 96 / 25.4;
+            const wPx = wMm * mmToPx;
+            const hPx = hMm * mmToPx;
+
+            const header = document.querySelector('.no-print');
+            const headerHeight = header ? header.offsetHeight : 0;
+            
+            // Available space with dynamic spacing
+            const availWidth = window.innerWidth - 60;
+            const availHeight = window.innerHeight - headerHeight - 60;
+
+            const scaleX = availWidth / wPx;
+            const scaleY = availHeight / hPx;
+            const scale = Math.min(scaleX, scaleY, 1); // Max scale is 1.0 (100% size)
+
+            sheet.style.transform = `scale(${scale})`;
+            sheet.style.margin = '0 auto';
+        }
+
+        // Initialize and bind window resize events
+        window.addEventListener('resize', adjustPreviewScale);
+        window.addEventListener('DOMContentLoaded', () => {
+            selectRow(currentRow);
+            adjustPreviewScale();
+        });
+    </script>
+</body>
+</html>

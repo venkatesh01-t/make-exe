@@ -136,6 +136,7 @@ urlpatterns = [
     path('api/patient/<int:patient_id>/labwork/', PatientLabWorkAPIView.as_view(), name='api_patient_labwork'),
     path('api/patient/<int:patient_id>/billing/', PatientBillingAPIView.as_view(), name='api_patient_billing'),
     path('patient/<int:patient_id>/full-report/', PatientFullReportView.as_view(), name='patient_full_report'),
+    path('patient/<int:patient_id>/card/', PatientCardPrintView.as_view(), name='patient_card_print'),
     path('api/daily-patient/<int:daily_patient_id>/prescription/', DailyPatientPrescriptionAPIView.as_view(), name='api_daily_patient_prescription'),
     path('api/labwork/<int:labwork_id>/', LabWorkDetailAPIView.as_view(), name='api_labwork_detail'),
     path('api/patient/<int:patient_id>/uploads/', PatientFilesAPIView.as_view(), name='api_patient_uploads'),
