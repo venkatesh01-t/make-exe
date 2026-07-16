@@ -2282,9 +2282,14 @@
           if (!dropzone || !input) return;
 
           dropzone.addEventListener('click', function(event) {
+            if (event.target === input) return;
             const tagName = (event.target.tagName || '').toLowerCase();
             if (tagName === 'button') return;
             input.click();
+          });
+
+          input.addEventListener('click', function(event) {
+            event.stopPropagation();
           });
 
           dropzone.addEventListener('dragover', function(event) {

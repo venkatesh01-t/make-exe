@@ -6,7 +6,7 @@
 
 <style>
     :root {
-        --rx-watermark-opacity: 0.20;
+        --rx-watermark-opacity: 0.35;
         --rx-watermark-blur: 0.4px;
     }
 
@@ -100,71 +100,23 @@
         /* Reset and hide dashboard clutter to prevent blank page bug */
         html,
         body {
+            width: 210mm !important;
             height: 297mm !important;
             margin: 0 !important;
             padding: 0 !important;
             background: #fff !important;
             overflow: hidden !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
         }
 
-        /* Use visibility toggle combined with strict isolation */
-        body {
-            visibility: hidden !important;
-        }
-
-        /* Force modal and content to be visible */
-        #Prescription_Generator,
-        #Prescription_Generator *,
-        #prescription-content,
-        #prescription-content * {
-            visibility: visible !important;
-        }
-
-        /* Isolate modal as root element for print */
-        #Prescription_Generator {
-            position: absolute !important;
-            top: 0 !important;
-            left: 0 !important;
-            width: 210mm !important;
-            height: 297mm !important;
-            display: block !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            z-index: 99999 !important;
-        }
-
-        .modal-backdrop,
-        .no-print {
+        /* Hide all main page content and modals to prevent multiple pages/overlays */
+        body > * {
             display: none !important;
         }
 
-        .modal-content {
-            position: absolute !important;
-            top: 0 !important;
-            left: 0 !important;
-            width: 210mm !important;
-            height: 297mm !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            transform: none !important;
-            background: #fff !important;
-            border: none !important;
-            opacity: 1 !important;
-            box-shadow: none !important;
-            overflow: visible !important;
-            border-radius: 0 !important;
-        }
-
-        .preview-scroll {
-            overflow: visible !important;
-            padding: 0 !important;
-            margin: 0 !important;
-            width: 210mm !important;
-            height: 297mm !important;
-        }
-
-        /* The actual A4 page */
-        .a4-container {
+        /* Make only the cloned print root visible and correctly positioned */
+        body > #rx-print-root {
             display: block !important;
             position: absolute !important;
             top: 0 !important;
@@ -172,8 +124,26 @@
             width: 210mm !important;
             height: 297mm !important;
             margin: 0 !important;
-            padding: 6mm !important;
-            /* Internal paper safety margin */
+            padding: 0 !important;
+            overflow: hidden !important;
+            background: #fff !important;
+            z-index: 999999 !important;
+        }
+
+        #rx-print-root * {
+            visibility: visible !important;
+        }
+
+        /* The actual A4 page */
+        #rx-print-root .a4-container {
+            display: block !important;
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 210mm !important;
+            height: 297mm !important;
+            margin: 0 !important;
+            padding: 6mm !important; /* Internal paper safety margin */
             border: none !important;
             box-shadow: none !important;
             transform: none !important;
@@ -181,11 +151,10 @@
             box-sizing: border-box !important;
         }
 
-        .page-border {
+        #rx-print-root .page-border {
             border: 2px solid #000 !important;
             height: 100% !important;
             padding: 4mm 7mm 7mm !important;
-            /* Perfect fit minus padding */
             margin: 0 !important;
             box-sizing: border-box !important;
         }
@@ -200,6 +169,22 @@
             filter: blur(var(--rx-watermark-blur)) !important;
         }
 
+        /* Position footer absolutely at the bottom inside page-border */
+        #rx-print-root footer {
+            position: absolute !important;
+            bottom: 7mm !important;
+            left: 7mm !important;
+            right: 7mm !important;
+            background: #fff !important;
+            box-sizing: border-box !important;
+            z-index: 10 !important;
+        }
+
+        /* Prevent medicines list from overlapping the absolute footer */
+        #rx-print-root .rx-content-area {
+            max-height: 135mm !important;
+            overflow: hidden !important;
+        }
     }
 
     /* Custom Scrollbar for Modal Body */
@@ -275,7 +260,7 @@
                     </svg>
                 </div>
                 <div>
-                    <h3 class="text-xs font-bold text-white uppercase tracking-widest">Prescription Preview</h3>
+                    <h3 class="text-xs font-bold text-white uppercase tracking-widest">Prescription Preview </h3>
                     <p class="text-[10px] text-slate-400 font-medium tracking-tight">DentalRx Secure Terminal</p>
                 </div>
             </div>
@@ -344,7 +329,7 @@
                         <!-- Clinic Header -->
                         <header class="border-b-2 border-slate-800 pb-4 mb-6">
                             <div class="flex items-start justify-between gap-6">
-                                <div class="flex items-center gap-3 min-w-0">
+                                <div class="flex items-center gap-3 min-w-0 flex-1">
                                     {% if clinic and clinic.logo %}
                                     <div class="flex-shrink-0">
                                         <img src="{{ clinic.logo.url }}" alt="Clinic Logo" class="h-14 w-14 object-cover">
@@ -352,69 +337,91 @@
                                     {% endif %}
                                     <div class="min-w-0">
                                         <h1 id="outClinicName"
-                                            class="text-2xl font-bold font-serif uppercase tracking-widest leading-tight truncate">Clinic
+                                            class="text-2xl font-bold font-serif uppercase tracking-widest leading-tight break-words whitespace-normal">Clinic
                                             {{clinic.clinic_name}}</h1>
-                                        <p id="outClinicAddress"
-                                            class="text-[10px] font-medium text-slate-500 uppercase tracking-widest mt-1"></p>
-                                        <div class="flex flex-wrap gap-x-4 text-[10px] font-bold text-slate-400 uppercase mt-1">
-                                            <span id="outClinicPhone"></span>
-                                            <span id="outClinicTiming"></span>
+                                        <div id="outClinicSpecialist"
+                                            class="text-[10px] font-bold text-slate-700 uppercase tracking-widest mt-0.5">
+                                            {% if clinic.doctor_specialist %}({{ clinic.doctor_specialist }}){% endif %}
+                                        </div>
+                                        <div id="containerClinicAddress" class="flex items-start gap-1 text-[10px] font-medium text-slate-700 uppercase tracking-wider mt-1.5">
+                                            <svg class="w-3 h-3 text-slate-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25s-7.5-4.108-7.5-11.25A7.5 7.5 0 1119.5 10.5z" />
+                                            </svg>
+                                            <span id="outClinicAddress" class="break-words">{% if clinic.address %}{{ clinic.address }}{% endif %}</span>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div class="text-right flex-shrink-0 pt-1">
+                                <div class="text-right flex-shrink-0">
                                     <h2 id="outDoctorName" class="text-lg font-bold font-serif leading-tight">{{ user.doctor.name }}</h2>
-                                    <p class="text-[9px] text-slate-400 uppercase tracking-[0.2em]">
+                                    <p class="text-[10px] text-slate-700 uppercase tracking-[0.2em] mb-1">
                                         {% if user.doctor.education %}{{ user.doctor.education }}{% endif %}
                                         {% if user.doctor.education and user.doctor.specialization %} • {% endif %}
-                                        {% if user.doctor.specialization %}{{ user.doctor.specialization }}{% else %}Dental Surgeon{% endif %}
+                                        {% if user.doctor.specialization %}{{ user.doctor.specialization }}{% else %}{% endif %}
                                     </p>
+                                    <div id="outClinicRegNo" class="text-[10px] font-bold text-slate-700 uppercase tracking-wider mt-0.5">
+                                        {% if clinic.reg_no %}Reg. No: {{ clinic.reg_no }}{% endif %}
+                                    </div>
+                                    <div class="flex flex-col items-end gap-1 text-[10px] font-bold text-slate-700 uppercase mt-1.5">
+                                        <span id="containerClinicPhone" class="flex items-center justify-end gap-1">
+                                            <svg class="w-3 h-3 text-slate-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.387a12.035 12.035 0 01-7.108-7.108c-.155-.44.01-1.01.387-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z" />
+                                            </svg>
+                                            <span id="outClinicPhone"></span>
+                                        </span>
+                                        <span id="containerClinicTiming" class="flex items-center justify-end gap-1">
+                                            <svg class="w-3 h-3 text-slate-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                            <span id="outClinicTiming"></span>
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
                         </header>
 
                         <!-- Patient Info -->
-                        <div class="bg-slate-50 p-4 rounded-sm border border-slate-100 mb-6">
+                        <div class="bg-slate-50/80 p-4 rounded-sm border-2 border-slate-400 mb-6">
                             <div class="grid grid-cols-2 gap-y-2 text-sm">
-                                <div><span class="text-[10px] font-bold text-slate-400 uppercase mr-2">Patient:</span>
-                                    <span id="outPatientName" class="font-bold text-slate-900"></span></div>
+                                <div><span class="text-[10px] font-bold text-slate-600 uppercase mr-2">Patient:</span>
+                                    <span id="outPatientName" class="font-bold text-slate-950"></span></div>
                                 <div class="text-right"><span
-                                        class="text-[10px] font-bold text-slate-400 uppercase mr-2">Date:</span> <span
-                                        id="outVisitDate" class="font-medium text-slate-700"></span></div>
-                                <div><span class="text-[10px] font-bold text-slate-400 uppercase mr-2">Age/Sex:</span>
-                                    <span id="outPatientAgeGender" class="font-medium text-slate-700"></span></div>
+                                        class="text-[10px] font-bold text-slate-600 uppercase mr-2">Date:</span> <span
+                                        id="outVisitDate" class="font-semibold text-slate-900"></span></div>
+                                <div><span class="text-[10px] font-bold text-slate-600 uppercase mr-2">Age/Sex:</span>
+                                    <span id="outPatientAgeGender" class="font-semibold text-slate-900"></span></div>
                                 <div class="text-right"><span
-                                        class="text-[10px] font-bold text-slate-400 uppercase mr-2">RX No:</span> <span
-                                        id="outRxId" class="font-mono text-xs text-slate-900"></span></div>
+                                        class="text-[10px] font-bold text-slate-600 uppercase mr-2">RX No:</span> <span
+                                        id="outRxId" class="font-mono text-xs text-slate-950"></span></div>
                             </div>
                             <div class="mt-3 pt-3 border-t border-slate-200">
                                 <div class="grid grid-cols-1 gap-2 text-xs">
                                     <div>
-                                        <span class="text-[10px] font-bold text-slate-400 uppercase mr-2">Chief Complaint:</span>
-                                        <span id="outChiefComplaint" class="font-medium text-slate-700">-</span>
+                                        <span class="text-[10px] font-bold text-slate-600 uppercase mr-2">Chief Complaint:</span>
+                                        <span id="outChiefComplaint" class="font-semibold text-slate-900">-</span>
                                     </div>
                                     <div>
-                                        <span class="text-[10px] font-bold text-slate-400 uppercase mr-2">Diagnosis:</span>
-                                        <span id="outDiagnosis" class="font-medium text-slate-700">-</span>
+                                        <span class="text-[10px] font-bold text-slate-600 uppercase mr-2">Diagnosis:</span>
+                                        <span id="outDiagnosis" class="font-semibold text-slate-900">-</span>
                                     </div>
-                                    <div>
-                                        <span class="text-[10px] font-bold text-red-500 uppercase mr-2">Allergies:</span>
-                                        <span id="outPatientAllergies" class="font-semibold text-red-600">-</span>
+                                    <div class="flex items-center mt-0.5">
+                                        <span class="text-[10px] font-bold text-slate-600 uppercase mr-2 flex-shrink-0">Allergies:</span>
+                                        <span id="outPatientAllergies" class="px-2.5 py-0.5 text-[11px] font-semibold text-slate-600 bg-slate-50 border border-slate-200 rounded-md inline-block break-words max-w-full">-</span>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
                         <!-- Medical Content -->
-                        <div class="flex-grow overflow-hidden">
+                        <div class="rx-content-area flex-grow overflow-hidden">
                             <div class="mb-4"><span
                                     class="text-5xl font-serif italic font-bold text-slate-800 leading-none">Rx</span>
                             </div>
                             <table class="w-full text-left border-collapse table-fixed">
                                 <thead>
                                     <tr
-                                        class="border-b-2 border-slate-800 text-[10px] font-bold text-slate-400 uppercase">
+                                        class="border-b-2 border-slate-800 text-[10px] font-bold text-slate-600 uppercase">
                                         <th class="py-2 w-8">#</th>
                                         <th class="py-2">Medicine & Dosage</th>
                                         <th class="py-2 text-center w-16">Frequency</th>
@@ -430,26 +437,28 @@
                         <footer class="mt-auto pt-6 border-t-2 border-slate-800">
                             <div class="grid grid-cols-2 gap-8 mb-4">
                                 <div>
-                                    <h4 class="text-[10px] font-bold text-slate-400 uppercase mb-2">Advice &
+                                    <h4 class="text-[10px] font-bold text-slate-600 uppercase mb-2">Advice &
                                         Instructions</h4>
                                     <ul id="outAdvice"
-                                        class="text-xs text-slate-700 space-y-1 list-disc pl-4 leading-relaxed"></ul>
+                                        class="text-xs text-slate-800 space-y-1 list-disc pl-4 leading-relaxed"></ul>
                                 </div>
-                                <div class="flex flex-col items-center justify-end">
-                                    <div class="doctor-signature-slot">
-                                        {% if user.doctor and user.doctor.signature %}
-                                        <img src="{{ user.doctor.signature.url }}" alt="Doctor Signature" class="doctor-signature-image">
-                                        {% else %}
-                                        <span aria-hidden="true"></span>
-                                        {% endif %}
+                                <div class="flex flex-col items-end justify-end">
+                                    <div class="flex flex-col items-center">
+                                        <div class="doctor-signature-slot">
+                                            {% if user.doctor and user.doctor.signature %}
+                                            <img src="{{ user.doctor.signature.url }}" alt="Doctor Signature" class="doctor-signature-image">
+                                            {% else %}
+                                            <span aria-hidden="true"></span>
+                                            {% endif %}
+                                        </div>
+                                        <div class="w-40 border-b border-slate-900 mb-1"></div>
+                                        <p class="text-[10px] font-bold uppercase tracking-tighter text-slate-600 text-center">
+                                            Authorized Signature</p>
                                     </div>
-                                    <div class="w-40 border-b border-slate-900 mb-1"></div>
-                                    <p class="text-[10px] font-bold uppercase tracking-tighter text-slate-400">
-                                        Authorized Signature</p>
                                 </div>
                             </div>
                             <div
-                                class="flex justify-between items-center text-[7px] text-slate-300 uppercase tracking-widest border-t border-slate-50 pt-2">
+                                class="flex justify-between items-center text-[9px] text-slate-600 font-bold uppercase tracking-widest border-t border-slate-300 pt-2">
                                 <span>Digital Prescription Document • Page 1 of 1</span>
                                 <span id="footerTimeStamp"></span>
                             </div>
@@ -515,15 +524,15 @@
 
         rows.forEach((m, i) => {
             const tr = document.createElement('tr');
-            tr.className = 'border-b border-slate-50';
+            tr.className = 'border-b border-slate-200';
             tr.innerHTML = `
-                <td class="py-3 text-slate-300 font-mono text-[10px]">${(i + 1).toString().padStart(2, '0')}</td>
+                <td class="py-3 text-slate-700 font-bold font-mono text-xs">${(i + 1).toString().padStart(2, '0')}</td>
                 <td class="py-3 pr-2">
                     <div class="font-bold text-slate-900 text-xs sm:text-sm">${m.name || '-'}</div>
-                    <div class="text-[9px] text-slate-400 uppercase tracking-tighter">${m.dosage || ''}</div>
+                    <div class="text-[10px] text-slate-600 font-medium uppercase tracking-tighter">${m.dosage || ''}</div>
                 </td>
-                <td class="py-3 px-1 text-center text-xs text-slate-600">${m.frequency || m.freq || '-'}</td>
-                <td class="py-3 pl-1 text-right text-xs text-slate-600 font-mono whitespace-normal break-words">${m.duration || '-'}</td>
+                <td class="py-3 px-1 text-center text-xs text-slate-700 font-medium">${m.frequency || m.freq || '-'}</td>
+                <td class="py-3 pl-1 text-right text-xs text-slate-700 font-bold font-mono whitespace-normal break-words">${m.duration || '-'}</td>
             `;
             tbody.appendChild(tr);
         });
@@ -544,10 +553,12 @@
         if (!allergyText) return;
 
         const value = (allergies || '').trim();
-        if (value && value.toLowerCase() !== 'none') {
+        if (value && value.toLowerCase() !== 'none' && value !== '-') {
             allergyText.textContent = value;
+            allergyText.className = "px-2.5 py-0.5 text-[11px] font-semibold text-red-800 bg-red-50 border border-red-200 rounded-md inline-block break-words max-w-full";
         } else {
-            allergyText.textContent = '-';
+            allergyText.textContent = 'None';
+            allergyText.className = "px-2.5 py-0.5 text-[11px] font-semibold text-slate-600 bg-slate-50 border border-slate-200 rounded-md inline-block break-words max-w-full";
         }
     }
 
@@ -570,7 +581,9 @@
             clinicName: source.clinicName || '{{ clinic.clinic_name|default:"Clinic"|escapejs }}',
             clinicAddress: source.clinicAddress || '{{ clinic.address|default:""|escapejs }}',
             clinicPhone: source.clinicPhone || '{{ clinic.phone|default:""|escapejs }}',
-            clinicTiming: source.clinicTiming || '{{ clinic.open_time|default_if_none:""|time:"H:i"|escapejs }}{% if clinic.open_time and clinic.close_time %} - {% endif %}{{ clinic.close_time|default_if_none:""|time:"H:i"|escapejs }}',
+            clinicTiming: source.clinicTiming || "Timing :"+'{{ clinic.open_time|default_if_none:""|time:"g:i A"|escapejs }}{% if clinic.open_time and clinic.close_time %} - {% endif %}{{ clinic.close_time|default_if_none:""|time:"g:i A"|escapejs }}',
+            clinicRegNo: source.clinicRegNo || '{{ clinic.reg_no|default:""|escapejs }}',
+            doctorSpecialist: source.doctorSpecialist || '{{ clinic.doctor_specialist|default:""|escapejs }}',
             doctorName: source.doctorName || 'Dr.{{ user.doctor.name|default:user.get_full_name|default:user.username|escapejs }}',
             patientName: source.patientName || (patientNameInput ? patientNameInput.value : ''),
             patientAgeGender: source.patientAgeGender || (ageGenderInput ? ageGenderInput.value : ''),
@@ -588,11 +601,131 @@
     function applyPrescriptionPreview(source = {}) {
         const data = buildPreviewData(source);
 
+        // --- DYNAMIC MATCHED SCALING FOR CLINIC NAME & DOCTOR NAME ---
         setText('outClinicName', data.clinicName, 'Clinic');
         setText('outDoctorName', data.doctorName, 'Doctor');
-        setText('outClinicAddress', data.clinicAddress, '');
-        setText('outClinicPhone', data.clinicPhone, '');
-        setText('outClinicTiming', data.clinicTiming, '');
+
+        const clinicNameEl = document.getElementById('outClinicName');
+        const doctorNameEl = document.getElementById('outDoctorName');
+
+        const clinicLen = (data.clinicName || '').length;
+        const doctorLen = (data.doctorName || '').length;
+        const maxLen = Math.max(clinicLen, doctorLen);
+
+        let targetFontSize = '20px';
+        let clinicLetterSpacing = '0.08em';
+
+        if (maxLen > 45) {
+            targetFontSize = '15px';
+            clinicLetterSpacing = '0.02em';
+        } else if (maxLen > 30) {
+            targetFontSize = '18px';
+            clinicLetterSpacing = '0.04em';
+        } else if (maxLen > 18) {
+            targetFontSize = '21px';
+            clinicLetterSpacing = '0.06em';
+        } else {
+            targetFontSize = '24px';
+            clinicLetterSpacing = '0.08em';
+        }
+
+        // Apply matching font sizes and line heights
+        if (clinicNameEl) {
+            clinicNameEl.style.fontSize = targetFontSize;
+            clinicNameEl.style.letterSpacing = clinicLetterSpacing;
+            clinicNameEl.style.lineHeight = '1.2';
+        }
+        if (doctorNameEl) {
+            doctorNameEl.style.fontSize = targetFontSize;
+            doctorNameEl.style.letterSpacing = '0.02em';
+            doctorNameEl.style.lineHeight = '1.2';
+        }
+
+        // --- DYNAMIC SCALING FOR SPECIALIST ---
+        const specialistEl = document.getElementById('outClinicSpecialist');
+        if (specialistEl) {
+            const specVal = (data.doctorSpecialist || '').trim();
+            if (specVal) {
+                specialistEl.style.display = 'block';
+                specialistEl.textContent = '(' + specVal + ')';
+                const specLen = specVal.length;
+                if (specLen > 35) {
+                    specialistEl.style.fontSize = '10px';
+                    specialistEl.style.letterSpacing = '0.05em';
+                } else if (specLen > 20) {
+                    specialistEl.style.fontSize = '11px';
+                    specialistEl.style.letterSpacing = '0.08em';
+                } else {
+                    specialistEl.style.fontSize = '12px';
+                    specialistEl.style.letterSpacing = '0.1em';
+                }
+            } else {
+                specialistEl.style.display = 'none';
+            }
+        }
+
+        // --- REG. NO. RENDERING ---
+        const regNoEl = document.getElementById('outClinicRegNo');
+        if (regNoEl) {
+            const regVal = (data.clinicRegNo || '').trim();
+            if (regVal) {
+                regNoEl.style.display = 'block';
+                regNoEl.textContent = 'Reg. No: ' + regVal;
+            } else {
+                regNoEl.style.display = 'none';
+            }
+        }
+
+        // --- DYNAMIC SCALING FOR CLINIC ADDRESS ---
+        const addressContainer = document.getElementById('containerClinicAddress');
+        if (addressContainer) {
+            const addrVal = (data.clinicAddress || '').replace(/\s+/g, ' ').trim();
+            if (addrVal) {
+                addressContainer.style.display = 'flex';
+                setText('outClinicAddress', addrVal);
+                const addrLen = addrVal.length;
+                if (addrLen > 80) {
+                    addressContainer.style.fontSize = '10px';
+                    addressContainer.style.letterSpacing = '0.02em';
+                } else if (addrLen > 45) {
+                    addressContainer.style.fontSize = '11px';
+                    addressContainer.style.letterSpacing = '0.04em';
+                } else {
+                    addressContainer.style.fontSize = '12px';
+                    addressContainer.style.letterSpacing = '0.05em';
+                }
+            } else {
+                addressContainer.style.display = 'none';
+            }
+        } else {
+            setText('outClinicAddress', data.clinicAddress, '');
+        }
+
+        const phoneContainer = document.getElementById('containerClinicPhone');
+        if (phoneContainer) {
+            const phoneVal = (data.clinicPhone || '').trim();
+            if (phoneVal) {
+                phoneContainer.style.display = 'inline-flex';
+                setText('outClinicPhone', phoneVal);
+            } else {
+                phoneContainer.style.display = 'none';
+            }
+        } else {
+            setText('outClinicPhone', data.clinicPhone, '');
+        }
+
+        const timingContainer = document.getElementById('containerClinicTiming');
+        if (timingContainer) {
+            const timingText = (data.clinicTiming || '').replace(/^Timing\s*:\s*/i, '').trim();
+            if (timingText) {
+                timingContainer.style.display = 'inline-flex';
+                setText('outClinicTiming', timingText);
+            } else {
+                timingContainer.style.display = 'none';
+            }
+        } else {
+            setText('outClinicTiming', data.clinicTiming, '');
+        }
         setText('outPatientName', data.patientName);
         setText('outPatientAgeGender', data.patientAgeGender);
         setText('outVisitDate', data.visitDate);
