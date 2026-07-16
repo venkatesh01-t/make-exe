@@ -329,8 +329,8 @@
             <div class="flex flex-col justify-between h-full z-10 pt-0.5 font-sans text-slate-800">
                 <div>
                     <!-- Header with Clinic Logo and Name -->
-                    <div class="flex items-center justify-between border-b border-teal-200 pb-1.5 mb-2.5">
-                        <div class="flex items-center gap-1.5">
+                    <div class="flex items-center justify-between border-b border-teal-200 pb-1.5 mb-2.5 gap-2">
+                        <div class="flex items-center gap-1.5 flex-1 min-w-0">
                             {% if clinic and clinic.logo %}
                                 <img src="{{ clinic.logo.url }}" class="w-8 h-8 object-contain flex-shrink-0" alt="Logo">
                             {% else %}
@@ -338,18 +338,18 @@
                                     +
                                 </div>
                             {% endif %}
-                            <div class="leading-none">
-                                <h3 class="font-black text-teal-950 text-[12px] uppercase tracking-wider truncate max-w-[130px]" title="{% if clinic %}{{ clinic.clinic_name }}{% else %}Clinic Pro{% endif %}">
+                            <div class="leading-tight flex flex-col justify-center min-w-0 flex-1">
+                                <h3 class="font-black text-teal-950 text-[11px] uppercase tracking-wider line-clamp-2 break-words" title="{% if clinic %}{{ clinic.clinic_name }}{% else %}Clinic Pro{% endif %}">
                                     {% if clinic %}{{ clinic.clinic_name }}{% else %}Clinic Pro{% endif %}
                                 </h3>
                                 <span class="text-[7.5px] text-teal-700 font-extrabold uppercase tracking-widest block mt-0.5">Medical Center</span>
                             </div>
                         </div>
                         {% if clinic.doctor_name %}
-                            <div class="text-right leading-none">
-                                <span class="text-[8.5px] text-slate-700 font-extrabold block">Dr.{{ clinic.doctor_name }}</span>
+                            <div class="text-right leading-none flex-shrink-0 ml-2 max-w-[110px]">
+                                <span class="text-[8.5px] text-slate-700 font-extrabold block truncate" title="Dr. {{ clinic.doctor_name }}">Dr.{{ clinic.doctor_name }}</span>
                                 {% if clinic.doctor_specialist %}
-                                    <span class="text-[7px] text-slate-400 font-extrabold uppercase block mt-0.5">{{ clinic.doctor_specialist }}</span>
+                                    <span class="text-[7px] text-slate-400 font-extrabold uppercase block mt-0.5 truncate" title="{{ clinic.doctor_specialist }}">{{ clinic.doctor_specialist }}</span>
                                 {% endif %}
                             </div>
                         {% endif %}
