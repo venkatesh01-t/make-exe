@@ -21,7 +21,7 @@ def build_hx_trigger(message, notif_type='success', duration=3500, closemodel=''
 class MedicationListView(LoginRequiredMixin, View):
     """Fetch all medications and display in modal"""
     def get(self, request):
-        medications = MedicationTemplate.objects.all().values('id', 'category', 'name', 'dosage', 'frequency', 'duration')
+        medications = MedicationTemplate.objects.all().values('id', 'category', 'name', 'dosage', 'frequency', 'duration', 'food')
         categories = MedicationTemplate.objects.values_list('category', flat=True).distinct()
         
         context = {
@@ -41,7 +41,8 @@ class MedicationCreateView(LoginRequiredMixin, View):
                 name=data.get('name'),
                 dosage=data.get('dosage'),
                 frequency=data.get('frequency'),
-                duration=data.get('duration')
+                duration=data.get('duration'),
+                food=data.get('food')
             )
             
             context = {'medication': medication}
@@ -65,6 +66,7 @@ class MedicationUpdateView(LoginRequiredMixin, View):
             medication.dosage = data.get('dosage', medication.dosage)
             medication.frequency = data.get('frequency', medication.frequency)
             medication.duration = data.get('duration', medication.duration)
+            medication.food = data.get('food', medication.food)
             medication.save()
             
             context = {'medication': medication}
@@ -110,7 +112,7 @@ class MedicationByCategoryView(LoginRequiredMixin, View):
         medications_by_category = {}
         
         for category in categories:
-            medications = MedicationTemplate.objects.filter(category=category).values('id', 'name', 'dosage', 'frequency', 'duration')
+            medications = MedicationTemplate.objects.filter(category=category).values('id', 'name', 'dosage', 'frequency', 'duration', 'food')
             medications_by_category[category] = list(medications)
         
         return JsonResponse(medications_by_category)

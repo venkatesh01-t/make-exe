@@ -309,7 +309,7 @@ class DailyPatientPrescriptionAPIView(LoginRequiredMixin, View):
             if not prescription:
                 return JsonResponse({'error': 'Prescription not found'}, status=404)
             
-            medicines = list(prescription.medicines.values('drug_name', 'dosage', 'frequency', 'duration'))
+            medicines = list(prescription.medicines.values('drug_name', 'dosage', 'frequency', 'duration', 'food'))
             treatments = list(prescription.treatments.values('treatment_name'))
             
             return JsonResponse({

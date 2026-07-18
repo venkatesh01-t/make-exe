@@ -245,7 +245,7 @@
 
           <!-- Prescription -->
           <button class="tp-btn tp-rx" title="Prescription"
-            onclick="todayPatientsOpenPrescriptionModalFromPatient('{{ i.id }}', '{{ i.patient.id }}', '{{ i.patient|escapejs }}', '{{ i.patient.age|default_if_none:'' }}', '{{ i.patient.gender|default_if_none:''|escapejs }}')">
+            onclick="todayPatientsOpenPrescriptionModalFromPatient('{{ i.id }}', '{{ i.patient.id }}', '{{ i.patient|escapejs }}', '{{ i.patient.age|default_if_none:'' }}', '{{ i.patient.gender|default_if_none:''|escapejs }}', '{{ i.patient.medical_history|default_if_none:''|escapejs }}')">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M9 12h6m-6 4h6M7 4h8l4 4v12a1 1 0 01-1 1H7a1 1 0 01-1-1V5a1 1 0 011-1z"/>

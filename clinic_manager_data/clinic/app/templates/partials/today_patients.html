@@ -1001,6 +1001,11 @@
           clearPatientUploadQueue();
           fetchPatientUploadList(dailyPatientId);
           openModal1('patientUploadModal');
+          // Auto-focus the dropzone so Ctrl+V paste works immediately on modal open
+          setTimeout(function() {
+            const dz = document.getElementById('patientUploadDropzone');
+            if (dz) dz.focus();
+          }, 120);
         }
 
         function todayPatientsOpenPatientCameraCaptureModal(dailyPatientId, patientId, patientName) {
@@ -2278,9 +2283,20 @@
 
         (function bindPatientUploadDnD() {
           const dropzone = document.getElementById('patientUploadDropzone');
-          const input = document.getElementById('patientUploadInput');
+          const input    = document.getElementById('patientUploadInput');
+          const overlay  = document.getElementById('dropzoneOverlay');
+          const badge    = document.getElementById('pasteReadyBadge');
           if (!dropzone || !input) return;
 
+          // ── Helper: show / hide drag overlay ──
+          function showOverlay() { if (overlay) overlay.classList.remove('hidden'); }
+          function hideOverlay() { if (overlay) overlay.classList.add('hidden'); }
+
+          // ── Helper: show / hide Ctrl+V-ready badge ──
+          function showBadge() { if (badge) badge.classList.remove('hidden'); }
+          function hideBadge() { if (badge) badge.classList.add('hidden'); }
+
+          // ── Dropzone click → open file picker (skip button clicks) ──
           dropzone.addEventListener('click', function(event) {
             if (event.target === input) return;
             const tagName = (event.target.tagName || '').toLowerCase();
@@ -2288,28 +2304,112 @@
             input.click();
           });
 
-          input.addEventListener('click', function(event) {
-            event.stopPropagation();
-          });
+          input.addEventListener('click', function(event) { event.stopPropagation(); });
 
+          // ── Drag & Drop ──
           dropzone.addEventListener('dragover', function(event) {
             event.preventDefault();
             dropzone.classList.add('border-blue-400', 'bg-blue-100/40');
+            showOverlay();
           });
 
-          dropzone.addEventListener('dragleave', function() {
+          dropzone.addEventListener('dragleave', function(event) {
+            if (dropzone.contains(event.relatedTarget)) return;
             dropzone.classList.remove('border-blue-400', 'bg-blue-100/40');
+            hideOverlay();
           });
 
           dropzone.addEventListener('drop', function(event) {
             event.preventDefault();
             dropzone.classList.remove('border-blue-400', 'bg-blue-100/40');
+            hideOverlay();
             queuePatientUploads(event.dataTransfer.files);
           });
 
+          // ── File input change ──
           input.addEventListener('change', function(event) {
             queuePatientUploads(event.target.files);
             event.target.value = '';
+          });
+
+          // ── Focus/blur on dropzone: show Ctrl+V Ready badge ──
+          dropzone.addEventListener('focus', function() {
+            dropzone.style.outline = '3px solid #3b82f6';
+            showBadge();
+          });
+          dropzone.addEventListener('blur', function() {
+            dropzone.style.outline = '';
+            hideBadge();
+          });
+
+          // ── Helper: extract all files from ClipboardData synchronously ──
+          function extractFilesFromClipboard(clipboardData) {
+            if (!clipboardData) return [];
+            const collected = [];
+            const seen = new Set();
+
+            // Primary: clipboardData.files — exposes ALL copied files from OS Explorer
+            if (clipboardData.files && clipboardData.files.length > 0) {
+              for (let i = 0; i < clipboardData.files.length; i++) {
+                const f = clipboardData.files[i];
+                if (f) {
+                  const key = f.name + '_' + f.size;
+                  if (!seen.has(key)) { collected.push(f); seen.add(key); }
+                }
+              }
+            }
+
+            // Secondary: clipboardData.items — catches screenshots & pasted images
+            if (clipboardData.items && clipboardData.items.length > 0) {
+              for (let i = 0; i < clipboardData.items.length; i++) {
+                const item = clipboardData.items[i];
+                if (item.kind === 'file') {
+                  const blob = item.getAsFile();
+                  if (blob) {
+                    let name = blob.name || '';
+                    if (!name || /^image/i.test(name)) {
+                      const ext = (blob.type.split('/')[1] || 'png').replace(/\+.*$/, '');
+                      name = 'pasted-' + Date.now() + '-' + i + '.' + ext;
+                    }
+                    const key = name + '_' + blob.size;
+                    if (!seen.has(key)) {
+                      collected.push(new File([blob], name, { type: blob.type }));
+                      seen.add(key);
+                    }
+                  }
+                }
+              }
+            }
+            return collected;
+          }
+
+          // ── Paste directly on dropzone (when focused via "Click to Enable Paste") ──
+          dropzone.addEventListener('paste', function(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            const cd = event.clipboardData || event.originalEvent.clipboardData;
+            const files = extractFilesFromClipboard(cd);
+            if (files.length > 0) {
+              queuePatientUploads(files);
+              // Flash green success feedback
+              dropzone.classList.add('border-green-400', 'bg-green-50');
+              setTimeout(function() {
+                dropzone.classList.remove('border-green-400', 'bg-green-50');
+              }, 700);
+            }
+          });
+
+          // ── Document-level fallback paste (works anywhere in modal) ──
+          document.addEventListener('paste', function(event) {
+            const modal = document.getElementById('patientUploadModal');
+            if (!modal || modal.classList.contains('hidden')) return;
+            if (event.defaultPrevented) return; // dropzone already handled it
+            const cd = event.clipboardData || event.originalEvent.clipboardData;
+            const files = extractFilesFromClipboard(cd);
+            if (files.length > 0) {
+              event.preventDefault();
+              queuePatientUploads(files);
+            }
           });
         })();
 
@@ -2322,7 +2422,7 @@
         });
 
         // --- MEDICINE MODE STATE VARIABLES ---
-        var isMedicineAppendMode = false; // OFF (default) = Replace mode, ON = Append mode
+        var isMedicineAppendMode = true; // ON (default) = Append mode, OFF = Replace mode
 
         // Load medication templates from database
         function loadMedicationTemplates() {
@@ -2352,13 +2452,13 @@
             // Toggle ON state (Append mode)
             toggle.classList.remove('bg-gray-300', 'hover:bg-gray-400');
             toggle.classList.add('bg-blue-600', 'hover:bg-blue-700');
-            toggleCircle.classList.replace('translate-x-0.5', 'translate-x-4');
+            toggleCircle.classList.replace('translate-x-0.5', 'translate-x-5');
             modeLabel.textContent = 'Append';
           } else {
             // Toggle OFF state (Replace mode)
             toggle.classList.remove('bg-blue-600', 'hover:bg-blue-700');
             toggle.classList.add('bg-gray-300', 'hover:bg-gray-400');
-            toggleCircle.classList.replace('translate-x-4', 'translate-x-0.5');
+            toggleCircle.classList.replace('translate-x-5', 'translate-x-0.5');
             modeLabel.textContent = 'Replace';
           }
         }
@@ -2436,7 +2536,7 @@
           if (emptyTreatmentState) emptyTreatmentState.style.display = 'block';
         }
 
-        function fillPrescriptionForm(data, fallbackName, fallbackAge, fallbackGender, dailyPatientId, patientId) {
+        function fillPrescriptionForm(data, fallbackName, fallbackAge, fallbackGender, dailyPatientId, patientId, patientMedicalNotes) {
           const dailyPatientIdInput = document.getElementById('dailyPatientId');
           const patientIdInput = document.getElementById('patientId');
           const nameInput = document.getElementById('patientName');
@@ -2466,7 +2566,13 @@
           if (allergiesInput) allergiesInput.value = (data && data.allergies) ? data.allergies : '';
           if (chiefComplaintInput) chiefComplaintInput.value = (data && data.chiefComplaint) ? data.chiefComplaint : '';
           if (diagnosisInput) diagnosisInput.value = (data && data.diagnosis) ? data.diagnosis : '';
-          if (adviceInput) adviceInput.value = (data && data.advice) ? data.advice : '';
+          if (adviceInput) {
+            let notes = patientMedicalNotes || '';
+            if (notes.trim().toLowerCase() === 'no notes') {
+              notes = '';
+            }
+            adviceInput.value = (data && data.advice) ? data.advice : notes;
+          }
 
           clearPrescriptionRows();
 
@@ -2558,8 +2664,8 @@
           openModal1('viewPatientModal');
         }
 
-        function todayPatientsOpenPrescriptionModalFromPatient(dailyPatientId, patientId, patientName, patientAge, patientGender) {
-          fillPrescriptionForm(null, patientName, patientAge, patientGender, dailyPatientId, patientId);
+        function todayPatientsOpenPrescriptionModalFromPatient(dailyPatientId, patientId, patientName, patientAge, patientGender, patientMedicalNotes) {
+          fillPrescriptionForm(null, patientName, patientAge, patientGender, dailyPatientId, patientId, patientMedicalNotes);
           
           
           if (!patientId) return;
@@ -2574,7 +2680,7 @@
             })
             .then(data => {
               if (data && data.exists) {
-                fillPrescriptionForm(data, patientName, patientAge, patientGender, (data.dailyPatientId || dailyPatientId), patientId);
+                fillPrescriptionForm(data, patientName, patientAge, patientGender, (data.dailyPatientId || dailyPatientId), patientId, patientMedicalNotes);
                 
               }
             })
@@ -2615,6 +2721,19 @@
           lucide.createIcons();
         }
 
+        function updateRowNumbers() {
+          const list = document.getElementById('medicineList');
+          if (!list) return;
+          const rows = list.querySelectorAll('tr');
+          rows.forEach((row, index) => {
+            const numEl = row.querySelector('.medicine-row-num');
+            if (numEl) {
+              const numStr = (index + 1) < 10 ? '0' + (index + 1) : (index + 1);
+              numEl.textContent = numStr;
+            }
+          });
+        }
+
         // Medicine Row Logic
         function addMedicineRow(data = null) {
           const list = document.getElementById('medicineList');
@@ -2624,21 +2743,31 @@
           const dosageValue = data && data.dosage ? data.dosage : '';
           const frequencyValue = data && (data.freq || data.frequency) ? (data.freq || data.frequency) : '';
           const durationValue = data && data.duration ? data.duration : '';
+          const foodValue = data ? (data.food || '') : 'BF';
           const tr = document.createElement('tr');
           tr.className = "group hover:bg-slate-50 transition border-b border-gray-50";
           tr.id = `row-${rowId}`;
           tr.innerHTML = `
+            <td class="px-2 py-4 text-center text-slate-400 font-bold text-xs medicine-row-num"></td>
             <td class="px-4 sm:px-6 py-4"><input type="text" value="${medicineName}" placeholder="Medicine Name" class="w-full bg-transparent outline-none font-bold text-slate-800 text-sm"></td>
             <td class="px-2 py-4"><input type="text" value="${dosageValue}" placeholder="1 Tab" class="w-full bg-transparent outline-none text-center text-slate-600 text-sm"></td>
             <td class="px-2 py-4"><input type="text" value="${frequencyValue}" placeholder="1-0-1" class="w-full bg-transparent outline-none text-center text-slate-600 text-xs"></td>
             <td class="px-2 py-4"><input type="text" value="${durationValue}" placeholder="5 Days" class="w-full bg-transparent outline-none text-center text-slate-600 text-xs"></td>
-                <td class="px-6 py-4 text-center">
-                    <button type="button" onclick="removeRow('${rowId}')" class="w-8 h-8 rounded-lg bg-red-50 text-red-600 flex items-center justify-center hover:bg-red-100 transition shadow-sm" title="Delete">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                    </button>
-                </td>
+            <td class="px-2 py-4">
+              <select class="w-full bg-transparent outline-none text-center text-slate-600 text-xs font-semibold">
+                <option value="" ${foodValue === '' ? 'selected' : ''}>--</option>
+                <option value="BF" ${foodValue === 'BF' ? 'selected' : ''}>BF</option>
+                <option value="AF" ${foodValue === 'AF' ? 'selected' : ''}>AF</option>
+              </select>
+            </td>
+            <td class="px-6 py-4 text-center">
+                <button type="button" onclick="removeRow('${rowId}')" class="w-8 h-8 rounded-lg bg-red-50 text-red-600 flex items-center justify-center hover:bg-red-100 transition shadow-sm" title="Delete">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                </button>
+            </td>
             `;
           list.appendChild(tr);
+          updateRowNumbers();
         }
 
         function refreshTreatmentRowMeta(row, explicitDetails = null) {
@@ -2761,6 +2890,7 @@
           if (document.getElementById('medicineList').children.length === 0) {
             document.getElementById('emptyState').style.display = 'block';
           }
+          updateRowNumbers();
         }
 
         // Reset Logic
@@ -2797,9 +2927,19 @@
         function preparePrescriptionSubmit() {
           const meds = [];
           document.getElementById('medicineList').querySelectorAll('tr').forEach(tr => {
-            const inputs = tr.querySelectorAll('input');
-            if (inputs[0] && inputs[0].value.trim()) {
-              meds.push(`${inputs[0].value}|${inputs[1].value}|${inputs[2].value}|${inputs[3].value}`);
+            const nameInput = tr.querySelector('td:nth-child(2) input');
+            const dosageInput = tr.querySelector('td:nth-child(3) input');
+            const freqInput = tr.querySelector('td:nth-child(4) input');
+            const durInput = tr.querySelector('td:nth-child(5) input');
+            const foodSelect = tr.querySelector('td:nth-child(6) select');
+            
+            if (nameInput && nameInput.value.trim()) {
+              const name = nameInput.value.trim();
+              const dosage = dosageInput ? dosageInput.value.trim() : '';
+              const freq = freqInput ? freqInput.value.trim() : '';
+              const dur = durInput ? durInput.value.trim() : '';
+              const food = foodSelect ? foodSelect.value : '';
+              meds.push(`${name}|${dosage}|${freq}|${dur}|${food}`);
             }
           });
 

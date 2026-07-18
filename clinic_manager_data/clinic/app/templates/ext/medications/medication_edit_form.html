@@ -1,12 +1,17 @@
 <div class="bg-green-50 rounded-2xl p-5 sm:p-6">
   <h4 class="text-xs font-bold text-green-600 uppercase tracking-widest mb-4">Edit Medication</h4>
-  <form id="editMedicationForm" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3" onsubmit="return saveMedicationEdit({{ medication.id }}, event);">
+  <form id="editMedicationForm" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-6 gap-3" onsubmit="return saveMedicationEdit({{ medication.id }}, event);">
     <input type="text" id="edit_category" value="{{ medication.category }}" placeholder="Category" class="input-styled text-sm" required>
     <input type="text" id="edit_name" value="{{ medication.name }}" placeholder="Drug Name" class="input-styled text-sm" required>
     <input type="text" id="edit_dosage" value="{{ medication.dosage }}" placeholder="Dosage" class="input-styled text-sm" required>
     <input type="text" id="edit_frequency" value="{{ medication.frequency }}" placeholder="Frequency" class="input-styled text-sm" required>
     <input type="text" id="edit_duration" value="{{ medication.duration }}" placeholder="Duration" class="input-styled text-sm" required>
-    <div class="col-span-1 sm:col-span-2 md:col-span-5 flex gap-3">
+    <select id="edit_food" class="input-styled text-sm">
+      <option value="" {% if not medication.food %}selected{% endif %}>BF/AF...</option>
+      <option value="BF" {% if medication.food == 'BF' %}selected{% endif %}>BF (Before Food)</option>
+      <option value="AF" {% if medication.food == 'AF' %}selected{% endif %}>AF (After Food)</option>
+    </select>
+    <div class="col-span-1 sm:col-span-2 md:col-span-6 flex gap-3">
       <button type="submit" class="flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-2.5 rounded-lg font-semibold text-sm transition flex items-center justify-center gap-2">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />

@@ -48,7 +48,7 @@
           <div class="w-6 h-6 bg-purple-600 text-white rounded-full flex items-center justify-center text-xs font-bold">2</div>
           <h4 class="text-sm font-bold text-purple-700 uppercase tracking-widest">Add Drugs to Category</h4>
         </div>
-        <form id="medicationForm" class="grid grid-cols-1 sm:grid-cols-5 gap-3" onsubmit="return addMedication(event);">
+        <form id="medicationForm" class="grid grid-cols-1 sm:grid-cols-6 gap-3" onsubmit="return addMedication(event);">
           {% csrf_token %}
           <select id="med_category_select" class="input-styled text-sm" required>
             <option value="">Select Category...</option>
@@ -58,7 +58,12 @@
           <input type="text" id="med_dosage" placeholder="Dosage" class="input-styled text-sm" required>
           <input type="text" id="med_frequency" placeholder="Frequency" class="input-styled text-sm" required>
           <input type="text" id="med_duration" placeholder="Duration" class="input-styled text-sm" required>
-          <button type="submit" class="col-span-1 sm:col-span-5 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2.5 rounded-lg font-semibold text-sm transition flex items-center justify-center gap-2">
+          <select id="med_food" class="input-styled text-sm">
+            <option value="">BF/AF...</option>
+            <option value="BF" selected>BF (Before Food)</option>
+            <option value="AF">AF (After Food)</option>
+          </select>
+          <button type="submit" class="col-span-1 sm:col-span-6 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2.5 rounded-lg font-semibold text-sm transition flex items-center justify-center gap-2">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
             </svg>
@@ -84,6 +89,7 @@
                   <th class="px-4 sm:px-6 py-4 text-left font-bold text-gray-700">Dosage</th>
                   <th class="px-4 sm:px-6 py-4 text-left font-bold text-gray-700">Frequency</th>
                   <th class="px-4 sm:px-6 py-4 text-left font-bold text-gray-700">Duration</th>
+                  <th class="px-4 sm:px-6 py-4 text-left font-bold text-gray-700">BF/AF</th>
                   <th class="px-4 sm:px-6 py-4 text-center font-bold text-gray-700">Actions</th>
                 </tr>
               </thead>
@@ -210,7 +216,8 @@ function addMedication(event) {
     name: document.getElementById('med_name').value,
     dosage: document.getElementById('med_dosage').value,
     frequency: document.getElementById('med_frequency').value,
-    duration: document.getElementById('med_duration').value
+    duration: document.getElementById('med_duration').value,
+    food: document.getElementById('med_food').value
   };
   
   fetch('{% url "clinic:medication_create" %}', {
@@ -257,7 +264,7 @@ function loadMedicationTableData() {
 // Edit medication - Simple modal approach
 let currentEditMedicationId = null;
 
-function openEditMedicationModal(medId, category, name, dosage, frequency, duration) {
+function openEditMedicationModal(medId, category, name, dosage, frequency, duration, food) {
   console.log('Opening edit modal for ID:', medId);
   currentEditMedicationId = medId;
   openModal('editMedicationModal');
@@ -286,6 +293,7 @@ function openEditMedicationModal(medId, category, name, dosage, frequency, durat
   document.getElementById('editMedDosage').value = dosage;
   document.getElementById('editMedFrequency').value = frequency;
   document.getElementById('editMedDuration').value = duration;
+  document.getElementById('editMedFood').value = food || '';
 }
 
 function closeEditMedicationModal() {
@@ -301,7 +309,8 @@ function saveEditedMedication() {
     name: document.getElementById('editMedName').value,
     dosage: document.getElementById('editMedDosage').value,
     frequency: document.getElementById('editMedFrequency').value,
-    duration: document.getElementById('editMedDuration').value
+    duration: document.getElementById('editMedDuration').value,
+    food: document.getElementById('editMedFood').value
   };
   
   console.log('Saving medication ID:', currentEditMedicationId);
@@ -436,7 +445,7 @@ function deleteMedicationConfirmed(id) {
         <label class="text-xs font-bold text-gray-600 uppercase">Drug Name</label>
         <input type="text" id="editMedName" placeholder="Drug Name" class="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm mt-1" required>
       </div>
-      <div class="grid grid-cols-3 gap-3">
+      <div class="grid grid-cols-4 gap-3">
         <div>
           <label class="text-xs font-bold text-gray-600 uppercase">Dosage</label>
           <input type="text" id="editMedDosage" placeholder="Dosage" class="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm mt-1" required>
@@ -448,6 +457,14 @@ function deleteMedicationConfirmed(id) {
         <div>
           <label class="text-xs font-bold text-gray-600 uppercase">Duration</label>
           <input type="text" id="editMedDuration" placeholder="Duration" class="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm mt-1" required>
+        </div>
+        <div>
+          <label class="text-xs font-bold text-gray-600 uppercase">BF/AF</label>
+          <select id="editMedFood" class="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm mt-1">
+            <option value="">BF/AF...</option>
+            <option value="BF">BF (Before Food)</option>
+            <option value="AF">AF (After Food)</option>
+          </select>
         </div>
       </div>
     </div>

@@ -346,10 +346,10 @@
                             </div>
                         </div>
                         {% if clinic.doctor_name %}
-                            <div class="text-right leading-none flex-shrink-0 ml-2 max-w-[110px]">
+                            <div class="text-right flex flex-col items-end leading-none flex-shrink-0 ml-2 max-w-[110px]">
                                 <span class="text-[8.5px] text-slate-700 font-extrabold block truncate" title="Dr. {{ clinic.doctor_name }}">Dr.{{ clinic.doctor_name }}</span>
                                 {% if clinic.doctor_specialist %}
-                                    <span class="text-[7px] text-slate-400 font-extrabold uppercase block mt-0.5 truncate" title="{{ clinic.doctor_specialist }}">{{ clinic.doctor_specialist }}</span>
+                                    <span class="text-[7px] text-slate-400 font-extrabold uppercase block mt-0.5 leading-tight break-words" title="{{ clinic.doctor_specialist }}">{{ clinic.doctor_specialist }}</span>
                                 {% endif %}
                             </div>
                         {% endif %}
@@ -399,7 +399,12 @@
                         </strong></span>
                     </div>
                     {% if clinic.email %}
-                        <span class="text-[8.5px] text-teal-700 font-extrabold tracking-tight">{{ clinic.email }}</span>
+                        <span class="flex items-center gap-0.5 text-[8.5px] text-teal-700 font-extrabold tracking-tight leading-none">
+                            <svg class="w-2.5 h-2.5 text-teal-800 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                            </svg>
+                            <span>{{ clinic.email }}</span>
+                        </span>
                     {% endif %}
                 </div>
             </div>

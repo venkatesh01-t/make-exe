@@ -314,9 +314,9 @@ class PrescriptionSubmitView(LoginRequiredMixin, View):
                 if not medicine_row.strip():
                     continue
                 parts = medicine_row.split("|")
-                while len(parts) < 4:
+                while len(parts) < 5:
                     parts.append("")
-                name, dosage, frequency, duration = [p.strip() for p in parts[:4]]
+                name, dosage, frequency, duration, food = [p.strip() for p in parts[:5]]
                 if not name:
                     continue
                 PrescriptionMedication.objects.create(
@@ -325,6 +325,7 @@ class PrescriptionSubmitView(LoginRequiredMixin, View):
                     dosage=dosage,
                     frequency=frequency,
                     duration=duration,
+                    food=food,
                 )
 
         treatments_payload = request.POST.get("treatments", "").strip()
@@ -460,6 +461,7 @@ def get_latest_prescription(request, patient_id):
                 "dosage": m.dosage or "",
                 "freq": m.frequency or "",
                 "duration": m.duration or "",
+                "food": m.food or "",
             }
             for m in prescription.medicines.all()
         ],
@@ -518,6 +520,7 @@ def get_daily_patient_prescription(request, daily_patient_id):
                 "dosage": m.dosage or "",
                 "freq": m.frequency or "",
                 "duration": m.duration or "",
+                "food": m.food or "",
             }
             for m in prescription.medicines.all()
         ],

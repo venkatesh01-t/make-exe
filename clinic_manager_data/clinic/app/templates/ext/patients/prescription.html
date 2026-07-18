@@ -67,40 +67,58 @@
                 /* Enforce A4 size */
             }
 
+            html,
             body {
-                margin: 0;
-                background: white;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
+                width: auto !important;
+                height: auto !important;
+                overflow: visible !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                background: white !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
             }
 
-            body * {
-                visibility: hidden;
+            body > :not(#rx-print-root) {
+                display: none !important;
             }
 
-            #preview-section,
-            #preview-section * {
-                visibility: visible;
+            body > #rx-print-root,
+            body > #rx-print-root > * {
+                display: block !important;
+                position: relative !important;
+                width: 210mm !important;
+                height: auto !important;
+                overflow: visible !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                background: white !important;
+                z-index: 999999 !important;
             }
 
-            #preview-section {
-                position: absolute;
-                left: 0;
-                top: 0;
-                width: 210mm;
-                height: 297mm;
-                margin: 0;
-                box-shadow: none;
-                background: white;
-                overflow: hidden;
-                /* Ensure clean cut */
+            #rx-print-root * {
+                visibility: visible !important;
+            }
+
+            #rx-print-root .a4-page {
+                display: block !important;
+                position: relative !important;
+                width: 210mm !important;
+                height: 297mm !important;
+                margin: 0 !important;
+                box-shadow: none !important;
+                background: white !important;
+                page-break-after: always !important;
+                break-after: page !important;
+                box-sizing: border-box !important;
             }
 
             /* Adjust margin for print to ensure border is visible */
-            .page-border {
-                margin: 5mm;
-                height: calc(100% - 10mm);
-                border-width: 2px;
+            #rx-print-root .page-border {
+                margin: 5mm !important;
+                height: calc(100% - 10mm) !important;
+                border-width: 2px !important;
+                border: 2px solid #334155 !important;
             }
 
             .no-print {
@@ -269,10 +287,12 @@
                         <table class="w-full text-sm text-left text-gray-600 min-w-[500px]">
                             <thead class="text-xs text-gray-700 uppercase bg-gray-50 border-b border-gray-200">
                                 <tr>
+                                    <th scope="col" class="px-4 py-3 w-12 font-semibold text-center">No.</th>
                                     <th scope="col" class="px-4 py-3 font-semibold">Medicine Name</th>
                                     <th scope="col" class="px-4 py-3 w-28 font-semibold">Dosage</th>
                                     <th scope="col" class="px-4 py-3 w-36 font-semibold">Frequency</th>
                                     <th scope="col" class="px-4 py-3 w-28 font-semibold">Duration</th>
+                                    <th scope="col" class="px-4 py-3 w-28 font-semibold">BF/AF</th>
                                     <th scope="col" class="px-4 py-3 w-10"></th>
                                 </tr>
                             </thead>
@@ -326,7 +346,7 @@
                     <i data-lucide="arrow-left" class="w-4 h-4"></i> Back to Edit
                 </button>
                 <div class="flex gap-3">
-                    <button onclick="window.print()"
+                    <button onclick="printPrescription()"
                         class="bg-slate-900 hover:bg-black text-white px-6 py-2 rounded-lg shadow-lg flex items-center gap-2 transition transform hover:-translate-y-0.5">
                         <i data-lucide="printer" class="w-4 h-4"></i> Print
                     </button>
@@ -337,173 +357,184 @@
                 </div>
             </div>
 
-            <!-- The A4 Page -->
-            <div id="preview-section" class="a4-page text-slate-800">
+            <!-- The A4 Pages container -->
+            <div id="prescription-pages-container" class="flex flex-col items-center gap-6">
+                <!-- Generated pages will be injected here -->
+            </div>
 
-                <!-- Decorative Border Container -->
-                <div class="page-border">
-                    <div class="page-inner-padding">
+            <!-- Hidden Template Page Container -->
+            <div class="hidden" aria-hidden="true">
+                <div id="prescription-template" class="a4-page text-slate-800">
 
-                        <!-- Watermark Background -->
-                        <div id="watermarkContainer"
-                            class="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
-                            <img id="outWatermark" class="w-2/3 opacity-[0.03] object-contain grayscale hidden"
-                                alt="Watermark">
-                        </div>
+                    <!-- Decorative Border Container -->
+                    <div class="page-border">
+                        <div class="page-inner-padding">
 
-                        <!-- Header: Compacted -->
-                        <header class="border-b-2 border-slate-800 pb-2 mb-4 relative z-10">
-                            <div class="flex items-center justify-between">
-                                <!-- Logo -->
-                                <div class="w-20 h-20 flex-shrink-0 mr-4">
-                                    <img id="outHeaderLogo" class="w-full h-full object-contain hidden" alt="Logo">
+                            <!-- Watermark Background -->
+                            <div id="watermarkContainer"
+                                class="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
+                                <img id="outWatermark" class="outWatermark w-2/3 opacity-[0.03] object-contain grayscale hidden"
+                                    alt="Watermark">
+                            </div>
+
+                            <!-- Header: Compacted -->
+                            <header class="border-b-2 border-slate-800 pb-2 mb-4 relative z-10">
+                                <div class="flex items-center justify-between">
+                                    <!-- Logo -->
+                                    <div class="w-20 h-20 flex-shrink-0 mr-4">
+                                        <img id="outHeaderLogo" class="outHeaderLogo w-full h-full object-contain hidden" alt="Logo">
+                                    </div>
+
+                                    <!-- Center: Clinic Info -->
+                                    <div class="text-center flex-grow">
+                                        <h1 id="outClinicName"
+                                            class="outClinicName text-3xl font-bold font-serif text-slate-900 uppercase tracking-wide leading-tight mb-1">
+                                            Clinic Name</h1>
+                                        <p id="outClinicAddress"
+                                            class="outClinicAddress text-xs font-medium text-slate-600 uppercase tracking-wider">Address Line
+                                            1</p>
+                                        <div class="text-xs font-medium text-slate-600 mt-1 flex justify-center gap-4">
+                                            <span><i class="inline-block w-3 h-3 mr-1" data-lucide="phone"></i><span
+                                                    id="outClinicPhone" class="outClinicPhone"></span></span>
+                                            <span><i class="inline-block w-3 h-3 mr-1" data-lucide="clock"></i><span
+                                                    id="outClinicTiming" class="outClinicTiming"></span></span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Spacer to balance Logo -->
+                                    <div class="w-20"></div>
                                 </div>
 
-                                <!-- Center: Clinic Info -->
-                                <div class="text-center flex-grow">
-                                    <h1 id="outClinicName"
-                                        class="text-3xl font-bold font-serif text-slate-900 uppercase tracking-wide leading-tight mb-1">
-                                        Clinic Name</h1>
-                                    <p id="outClinicAddress"
-                                        class="text-xs font-medium text-slate-600 uppercase tracking-wider">Address Line
-                                        1</p>
-                                    <div class="text-xs font-medium text-slate-600 mt-1 flex justify-center gap-4">
-                                        <span><i class="inline-block w-3 h-3 mr-1" data-lucide="phone"></i><span
-                                                id="outClinicPhone"></span></span>
-                                        <span><i class="inline-block w-3 h-3 mr-1" data-lucide="clock"></i><span
-                                                id="outClinicTiming"></span></span>
+                                <!-- Doctor Name Sub-header: Compacted -->
+                                <div class="mt-2 text-center border-t border-slate-200 pt-1">
+                                    <h2 id="outDoctorName" class="outDoctorName text-lg font-bold font-serif text-slate-800">Doctor Name
+                                    </h2>
+                                    <p class="text-[10px] text-slate-500 uppercase tracking-widest">B.D.S, M.D.S &bull; Reg
+                                        No: 123456</p>
+                                </div>
+                            </header>
+
+                            <!-- Patient Details Strip: Compacted -->
+                            <div class="mb-4 relative z-10">
+                                <div class="bg-slate-50 border border-slate-200 p-3 rounded-sm">
+                                    <!-- Row 1 -->
+                                    <div
+                                        class="flex justify-between items-baseline mb-2 border-b border-slate-200 pb-1 border-dashed">
+                                        <div class="w-2/3"><span
+                                                class="font-bold text-slate-500 text-xs uppercase tracking-wide mr-2">Patient
+                                                Name:</span> <span id="outPatientName"
+                                                class="outPatientName font-serif text-lg text-slate-900 font-semibold"></span></div>
+                                        <div class="w-1/3 text-right"><span
+                                                class="font-bold text-slate-500 text-xs uppercase tracking-wide mr-2">Date:</span>
+                                            <span id="outDate" class="outDate font-medium text-sm"></span>
+                                        </div>
+                                    </div>
+                                    <div class="flex justify-between items-baseline">
+                                        <div><span class="font-bold text-slate-500 text-xs uppercase tracking-wide mr-2">Age
+                                                / Sex:</span> <span id="outAgeGender" class="outAgeGender font-medium text-sm"></span>
+                                        </div>
                                     </div>
                                 </div>
 
-                                <!-- Spacer to balance Logo -->
-                                <div class="w-20"></div>
-                            </div>
-
-                            <!-- Doctor Name Sub-header: Compacted -->
-                            <div class="mt-2 text-center border-t border-slate-200 pt-1">
-                                <h2 id="outDoctorName" class="text-lg font-bold font-serif text-slate-800">Doctor Name
-                                </h2>
-                                <p class="text-[10px] text-slate-500 uppercase tracking-widest">B.D.S, M.D.S &bull; Reg
-                                    No: 123456</p>
-                            </div>
-                        </header>
-
-                        <!-- Patient Details Strip: Compacted -->
-                        <div class="mb-4 relative z-10">
-                            <div class="bg-slate-50 border border-slate-200 p-3 rounded-sm">
-                                <!-- Row 1 -->
-                                <div
-                                    class="flex justify-between items-baseline mb-2 border-b border-slate-200 pb-1 border-dashed">
-                                    <div class="w-2/3"><span
-                                            class="font-bold text-slate-500 text-xs uppercase tracking-wide mr-2">Patient
-                                            Name:</span> <span id="outPatientName"
-                                            class="font-serif text-lg text-slate-900 font-semibold"></span></div>
-                                    <div class="w-1/3 text-right"><span
-                                            class="font-bold text-slate-500 text-xs uppercase tracking-wide mr-2">Date:</span>
-                                        <span id="outDate" class="font-medium text-sm"></span>
+                                <!-- Alerts -->
+                                <div id="outAlertsContainer" class="outAlertsContainer hidden mt-2 flex gap-4 text-xs">
+                                    <div id="outAllergyBox"
+                                        class="outAllergyBox hidden flex-1 bg-red-50 border border-red-100 p-1.5 rounded-sm text-red-800">
+                                        <span class="font-bold uppercase text-red-600 mr-2">Allergies:</span> <span
+                                            id="outAllergies" class="outAllergies font-bold"></span>
+                                    </div>
+                                    <div id="outHistoryBox"
+                                        class="outHistoryBox hidden flex-1 bg-yellow-50 border border-yellow-100 p-1.5 rounded-sm text-yellow-900">
+                                        <span class="font-bold uppercase text-yellow-700 mr-2">History:</span> <span
+                                            id="outHistory" class="outHistory font-medium"></span>
                                     </div>
                                 </div>
-                                <div class="flex justify-between items-baseline">
-                                    <div><span class="font-bold text-slate-500 text-xs uppercase tracking-wide mr-2">Age
-                                            / Sex:</span> <span id="outAgeGender" class="font-medium text-sm"></span>
+
+                                <!-- Diagnosis Grid: Fixed Text Merging Issue -->
+                                <div class="mt-2 grid grid-cols-2 gap-8">
+                                    <div>
+                                        <span
+                                            class="block font-bold text-slate-400 text-[10px] uppercase tracking-wider mb-1">Chief
+                                            Complaint</span>
+                                        <div class="outChiefComplaint border-b border-slate-300 pb-1 text-slate-900 text-sm min-h-[20px] break-words leading-snug"
+                                            id="outChiefComplaint"></div>
+                                    </div>
+                                    <div>
+                                        <span
+                                            class="block font-bold text-slate-400 text-[10px] uppercase tracking-wider mb-1">Diagnosis</span>
+                                        <div class="outDiagnosis border-b border-slate-300 pb-1 text-slate-900 font-medium text-sm min-h-[20px] break-words leading-snug"
+                                            id="outDiagnosis"></div>
                                     </div>
                                 </div>
                             </div>
 
-                            <!-- Alerts -->
-                            <div id="outAlertsContainer" class="hidden mt-2 flex gap-4 text-xs">
-                                <div id="outAllergyBox"
-                                    class="hidden flex-1 bg-red-50 border border-red-100 p-1.5 rounded-sm text-red-800">
-                                    <span class="font-bold uppercase text-red-600 mr-2">Allergies:</span> <span
-                                        id="outAllergies" class="font-bold"></span>
+                            <!-- Rx Symbol & Body -->
+                            <div class="flex-grow relative z-10 flex flex-col">
+                                <div class="mb-2">
+                                    <span class="font-serif text-4xl font-bold italic text-slate-800 leading-none">Rx</span>
                                 </div>
-                                <div id="outHistoryBox"
-                                    class="hidden flex-1 bg-yellow-50 border border-yellow-100 p-1.5 rounded-sm text-yellow-900">
-                                    <span class="font-bold uppercase text-yellow-700 mr-2">History:</span> <span
-                                        id="outHistory" class="font-medium"></span>
+
+                                <div class="mt-1 flex-grow">
+                                    <table class="w-full text-left border-collapse">
+                                        <thead>
+                                            <tr class="border-b-2 border-slate-800">
+                                                <th
+                                                    class="py-1.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider w-8">
+                                                    No.</th>
+                                                <th
+                                                    class="py-1.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                                                    Medicine Name & Form</th>
+                                                <th
+                                                    class="py-1.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                                                    Food</th>
+                                                <th
+                                                    class="py-1.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                                                    Dosage</th>
+                                                <th
+                                                    class="py-1.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                                                    Freq</th>
+                                                <th
+                                                    class="py-1.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-right">
+                                                    Duration</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="outMedicineList" class="outMedicineList text-sm text-slate-900 font-medium divide-y divide-slate-100">
+                                            <!-- Populated via JS -->
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
 
-                            <!-- Diagnosis Grid: Fixed Text Merging Issue -->
-                            <div class="mt-2 grid grid-cols-2 gap-8">
-                                <div>
-                                    <span
-                                        class="block font-bold text-slate-400 text-[10px] uppercase tracking-wider mb-1">Chief
-                                        Complaint</span>
-                                    <div class="border-b border-slate-300 pb-1 text-slate-900 text-sm min-h-[20px] break-words leading-snug"
-                                        id="outChiefComplaint"></div>
-                                </div>
-                                <div>
-                                    <span
-                                        class="block font-bold text-slate-400 text-[10px] uppercase tracking-wider mb-1">Diagnosis</span>
-                                    <div class="border-b border-slate-300 pb-1 text-slate-900 font-medium text-sm min-h-[20px] break-words leading-snug"
-                                        id="outDiagnosis"></div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Rx Symbol & Body -->
-                        <div class="flex-grow relative z-10 flex flex-col">
-                            <div class="mb-2">
-                                <span class="font-serif text-4xl font-bold italic text-slate-800 leading-none">Rx</span>
-                            </div>
-
-                            <div class="mt-1 flex-grow">
-                                <table class="w-full text-left border-collapse">
-                                    <thead>
-                                        <tr class="border-b-2 border-slate-800">
-                                            <th
-                                                class="py-1.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider w-8">
-                                                No.</th>
-                                            <th
-                                                class="py-1.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                                                Medicine Name & Form</th>
-                                            <th
-                                                class="py-1.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                                                Dosage</th>
-                                            <th
-                                                class="py-1.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                                                Freq</th>
-                                            <th
-                                                class="py-1.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-right">
-                                                Duration</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="outMedicineList"
-                                        class="text-sm text-slate-900 font-medium divide-y divide-slate-100">
+                            <!-- Footer / Advice: Compacted -->
+                            <div class="mt-auto pt-4 border-t-2 border-slate-800 relative z-10">
+                                <div class="mb-4">
+                                    <h4 class="font-bold text-slate-800 font-serif mb-1 text-sm">Advice & Instructions:</h4>
+                                    <ul id="outAdvice" class="outAdvice list-disc pl-5 text-sm text-slate-700 space-y-0.5 leading-snug">
                                         <!-- Populated via JS -->
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-
-                        <!-- Footer / Advice: Compacted -->
-                        <div class="mt-auto pt-4 border-t-2 border-slate-800 relative z-10">
-                            <div class="mb-4">
-                                <h4 class="font-bold text-slate-800 font-serif mb-1 text-sm">Advice & Instructions:</h4>
-                                <ul id="outAdvice"
-                                    class="list-disc pl-5 text-sm text-slate-700 space-y-0.5 leading-snug">
-                                    <!-- Populated via JS -->
-                                </ul>
-                            </div>
-
-                            <div class="flex justify-between items-end pt-2">
-                                <div class="text-[10px] text-slate-400 uppercase tracking-wide">
-                                    <p>Substitutes allowed unless specified.</p>
-                                    <p>Generated on <span id="footerDate"></span></p>
+                                    </ul>
                                 </div>
-                                <div class="text-center">
-                                    <!-- Signature Line -->
-                                    <div class="w-40 h-8 mb-1"></div> <!-- Space for wet signature -->
-                                    <div class="w-40 border-t border-slate-800"></div>
-                                    <p class="text-[10px] font-bold text-slate-800 mt-0.5 uppercase tracking-wide">
-                                        Doctor's Signature</p>
+                                <div class="text-[9px] text-slate-500 font-bold uppercase tracking-wider mb-1">
+                                    <span>* AF-AfterFood / BF-BeforeFood</span>
+                                </div>
+                                <div class="flex justify-between items-end pt-2">
+                                    <div class="text-[10px] text-slate-400 uppercase tracking-wide">
+                                        <p>Substitutes allowed unless specified.</p>
+                                        <p class="footerPageNum">Digital Prescription Document • Page 1 of 1</p>
+                                        <p>Generated on <span id="footerDate" class="footerDate"></span></p>
+                                    </div>
+                                    <div class="text-center">
+                                        <!-- Signature Line -->
+                                        <div class="w-40 h-8 mb-1"></div> <!-- Space for wet signature -->
+                                        <div class="w-40 border-t border-slate-800"></div>
+                                        <p class="text-[10px] font-bold text-slate-800 mt-0.5 uppercase tracking-wide">
+                                            Doctor's Signature</p>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
 
-                    </div>
-                </div> <!-- End Page Border -->
+                        </div>
+                    </div> <!-- End Page Border -->
+                </div>
             </div>
         </div>
     </div>
@@ -602,6 +633,19 @@
 
         // --- MAIN FUNCTIONS ---
 
+        function updateRowNumbers() {
+            const list = document.getElementById('medicineList');
+            if (!list) return;
+            const rows = list.querySelectorAll('tr');
+            rows.forEach((row, index) => {
+                const numEl = row.querySelector('.medicine-row-num');
+                if (numEl) {
+                    const numStr = (index + 1) < 10 ? '0' + (index + 1) : (index + 1);
+                    numEl.textContent = numStr;
+                }
+            });
+        }
+
         function addMedicineRow(data = null) {
             const list = document.getElementById('medicineList');
             const emptyState = document.getElementById('emptyState');
@@ -611,13 +655,15 @@
 
             const nameVal = data ? data.name : '';
             const doseVal = data ? data.dosage : '';
-            const freqVal = data ? data.freq : '';
+            const freqVal = data ? (data.freq || data.frequency || '') : '';
             const durVal = data ? data.duration : '';
+            const foodVal = data ? (data.food || '') : 'BF';
 
             const tr = document.createElement('tr');
             tr.className = "bg-white border-b border-gray-100 hover:bg-gray-50 transition";
             tr.id = `row-${rowId}`;
             tr.innerHTML = `
+                <td class="px-4 py-2 text-center text-slate-400 font-bold text-xs medicine-row-num"></td>
                 <td class="px-4 py-2">
                     <input type="text" value="${nameVal}" placeholder="Medicine Name" class="w-full bg-transparent focus:outline-none border-b border-transparent focus:border-slate-400 text-gray-800 placeholder-gray-400 font-medium">
                 </td>
@@ -630,6 +676,13 @@
                 <td class="px-4 py-2">
                     <input type="text" value="${durVal}" placeholder="Dur" class="w-full bg-transparent focus:outline-none border-b border-transparent focus:border-slate-400 text-gray-800 placeholder-gray-400">
                 </td>
+                <td class="px-4 py-2">
+                    <select class="w-full bg-transparent focus:outline-none text-gray-800 font-medium">
+                        <option value="" ${foodVal === '' ? 'selected' : ''}>--</option>
+                        <option value="BF" ${foodVal === 'BF' ? 'selected' : ''}>BF</option>
+                        <option value="AF" ${foodVal === 'AF' ? 'selected' : ''}>AF</option>
+                    </select>
+                </td>
                 <td class="px-4 py-2 text-center">
                     <button type="button" onclick="removeRow('${rowId}')" class="text-slate-400 hover:text-red-600 transition">
                         <i data-lucide="trash-2" class="w-4 h-4"></i>
@@ -637,6 +690,7 @@
                 </td>
             `;
             list.appendChild(tr);
+            updateRowNumbers();
             safeCreateIcons();
 
             // Focus first input if added manually (no data provided)
@@ -670,6 +724,13 @@
             if (list.children.length === 0) {
                 document.getElementById('emptyState').style.display = 'block';
             }
+            updateRowNumbers();
+        }
+
+        function helperSetText(parentEl, selector, value, fallback = '---') {
+            const el = parentEl.querySelector(selector);
+            if (!el) return;
+            el.innerText = value && String(value).trim() ? value : fallback;
         }
 
         function generatePrescription() {
@@ -690,76 +751,151 @@
             const dx = document.getElementById('diagnosis').value;
             const advice = document.getElementById('advice').value;
 
-            // Map Clinic Info
-            document.getElementById('outClinicName').innerText = clinic || 'Dental Clinic';
-            document.getElementById('outDoctorName').innerText = doctor || 'Doctor';
-            document.getElementById('outClinicAddress').innerText = address;
-            document.getElementById('outClinicPhone').innerText = phone;
-            document.getElementById('outClinicTiming').innerText = timing;
+            const pagesContainer = document.getElementById('prescription-pages-container');
+            const template = document.getElementById('prescription-template');
+            if (!pagesContainer || !template) return;
 
-            // Map Patient Info
-            document.getElementById('outPatientName').innerText = patient;
-            document.getElementById('outAgeGender').innerText = ageSex;
-            document.getElementById('outDate').innerText = date;
-
-            // Handle Medical Alerts
-            const alertContainer = document.getElementById('outAlertsContainer');
-            const allergyBox = document.getElementById('outAllergyBox');
-            const historyBox = document.getElementById('outHistoryBox');
-
-            if (allergies.trim() || history.trim()) {
-                alertContainer.classList.remove('hidden');
-
-                if (allergies.trim()) {
-                    allergyBox.classList.remove('hidden');
-                    document.getElementById('outAllergies').innerText = allergies;
-                } else {
-                    allergyBox.classList.add('hidden');
-                }
-
-                if (history.trim()) {
-                    historyBox.classList.remove('hidden');
-                    document.getElementById('outHistory').innerText = history;
-                } else {
-                    historyBox.classList.add('hidden');
-                }
-            } else {
-                alertContainer.classList.add('hidden');
-            }
-
-            document.getElementById('outChiefComplaint').innerText = cc;
-            document.getElementById('outDiagnosis').innerText = dx;
+            // Clear container
+            pagesContainer.innerHTML = '';
 
             // Gather Medicines from DOM
             const rows = document.getElementById('medicineList').querySelectorAll('tr');
-            let medHtml = '';
-            let count = 0;
+            const meds = [];
             rows.forEach((row) => {
-                const inputs = row.querySelectorAll('input');
-                // Ensure the row has valid inputs
-                if (inputs.length > 0 && inputs[0].value.trim()) {
-                    count++;
-                    medHtml += `
-                        <tr class="border-b border-gray-100/50 hover:bg-gray-50/50">
-                            <td class="py-2 text-slate-500 font-semibold text-xs">${count < 10 ? '0' + count : count}</td>
-                            <td class="py-2 font-bold text-slate-900 text-sm">${inputs[0].value}</td>
-                            <td class="py-2 text-sm">${inputs[1].value}</td>
-                            <td class="py-2 text-sm">${inputs[2].value}</td>
-                            <td class="py-2 text-right text-sm">${inputs[3].value}</td>
-                        </tr>
-                    `;
+                const nameInput = row.querySelector('td:nth-child(2) input');
+                const dosageInput = row.querySelector('td:nth-child(3) input');
+                const freqInput = row.querySelector('td:nth-child(4) input');
+                const durInput = row.querySelector('td:nth-child(5) input');
+                const foodSelect = row.querySelector('td:nth-child(6) select');
+                if (nameInput && nameInput.value.trim()) {
+                    meds.push({
+                        name: nameInput.value.trim(),
+                        dosage: dosageInput ? dosageInput.value.trim() : '',
+                        freq: freqInput ? freqInput.value.trim() : '',
+                        duration: durInput ? durInput.value.trim() : '',
+                        food: foodSelect ? foodSelect.value : ''
+                    });
                 }
             });
 
-            // Handle Advice formatting (Secure)
-            const adviceList = advice.split('\n').filter(line => line.trim() !== '');
-            const adviceHtml = adviceList.length
-                ? adviceList.map(item => `<li class="mb-1 pl-2">${escapeHtml(item)}</li>`).join('')
-                : '<li class="italic text-gray-400">No specific advice recorded.</li>';
-            document.getElementById('outAdvice').innerHTML = adviceHtml;
+            // Sort by food: BF first, then AF, then empty/none
+            meds.sort((a, b) => {
+                const foodA = (a.food || '').toUpperCase();
+                const foodB = (b.food || '').toUpperCase();
+                const getPriority = (food) => {
+                    if (food.includes('BF')) return 1;
+                    if (food.includes('AF')) return 2;
+                    return 3;
+                };
+                return getPriority(foodA) - getPriority(foodB);
+            });
 
-            document.getElementById('outMedicineList').innerHTML = medHtml || '<tr><td colspan="5" class="py-8 text-center text-gray-400 italic">No medicines prescribed</td></tr>';
-            document.getElementById('footerDate').innerText = new Date().toLocaleString();
+            // Chunk medicines by 7
+            const chunks = [];
+            if (meds.length === 0) {
+                chunks.push([]);
+            } else {
+                for (let i = 0; i < meds.length; i += 7) {
+                    chunks.push(meds.slice(i, i + 7));
+                }
+            }
+
+            const totalPages = chunks.length;
+            const timestamp = new Date().toLocaleString();
+
+            chunks.forEach((chunk, pageIndex) => {
+                const pageNum = pageIndex + 1;
+                const clone = template.cloneNode(true);
+                clone.id = `prescription-page-${pageNum}`;
+                clone.classList.remove('hidden');
+
+                // Map Clinic Info
+                helperSetText(clone, '.outClinicName', clinic, 'Dental Clinic');
+                helperSetText(clone, '.outDoctorName', doctor, 'Doctor');
+                helperSetText(clone, '.outClinicAddress', address, '');
+                helperSetText(clone, '.outClinicPhone', phone, '');
+                helperSetText(clone, '.outClinicTiming', timing, '');
+
+                // Map Patient Info
+                helperSetText(clone, '.outPatientName', patient, '');
+                helperSetText(clone, '.outAgeGender', ageSex, '');
+                helperSetText(clone, '.outDate', date, '');
+
+                // Handle Medical Alerts
+                const alertContainer = clone.querySelector('.outAlertsContainer');
+                const allergyBox = clone.querySelector('.outAllergyBox');
+                const historyBox = clone.querySelector('.outHistoryBox');
+
+                if (alertContainer) {
+                    if (allergies.trim() || history.trim()) {
+                        alertContainer.classList.remove('hidden');
+
+                        if (allergies.trim()) {
+                            if (allergyBox) allergyBox.classList.remove('hidden');
+                            helperSetText(clone, '.outAllergies', allergies);
+                        } else {
+                            if (allergyBox) allergyBox.classList.add('hidden');
+                        }
+
+                        if (history.trim()) {
+                            if (historyBox) historyBox.classList.remove('hidden');
+                            helperSetText(clone, '.outHistory', history);
+                        } else {
+                            if (historyBox) historyBox.classList.add('hidden');
+                        }
+                    } else {
+                        alertContainer.classList.add('hidden');
+                    }
+                }
+
+                helperSetText(clone, '.outChiefComplaint', cc, '-');
+                helperSetText(clone, '.outDiagnosis', dx, '-');
+
+                // Render Medicines
+                const tbody = clone.querySelector('.outMedicineList');
+                if (tbody) {
+                    tbody.innerHTML = '';
+                    if (chunk.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="6" class="py-8 text-center text-gray-400 italic">No medicines prescribed</td></tr>';
+                    } else {
+                        chunk.forEach((m, i) => {
+                            const displayDosage = calculateDisplayDosage(m.dosage, m.freq, m.duration);
+                            const foodKeyword = m.food || '-';
+                            const indexNum = (pageIndex * 7) + (i + 1);
+                            
+                            const tr = document.createElement('tr');
+                            tr.className = "border-b border-gray-100/50 hover:bg-gray-50/50";
+                            tr.innerHTML = `
+                                <td class="py-2 text-slate-500 font-semibold text-xs">${indexNum < 10 ? '0' + indexNum : indexNum}</td>
+                                <td class="py-2 pr-2 font-bold text-slate-900 text-sm">${m.name}</td>
+                                <td class="py-2 text-slate-700 font-bold text-xs">${foodKeyword}</td>
+                                <td class="py-2 text-sm">${displayDosage}</td>
+                                <td class="py-2 text-sm">${m.freq}</td>
+                                <td class="py-2 text-right text-sm">${m.duration}</td>
+                            `;
+                            tbody.appendChild(tr);
+                        });
+                    }
+                }
+
+                // Render Advice
+                const adviceList = clone.querySelector('.outAdvice');
+                if (adviceList) {
+                    const adviceItems = advice.split('\n').filter(line => line.trim() !== '');
+                    adviceList.innerHTML = adviceItems.length
+                        ? adviceItems.map(item => `<li class="mb-1 pl-2">${escapeHtml(item)}</li>`).join('')
+                        : '<li class="italic text-gray-400">No specific advice recorded.</li>';
+                }
+
+                // Set footer page number & timestamp
+                const pageNumEl = clone.querySelector('.footerPageNum');
+                if (pageNumEl) pageNumEl.textContent = `Digital Prescription Document • Page ${pageNum} of ${totalPages}`;
+
+                const footerDateEl = clone.querySelector('.footerDate');
+                if (footerDateEl) footerDateEl.innerText = timestamp;
+
+                pagesContainer.appendChild(clone);
+            });
 
             // Toggle Views
             document.getElementById('form-section').classList.add('hidden');
@@ -786,6 +922,111 @@
             }
         }
 
+        function parseDurationDays(durationStr) {
+            if (!durationStr) return null;
+            const match = String(durationStr).trim().match(/^(\d+)\s*(.*)$/i);
+            if (!match) return null;
+            const value = parseInt(match[1], 10);
+            const unit = match[2].toLowerCase();
+            if (unit.includes('week') || unit.includes('wk')) {
+                return value * 7;
+            }
+            if (unit.includes('month')) {
+                return value * 30;
+            }
+            return value; // default to days
+        }
+
+        function calculateDisplayDosage(dosage, frequency, duration) {
+            const fallback = dosage || '';
+            if (!duration || !frequency) return fallback;
+
+            const freqStr = String(frequency).trim();
+            const freqParts = freqStr.split(/\s*-\s*/);
+            const isHyphenatedPattern = freqParts.length > 1 && freqParts.every(part => /^\d+(\.\d+)?$/.test(part));
+            const days = parseDurationDays(duration);
+
+            if (isHyphenatedPattern && days !== null && !isNaN(days)) {
+                const dailyCount = freqParts.reduce((sum, part) => sum + parseFloat(part), 0);
+                const totalUnits = dailyCount * days;
+
+                let doseMultiplier = 1;
+                let doseUnit = 'TAB';
+                if (dosage) {
+                    const cleanDosage = String(dosage).trim();
+                    const dosageMatch = cleanDosage.match(/^(\d+(?:\.\d+)?)\s*(.*)$/);
+                    if (dosageMatch) {
+                        doseMultiplier = parseFloat(dosageMatch[1]);
+                        doseUnit = dosageMatch[2].trim() || 'TAB';
+                    } else {
+                        doseUnit = cleanDosage;
+                    }
+                }
+                const calculatedTotal = totalUnits * doseMultiplier;
+                return `${calculatedTotal} ${doseUnit.toUpperCase()}`;
+            }
+            return fallback;
+        }
+
+        function printPrescription() {
+            const source = document.getElementById('prescription-pages-container');
+            if (!source) {
+                window.print();
+                return;
+            }
+
+            const existing = document.getElementById('rx-print-root');
+            if (existing) existing.remove();
+
+            const printRoot = document.createElement('div');
+            printRoot.id = 'rx-print-root';
+            const clone = source.cloneNode(true);
+            clone.id = 'prescription-pages-container-print';
+            printRoot.appendChild(clone);
+            document.body.appendChild(printRoot);
+
+            const handleAfterPrint = () => {
+                const root = document.getElementById('rx-print-root');
+                if (root) root.remove();
+                window.removeEventListener('afterprint', handleAfterPrint);
+            };
+
+            window.addEventListener('afterprint', handleAfterPrint, { once: true });
+
+            // Fallback for browsers that do not consistently fire afterprint.
+            setTimeout(() => {
+                const root = document.getElementById('rx-print-root');
+                if (root) root.remove();
+            }, 60000);
+
+            requestAnimationFrame(() => {
+                window.print();
+            });
+        }
+
+        // Self-executing tests for total tab calculation on page load
+        (function runPrescriptionCalculationTests() {
+            const testCases = [
+                { dosage: '1 Tab', frequency: '1-0-1', duration: '5 Days', expected: '10 TAB' },
+                { dosage: '1 TAB', frequency: '1-1-1', duration: '3 Days', expected: '9 TAB' },
+                { dosage: '2 Tabs', frequency: '1-0-1', duration: '5 Days', expected: '20 TABS' },
+                { dosage: '1 Capsule', frequency: '1-0-1-1', duration: '10 Days', expected: '30 CAPSULE' },
+                { dosage: '1 Tab', frequency: 'SOS', duration: '3 Days', expected: '1 Tab' },
+                { dosage: '2 Tabs', frequency: 'once daily', duration: '5 Days', expected: '2 Tabs' },
+                { dosage: '10ml', frequency: '1-0-1', duration: '1 Week', expected: '140 ML' },
+                { dosage: '1 Tab', frequency: '1-0-1', duration: '1 Month', expected: '60 TAB' }
+            ];
+
+            console.group('Prescription Preview Calculation Tests');
+            testCases.forEach((tc, idx) => {
+                const result = calculateDisplayDosage(tc.dosage, tc.frequency, tc.duration);
+                const passed = result.toUpperCase() === tc.expected.toUpperCase();
+                console.log(
+                    `Test #${idx + 1}: Input (${tc.dosage}, ${tc.frequency}, ${tc.duration}) -> Got: "${result}", Expected: "${tc.expected}" - ${passed ? 'PASSED ✅' : 'FAILED ❌'}`
+                );
+            });
+            console.groupEnd();
+        })();
     </script>
 </body>
 

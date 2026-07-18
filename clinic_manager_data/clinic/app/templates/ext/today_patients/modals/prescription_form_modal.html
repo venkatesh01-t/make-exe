@@ -25,6 +25,7 @@
               flex-direction: column;
               align-items: center;
               flex: 1;
+              cursor: pointer;
             }
             .stepper-item::after {
               content: '';
@@ -106,19 +107,19 @@
             
             <!-- Stepper UI -->
             <div class="flex justify-between items-start mb-8 sm:mb-10 max-w-4xl mx-auto px-4 sm:px-0">
-              <div class="stepper-item active" id="stepper-1">
+              <div class="stepper-item active" id="stepper-1" onclick="goToRxStep(1)">
                 <div class="stepper-icon">1</div>
                 <span class="stepper-label text-center">Diagnosis</span>
               </div>
-              <div class="stepper-item" id="stepper-2">
+              <div class="stepper-item" id="stepper-2" onclick="goToRxStep(2)">
                 <div class="stepper-icon">2</div>
                 <span class="stepper-label text-center">Advice</span>
               </div>
-              <div class="stepper-item" id="stepper-3">
+              <div class="stepper-item" id="stepper-3" onclick="goToRxStep(3)">
                 <div class="stepper-icon">3</div>
                 <span class="stepper-label text-center">Medication</span>
               </div>
-              <div class="stepper-item" id="stepper-4">
+              <div class="stepper-item" id="stepper-4" onclick="goToRxStep(4)">
                 <div class="stepper-icon">4</div>
                 <span class="stepper-label text-center">Treatments</span>
               </div>
@@ -201,12 +202,12 @@
                       <!-- Toggle Compact -->
                       <div class="flex items-center gap-2 px-3 py-2 bg-blue-50 rounded-lg border border-blue-100">
                         <button type="button" id="medicineModeToogle" onclick="toggleMedicineMode()"
-                          class="relative inline-flex h-5 w-9 bg-gray-300 rounded-full cursor-pointer transition-colors duration-200 hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1">
-                          <span class="inline-flex h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform duration-200 translate-x-0.5 absolute top-0.5"></span>
+                          class="relative inline-flex h-5 w-9 bg-blue-600 rounded-full cursor-pointer transition-colors duration-200 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1">
+                          <span class="inline-flex h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform duration-200 translate-x-5 absolute top-0.5 left-0"></span>
                         </button>
                         <div class="flex flex-col">
                           <label class="font-medium text-xs text-gray-700 select-none cursor-pointer leading-tight">Append</label>
-                          <p class="text-[9px] text-gray-500 leading-tight"><span id="modeLabel">Replace</span></p>
+                          <p class="text-[9px] text-gray-500 leading-tight"><span id="modeLabel">Append</span></p>
                         </div>
                       </div>
                       <button type="button" onclick="openMedicationModal()" 
@@ -233,10 +234,12 @@
                   <table class="w-full text-sm text-left min-w-[500px] medicine-table">
                     <thead class="bg-gray-50/80 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
                       <tr>
+                        <th class="px-2 py-4 w-12 text-center text-gray-400 font-bold uppercase tracking-widest">No.</th>
                         <th class="px-4 sm:px-6 py-4">Drug Name</th>
                         <th class="px-2 py-4 w-20 sm:w-24 text-center">Dosage</th>
                         <th class="px-2 py-4 w-24 sm:w-28 text-center">Freq</th>
                         <th class="px-2 py-4 w-20 sm:w-24 text-center">Dur</th>
+                        <th class="px-2 py-4 w-24 sm:w-28 text-center">BF/AF</th>
                         <th class="px-4 py-4 w-12"></th>
                       </tr>
                     </thead>
@@ -407,6 +410,19 @@
             if (currentRxStep > 1) {
               currentRxStep--;
               updateRxWizardUI();
+            }
+          }
+
+          function goToRxStep(stepNum) {
+            const patientName = document.getElementById('patientName').value;
+            if (stepNum > 1 && !patientName) {
+              alert("Please select a patient first.");
+              return;
+            }
+            if (stepNum >= 1 && stepNum <= totalRxSteps) {
+              currentRxStep = stepNum;
+              updateRxWizardUI();
+              lucide.createIcons();
             }
           }
 

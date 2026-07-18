@@ -116,6 +116,7 @@ class MedicationTemplate(models.Model):
     dosage = models.CharField(max_length=100)  # e.g., '1 Tab', '1 Cap'
     frequency = models.CharField(max_length=50)  # e.g., '1-0-1', 'SOS'
     duration = models.CharField(max_length=50)  # e.g., '5 Days'
+    food = models.CharField(max_length=50, blank=True, null=True)  # e.g., 'BF', 'AF'
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -151,6 +152,7 @@ class PrescriptionMedication(models.Model):
     dosage = models.CharField(max_length=100, blank=True, null=True)
     frequency = models.CharField(max_length=100, blank=True, null=True)
     duration = models.CharField(max_length=100, blank=True, null=True)
+    food = models.CharField(max_length=50, blank=True, null=True)  # e.g., 'BF', 'AF'
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

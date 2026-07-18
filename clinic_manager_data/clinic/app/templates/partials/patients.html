@@ -611,7 +611,11 @@
     document.getElementById('editPatientFirstName').value = firstName;
     document.getElementById('editPatientLastName').value = lastName;
     document.getElementById('editPatientPhone').value = phone;
-    document.getElementById('editPatientEmailInput').value = email || '';
+    let cleanEmail = email || '';
+    if (cleanEmail.trim().toUpperCase() === 'N/A') {
+      cleanEmail = '';
+    }
+    document.getElementById('editPatientEmailInput').value = cleanEmail;
     document.getElementById('editPatientDob').value = dob || '';
     document.getElementById('editPatientGender').value = gender;
     document.getElementById('editPatientNotes').value = notes || '';
@@ -988,7 +992,7 @@
                   ${data.medicines.map(med => `
                     <div class="bg-green-50 border border-green-200 rounded-lg p-2">
                       <p class="text-xs font-bold text-gray-800">${med.drug_name || 'N/A'}</p>
-                      <p class="text-[11px] text-gray-600">${med.dosage || 'N/A'} • ${med.frequency || 'N/A'} • ${med.duration || 'N/A'}</p>
+                      <p class="text-[11px] text-gray-600">${med.dosage || 'N/A'} • ${med.frequency || 'N/A'} • ${med.duration || 'N/A'}${med.food ? ` • ${med.food}` : ''}</p>
                     </div>
                   `).join('')}
                 </div>
@@ -1148,7 +1152,7 @@
                         <div class="mb-2">
                           <p class="text-xs font-bold text-slate-700 mb-1">Medicines:</p>
                           <div class="flex flex-wrap gap-1">
-                            ${prescription.medicines.map(med => `<span class="inline-block bg-green-100 text-green-700 text-[11px] font-bold px-2 py-0.5 rounded">${med.drug_name || 'N/A'}</span>`).join('')}
+                            ${prescription.medicines.map(med => `<span class="inline-block bg-green-100 text-green-700 text-[11px] font-bold px-2 py-0.5 rounded">${med.drug_name || 'N/A'}${med.food ? ` (${med.food})` : ''}</span>`).join('')}
                           </div>
                         </div>
                       ` : ''}

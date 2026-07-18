@@ -6,7 +6,7 @@
 
 <style>
     :root {
-        --rx-watermark-opacity: 0.35;
+        --rx-watermark-opacity: 0.05;
         --rx-watermark-blur: 0.4px;
     }
 
@@ -100,32 +100,31 @@
         /* Reset and hide dashboard clutter to prevent blank page bug */
         html,
         body {
-            width: 210mm !important;
-            height: 297mm !important;
+            width: auto !important;
+            height: auto !important;
+            overflow: visible !important;
             margin: 0 !important;
             padding: 0 !important;
             background: #fff !important;
-            overflow: hidden !important;
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
         }
 
         /* Hide all main page content and modals to prevent multiple pages/overlays */
-        body > * {
+        body > :not(#rx-print-root) {
             display: none !important;
         }
 
         /* Make only the cloned print root visible and correctly positioned */
-        body > #rx-print-root {
+        body > #rx-print-root,
+        body > #rx-print-root > * {
             display: block !important;
-            position: absolute !important;
-            top: 0 !important;
-            left: 0 !important;
+            position: relative !important;
             width: 210mm !important;
-            height: 297mm !important;
+            height: auto !important;
+            overflow: visible !important;
             margin: 0 !important;
             padding: 0 !important;
-            overflow: hidden !important;
             background: #fff !important;
             z-index: 999999 !important;
         }
@@ -137,9 +136,7 @@
         /* The actual A4 page */
         #rx-print-root .a4-container {
             display: block !important;
-            position: absolute !important;
-            top: 0 !important;
-            left: 0 !important;
+            position: relative !important;
             width: 210mm !important;
             height: 297mm !important;
             margin: 0 !important;
@@ -149,6 +146,8 @@
             transform: none !important;
             background: white !important;
             box-sizing: border-box !important;
+            page-break-after: always !important;
+            break-after: page !important;
         }
 
         #rx-print-root .page-border {
@@ -157,6 +156,7 @@
             padding: 4mm 7mm 7mm !important;
             margin: 0 !important;
             box-sizing: border-box !important;
+            position: relative !important;
         }
 
         header {
@@ -198,25 +198,27 @@
     }
 
     /* Dedicated print-root mode: print only cloned prescription area */
-    body.rx-print-active * {
-        visibility: hidden !important;
-    }
+    @media screen {
+        body.rx-print-active * {
+            visibility: hidden !important;
+        }
 
-    body.rx-print-active #rx-print-root,
-    body.rx-print-active #rx-print-root * {
-        visibility: visible !important;
-    }
+        body.rx-print-active #rx-print-root,
+        body.rx-print-active #rx-print-root * {
+            visibility: visible !important;
+        }
 
-    body.rx-print-active #rx-print-root {
-        position: fixed !important;
-        inset: 0 !important;
-        z-index: 999999 !important;
-        background: #fff !important;
-        display: flex !important;
-        justify-content: center !important;
-        align-items: flex-start !important;
-        padding: 0 !important;
-        margin: 0 !important;
+        body.rx-print-active #rx-print-root {
+            position: fixed !important;
+            inset: 0 !important;
+            z-index: 999999 !important;
+            background: #fff !important;
+            display: flex !important;
+            justify-content: center !important;
+            align-items: flex-start !important;
+            padding: 0 !important;
+            margin: 0 !important;
+        }
     }
 
     #rx-print-root .a4-container {
@@ -318,152 +320,159 @@
         
         <!-- Scrollable Document Area -->
         <div class="flex-grow preview-scroll p-4 lg:p-12 overflow-y-auto custom-scrollbar">
-            <div id="prescription-wrapper" class="mx-auto">
-                <div id="prescription-content" class="a4-container text-slate-900 mx-auto">
-                    <div class="page-border">
-                        <div class="rx-watermark" aria-hidden="true">
-                            {% if clinic and clinic.logo %}
-                            <img src="{{ clinic.logo.url }}" alt="" class="rx-watermark-logo">
-                            {% endif %}
-                        </div>
-                        <!-- Clinic Header -->
-                        <header class="border-b-2 border-slate-800 pb-4 mb-6">
-                            <div class="flex items-start justify-between gap-6">
-                                <div class="flex items-center gap-3 min-w-0 flex-1">
-                                    {% if clinic and clinic.logo %}
-                                    <div class="flex-shrink-0">
-                                        <img src="{{ clinic.logo.url }}" alt="Clinic Logo" class="h-14 w-14 object-cover">
-                                    </div>
-                                    {% endif %}
-                                    <div class="min-w-0">
-                                        <h1 id="outClinicName"
-                                            class="text-2xl font-bold font-serif uppercase tracking-widest leading-tight break-words whitespace-normal">Clinic
-                                            {{clinic.clinic_name}}</h1>
-                                        <div id="outClinicSpecialist"
-                                            class="text-[10px] font-bold text-slate-700 uppercase tracking-widest mt-0.5">
-                                            {% if clinic.doctor_specialist %}({{ clinic.doctor_specialist }}){% endif %}
-                                        </div>
-                                        <div id="containerClinicAddress" class="flex items-start gap-1 text-[10px] font-medium text-slate-700 uppercase tracking-wider mt-1.5">
-                                            <svg class="w-3 h-3 text-slate-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25s-7.5-4.108-7.5-11.25A7.5 7.5 0 1119.5 10.5z" />
-                                            </svg>
-                                            <span id="outClinicAddress" class="break-words">{% if clinic.address %}{{ clinic.address }}{% endif %}</span>
-                                        </div>
-                                    </div>
-                                </div>
+            <div id="prescription-wrapper" class="mx-auto flex flex-col items-center gap-6">
+                <!-- Generated pages will be injected here -->
+            </div>
+        </div>
 
-                                <div class="text-right flex-shrink-0">
-                                    <h2 id="outDoctorName" class="text-lg font-bold font-serif leading-tight">{{ user.doctor.name }}</h2>
-                                    <p class="text-[10px] text-slate-700 uppercase tracking-[0.2em] mb-1">
-                                        {% if user.doctor.education %}{{ user.doctor.education }}{% endif %}
-                                        {% if user.doctor.education and user.doctor.specialization %} • {% endif %}
-                                        {% if user.doctor.specialization %}{{ user.doctor.specialization }}{% else %}{% endif %}
-                                    </p>
-                                    <div id="outClinicRegNo" class="text-[10px] font-bold text-slate-700 uppercase tracking-wider mt-0.5">
-                                        {% if clinic.reg_no %}Reg. No: {{ clinic.reg_no }}{% endif %}
-                                    </div>
-                                    <div class="flex flex-col items-end gap-1 text-[10px] font-bold text-slate-700 uppercase mt-1.5">
-                                        <span id="containerClinicPhone" class="flex items-center justify-end gap-1">
-                                            <svg class="w-3 h-3 text-slate-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.387a12.035 12.035 0 01-7.108-7.108c-.155-.44.01-1.01.387-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z" />
-                                            </svg>
-                                            <span id="outClinicPhone"></span>
-                                        </span>
-                                        <span id="containerClinicTiming" class="flex items-center justify-end gap-1">
-                                            <svg class="w-3 h-3 text-slate-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                            </svg>
-                                            <span id="outClinicTiming"></span>
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                        </header>
-
-                        <!-- Patient Info -->
-                        <div class="bg-slate-50/80 p-4 rounded-sm border-2 border-slate-400 mb-6">
-                            <div class="grid grid-cols-2 gap-y-2 text-sm">
-                                <div><span class="text-[10px] font-bold text-slate-600 uppercase mr-2">Patient:</span>
-                                    <span id="outPatientName" class="font-bold text-slate-950"></span></div>
-                                <div class="text-right"><span
-                                        class="text-[10px] font-bold text-slate-600 uppercase mr-2">Date:</span> <span
-                                        id="outVisitDate" class="font-semibold text-slate-900"></span></div>
-                                <div><span class="text-[10px] font-bold text-slate-600 uppercase mr-2">Age/Sex:</span>
-                                    <span id="outPatientAgeGender" class="font-semibold text-slate-900"></span></div>
-                                <div class="text-right"><span
-                                        class="text-[10px] font-bold text-slate-600 uppercase mr-2">RX No:</span> <span
-                                        id="outRxId" class="font-mono text-xs text-slate-950"></span></div>
-                            </div>
-                            <div class="mt-3 pt-3 border-t border-slate-200">
-                                <div class="grid grid-cols-1 gap-2 text-xs">
-                                    <div>
-                                        <span class="text-[10px] font-bold text-slate-600 uppercase mr-2">Chief Complaint:</span>
-                                        <span id="outChiefComplaint" class="font-semibold text-slate-900">-</span>
-                                    </div>
-                                    <div>
-                                        <span class="text-[10px] font-bold text-slate-600 uppercase mr-2">Diagnosis:</span>
-                                        <span id="outDiagnosis" class="font-semibold text-slate-900">-</span>
-                                    </div>
-                                    <div class="flex items-center mt-0.5">
-                                        <span class="text-[10px] font-bold text-slate-600 uppercase mr-2 flex-shrink-0">Allergies:</span>
-                                        <span id="outPatientAllergies" class="px-2.5 py-0.5 text-[11px] font-semibold text-slate-600 bg-slate-50 border border-slate-200 rounded-md inline-block break-words max-w-full">-</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Medical Content -->
-                        <div class="rx-content-area flex-grow overflow-hidden">
-                            <div class="mb-4"><span
-                                    class="text-5xl font-serif italic font-bold text-slate-800 leading-none">Rx</span>
-                            </div>
-                            <table class="w-full text-left border-collapse table-fixed">
-                                <thead>
-                                    <tr
-                                        class="border-b-2 border-slate-800 text-[10px] font-bold text-slate-600 uppercase">
-                                        <th class="py-2 w-8">#</th>
-                                        <th class="py-2">Medicine & Dosage</th>
-                                        <th class="py-2 text-center w-16">Frequency</th>
-                                        <th class="py-2 text-right w-20">Duration</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="outMedicineList" class="text-sm font-medium divide-y divide-slate-100">
-                                </tbody>
-                            </table>
-                        </div>
-
-                        <!-- Footer -->
-                        <footer class="mt-auto pt-6 border-t-2 border-slate-800">
-                            <div class="grid grid-cols-2 gap-8 mb-4">
-                                <div>
-                                    <h4 class="text-[10px] font-bold text-slate-600 uppercase mb-2">Advice &
-                                        Instructions</h4>
-                                    <ul id="outAdvice"
-                                        class="text-xs text-slate-800 space-y-1 list-disc pl-4 leading-relaxed"></ul>
-                                </div>
-                                <div class="flex flex-col items-end justify-end">
-                                    <div class="flex flex-col items-center">
-                                        <div class="doctor-signature-slot">
-                                            {% if user.doctor and user.doctor.signature %}
-                                            <img src="{{ user.doctor.signature.url }}" alt="Doctor Signature" class="doctor-signature-image">
-                                            {% else %}
-                                            <span aria-hidden="true"></span>
-                                            {% endif %}
-                                        </div>
-                                        <div class="w-40 border-b border-slate-900 mb-1"></div>
-                                        <p class="text-[10px] font-bold uppercase tracking-tighter text-slate-600 text-center">
-                                            Authorized Signature</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div
-                                class="flex justify-between items-center text-[9px] text-slate-600 font-bold uppercase tracking-widest border-t border-slate-300 pt-2">
-                                <span>Digital Prescription Document • Page 1 of 1</span>
-                                <span id="footerTimeStamp"></span>
-                            </div>
-                        </footer>
+        <!-- Hidden Template Page Container -->
+        <div class="hidden" aria-hidden="true">
+            <div id="prescription-template" class="a4-container text-slate-900 mx-auto">
+                <div class="page-border">
+                    <div class="rx-watermark" aria-hidden="true">
+                        {% if clinic and clinic.logo %}
+                        <img src="{{ clinic.logo.url }}" alt="" class="rx-watermark-logo">
+                        {% endif %}
                     </div>
+                    <!-- Clinic Header -->
+                    <header class="border-b-2 border-slate-800 pb-4 mb-6">
+                        <div class="flex items-start justify-between gap-6">
+                            <div class="flex items-center gap-3 min-w-0 flex-1">
+                                {% if clinic and clinic.logo %}
+                                <div class="flex-shrink-0">
+                                    <img src="{{ clinic.logo.url }}" alt="Clinic Logo" class="h-14 w-14 object-cover">
+                                </div>
+                                {% endif %}
+                                <div class="min-w-0">
+                                    <h1 id="outClinicName"
+                                        class="outClinicName text-2xl font-bold font-serif uppercase tracking-widest leading-tight break-words whitespace-normal">Clinic
+                                        {{clinic.clinic_name}}</h1>
+                                    <div id="outClinicSpecialist"
+                                        class="outClinicSpecialist text-[10px] font-bold text-slate-700 uppercase tracking-widest mt-0.5">
+                                        {% if clinic.doctor_specialist %}({{ clinic.doctor_specialist }}){% endif %}
+                                    </div>
+                                    <div id="containerClinicAddress" class="flex items-start gap-1 text-[10px] font-medium text-slate-700 uppercase tracking-wider mt-1.5">
+                                        <svg class="w-3 h-3 text-slate-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25s-7.5-4.108-7.5-11.25A7.5 7.5 0 1119.5 10.5z" />
+                                        </svg>
+                                        <span id="outClinicAddress" class="outClinicAddress break-words">{% if clinic.address %}{{ clinic.address }}{% endif %}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="text-right flex-shrink-0">
+                                <h2 id="outDoctorName" class="outDoctorName text-lg font-bold font-serif leading-tight">{{ user.doctor.name }}</h2>
+                                <p class="text-[10px] text-slate-700 uppercase tracking-[0.2em] mb-1">
+                                    {% if user.doctor.education %}{{ user.doctor.education }}{% endif %}
+                                    {% if user.doctor.education and user.doctor.specialization %} • {% endif %}
+                                    {% if user.doctor.specialization %}{{ user.doctor.specialization }}{% else %}{% endif %}
+                                </p>
+                                <div id="outClinicRegNo" class="outClinicRegNo text-[10px] font-bold text-slate-700 uppercase tracking-wider mt-0.5">
+                                    {% if clinic.reg_no %}Reg. No: {{ clinic.reg_no }}{% endif %}
+                                </div>
+                                <div class="flex flex-col items-end gap-1 text-[10px] font-bold text-slate-700 uppercase mt-1.5">
+                                    <span id="containerClinicPhone" class="flex items-center justify-end gap-1">
+                                        <svg class="w-3 h-3 text-slate-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.387a12.035 12.035 0 01-7.108-7.108c-.155-.44.01-1.01.387-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z" />
+                                        </svg>
+                                        <span id="outClinicPhone" class="outClinicPhone"></span>
+                                    </span>
+                                    <span id="containerClinicTiming" class="flex items-center justify-end gap-1">
+                                        <svg class="w-3 h-3 text-slate-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        <span id="outClinicTiming" class="outClinicTiming"></span>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </header>
+
+                    <!-- Patient Info -->
+                    <div class="bg-slate-50/80 p-4 rounded-sm border-2 border-slate-400 mb-6">
+                        <div class="grid grid-cols-2 gap-y-2 text-sm">
+                            <div><span class="text-[10px] font-bold text-slate-600 uppercase mr-2">Patient:</span>
+                                <span id="outPatientName" class="outPatientName font-bold text-slate-950"></span></div>
+                            <div class="text-right"><span
+                                    class="text-[10px] font-bold text-slate-600 uppercase mr-2">Date:</span> <span
+                                    id="outVisitDate" class="outVisitDate font-semibold text-slate-900"></span></div>
+                            <div><span class="text-[10px] font-bold text-slate-600 uppercase mr-2">Age/Sex:</span>
+                                <span id="outPatientAgeGender" class="outPatientAgeGender font-semibold text-slate-900"></span></div>
+                            <div class="text-right"><span
+                                    class="text-[10px] font-bold text-slate-600 uppercase mr-2">RX No:</span> <span
+                                    id="outRxId" class="outRxId font-mono text-xs text-slate-950"></span></div>
+                        </div>
+                        <div class="mt-3 pt-3 border-t border-slate-200">
+                            <div class="grid grid-cols-1 gap-2 text-xs">
+                                <div>
+                                    <span class="text-[10px] font-bold text-slate-600 uppercase mr-2">Chief Complaint:</span>
+                                    <span id="outChiefComplaint" class="outChiefComplaint font-semibold text-slate-900">-</span>
+                                </div>
+                                <div>
+                                    <span class="text-[10px] font-bold text-slate-600 uppercase mr-2">Diagnosis:</span>
+                                    <span id="outDiagnosis" class="outDiagnosis font-semibold text-slate-900">-</span>
+                                </div>
+                                <div class="flex items-center mt-0.5">
+                                    <span class="text-[10px] font-bold text-slate-600 uppercase mr-2 flex-shrink-0">Allergies:</span>
+                                    <span id="outPatientAllergies" class="outPatientAllergies px-2.5 py-0.5 text-[11px] font-semibold text-slate-600 bg-slate-50 border border-slate-200 rounded-md inline-block break-words max-w-full">-</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Medical Content -->
+                    <div class="rx-content-area flex-grow overflow-hidden">
+                        <div class="mb-4"><span
+                                class="text-5xl font-serif italic font-bold text-slate-800 leading-none">Rx</span>
+                        </div>
+                        <table class="w-full text-left border-collapse table-fixed">
+                            <thead>
+                                <tr
+                                    class="border-b-2 border-slate-800 text-[10px] font-bold text-slate-600 uppercase">
+                                    <th class="py-2 w-8">#</th>
+                                    <th class="py-2">Medicine & Dosage</th>
+                                    <th class="py-2 text-center w-16">Food</th>
+                                    <th class="py-2 text-center w-16">Frequency</th>
+                                    <th class="py-2 text-right w-20">Duration</th>
+                                </tr>
+                            </thead>
+                            <tbody id="outMedicineList" class="outMedicineList text-sm font-medium divide-y divide-slate-100">
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Footer -->
+                    <footer class="mt-auto pt-6 border-t-2 border-slate-800">
+                        <div class="grid grid-cols-2 gap-8 mb-4">
+                            <div>
+                                <h4 class="text-[10px] font-bold text-slate-600 uppercase mb-2">Advice & Instructions</h4>
+                                <ul id="outAdvice" class="outAdvice text-xs text-slate-800 space-y-1 list-disc pl-4 leading-relaxed"></ul>
+                            </div>
+                            <div class="flex flex-col items-end justify-end">
+                                <div class="flex flex-col items-center">
+                                    <div class="doctor-signature-slot">
+                                        {% if user.doctor.signature %}
+                                        <img src="{{ user.doctor.signature.url }}" alt="Doctor Signature" class="h-10 object-contain">
+                                        {% else %}
+                                        <span aria-hidden="true"></span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="w-40 border-b border-slate-900 mb-1"></div>
+                                    <p class="text-[10px] font-bold uppercase tracking-tighter text-slate-600 text-center">
+                                        Authorized Signature</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-[9px] text-slate-500 font-bold uppercase tracking-wider mb-1">
+                            <span>* AF-AfterFood / BF-BeforeFood</span>
+                        </div>
+                        <div
+                            class="flex justify-between items-center text-[9px] text-slate-600 font-bold uppercase tracking-widest border-t border-slate-300 pt-2">
+                            <span class="footerPageNum">Digital Prescription Document • Page 1 of 1</span>
+                            <span id="footerTimeStamp" class="footerTimeStamp"></span>
+                        </div>
+                    </footer>
                 </div>
             </div>
         </div>
@@ -511,6 +520,52 @@
         el.textContent = value && String(value).trim() ? value : fallback;
     }
 
+    function parseDurationDays(durationStr) {
+        if (!durationStr) return null;
+        const match = String(durationStr).trim().match(/^(\d+)\s*(.*)$/i);
+        if (!match) return null;
+        const value = parseInt(match[1], 10);
+        const unit = match[2].toLowerCase();
+        if (unit.includes('week') || unit.includes('wk')) {
+            return value * 7;
+        }
+        if (unit.includes('month')) {
+            return value * 30;
+        }
+        return value; // default to days
+    }
+
+    function calculateDisplayDosage(dosage, frequency, duration) {
+        const fallback = dosage || '';
+        if (!duration || !frequency) return fallback;
+
+        const freqStr = String(frequency).trim();
+        const freqParts = freqStr.split(/\s*-\s*/);
+        const isHyphenatedPattern = freqParts.length > 1 && freqParts.every(part => /^\d+(\.\d+)?$/.test(part));
+        const days = parseDurationDays(duration);
+
+        if (isHyphenatedPattern && days !== null && !isNaN(days)) {
+            const dailyCount = freqParts.reduce((sum, part) => sum + parseFloat(part), 0);
+            const totalUnits = dailyCount * days;
+
+            let doseMultiplier = 1;
+            let doseUnit = 'TAB';
+            if (dosage) {
+                const cleanDosage = String(dosage).trim();
+                const dosageMatch = cleanDosage.match(/^(\d+(?:\.\d+)?)\s*(.*)$/);
+                if (dosageMatch) {
+                    doseMultiplier = parseFloat(dosageMatch[1]);
+                    doseUnit = dosageMatch[2].trim() || 'TAB';
+                } else {
+                    doseUnit = cleanDosage;
+                }
+            }
+            const calculatedTotal = totalUnits * doseMultiplier;
+            return `${calculatedTotal} ${doseUnit.toUpperCase()}`;
+        }
+        return fallback;
+    }
+
     function renderMedicines(medicines) {
         const tbody = document.getElementById('outMedicineList');
         if (!tbody) return;
@@ -518,19 +573,34 @@
         tbody.innerHTML = '';
         const rows = Array.isArray(medicines) ? medicines : [];
         if (!rows.length) {
-            tbody.innerHTML = '<tr><td colspan="4" class="py-3 text-center text-xs text-slate-400">No medicines listed</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="5" class="py-3 text-center text-xs text-slate-400">No medicines listed</td></tr>';
             return;
         }
 
-        rows.forEach((m, i) => {
+        // Sort by food: BF first, then AF, then empty/none
+        const sortedMedicines = [...rows].sort((a, b) => {
+            const foodA = (a.food || '').toUpperCase();
+            const foodB = (b.food || '').toUpperCase();
+            const getPriority = (food) => {
+                if (food.includes('BF')) return 1;
+                if (food.includes('AF')) return 2;
+                return 3;
+            };
+            return getPriority(foodA) - getPriority(foodB);
+        });
+
+        sortedMedicines.forEach((m, i) => {
             const tr = document.createElement('tr');
             tr.className = 'border-b border-slate-200';
+            const displayDosage = calculateDisplayDosage(m.dosage, m.frequency || m.freq, m.duration);
+            const foodKeyword = m.food || '-';
             tr.innerHTML = `
                 <td class="py-3 text-slate-700 font-bold font-mono text-xs">${(i + 1).toString().padStart(2, '0')}</td>
                 <td class="py-3 pr-2">
                     <div class="font-bold text-slate-900 text-xs sm:text-sm">${m.name || '-'}</div>
-                    <div class="text-[10px] text-slate-600 font-medium uppercase tracking-tighter">${m.dosage || ''}</div>
+                    <div class="text-[10px] text-slate-600 font-medium uppercase tracking-tighter">${displayDosage}</div>
                 </td>
+                <td class="py-3 px-1 text-center text-xs text-slate-700 font-bold">${foodKeyword}</td>
                 <td class="py-3 px-1 text-center text-xs text-slate-700 font-medium">${m.frequency || m.freq || '-'}</td>
                 <td class="py-3 pl-1 text-right text-xs text-slate-700 font-bold font-mono whitespace-normal break-words">${m.duration || '-'}</td>
             `;
@@ -598,156 +668,251 @@
         };
     }
 
+    function helperSetText(parentEl, selector, value, fallback = '---') {
+        const el = parentEl.querySelector(selector);
+        if (!el) return;
+        el.textContent = value && String(value).trim() ? value : fallback;
+    }
+
     function applyPrescriptionPreview(source = {}) {
         const data = buildPreviewData(source);
+        const wrapper = document.getElementById('prescription-wrapper');
+        const template = document.getElementById('prescription-template');
+        if (!wrapper || !template) return;
 
-        // --- DYNAMIC MATCHED SCALING FOR CLINIC NAME & DOCTOR NAME ---
-        setText('outClinicName', data.clinicName, 'Clinic');
-        setText('outDoctorName', data.doctorName, 'Doctor');
+        // Clear wrapper
+        wrapper.innerHTML = '';
 
-        const clinicNameEl = document.getElementById('outClinicName');
-        const doctorNameEl = document.getElementById('outDoctorName');
+        // Chunk medicines
+        const medicines = Array.isArray(data.medicines) ? data.medicines : [];
+        const sortedMedicines = [...medicines].sort((a, b) => {
+            const foodA = (a.food || '').toUpperCase();
+            const foodB = (b.food || '').toUpperCase();
+            const getPriority = (food) => {
+                if (food.includes('BF')) return 1;
+                if (food.includes('AF')) return 2;
+                return 3;
+            };
+            return getPriority(foodA) - getPriority(foodB);
+        });
 
-        const clinicLen = (data.clinicName || '').length;
-        const doctorLen = (data.doctorName || '').length;
-        const maxLen = Math.max(clinicLen, doctorLen);
-
-        let targetFontSize = '20px';
-        let clinicLetterSpacing = '0.08em';
-
-        if (maxLen > 45) {
-            targetFontSize = '15px';
-            clinicLetterSpacing = '0.02em';
-        } else if (maxLen > 30) {
-            targetFontSize = '18px';
-            clinicLetterSpacing = '0.04em';
-        } else if (maxLen > 18) {
-            targetFontSize = '21px';
-            clinicLetterSpacing = '0.06em';
+        const chunks = [];
+        if (sortedMedicines.length === 0) {
+            chunks.push([]);
         } else {
-            targetFontSize = '24px';
-            clinicLetterSpacing = '0.08em';
+            for (let i = 0; i < sortedMedicines.length; i += 7) {
+                chunks.push(sortedMedicines.slice(i, i + 7));
+            }
         }
 
-        // Apply matching font sizes and line heights
-        if (clinicNameEl) {
-            clinicNameEl.style.fontSize = targetFontSize;
-            clinicNameEl.style.letterSpacing = clinicLetterSpacing;
-            clinicNameEl.style.lineHeight = '1.2';
-        }
-        if (doctorNameEl) {
-            doctorNameEl.style.fontSize = targetFontSize;
-            doctorNameEl.style.letterSpacing = '0.02em';
-            doctorNameEl.style.lineHeight = '1.2';
-        }
+        const totalPages = chunks.length;
+        const timeStampStr = 'SECURE RX: ' + Date.now().toString().slice(-8) + ' • ' + new Date().toLocaleDateString();
 
-        // --- DYNAMIC SCALING FOR SPECIALIST ---
-        const specialistEl = document.getElementById('outClinicSpecialist');
-        if (specialistEl) {
-            const specVal = (data.doctorSpecialist || '').trim();
-            if (specVal) {
-                specialistEl.style.display = 'block';
-                specialistEl.textContent = '(' + specVal + ')';
-                const specLen = specVal.length;
-                if (specLen > 35) {
-                    specialistEl.style.fontSize = '10px';
-                    specialistEl.style.letterSpacing = '0.05em';
-                } else if (specLen > 20) {
-                    specialistEl.style.fontSize = '11px';
-                    specialistEl.style.letterSpacing = '0.08em';
+        chunks.forEach((chunk, pageIndex) => {
+            const pageNum = pageIndex + 1;
+            const clone = template.cloneNode(true);
+            clone.id = `prescription-page-${pageNum}`;
+            clone.classList.remove('hidden');
+
+            // Apply fields
+            helperSetText(clone, '.outClinicName', data.clinicName, 'Clinic');
+            helperSetText(clone, '.outDoctorName', data.doctorName, 'Doctor');
+
+            const clinicNameEl = clone.querySelector('.outClinicName');
+            const doctorNameEl = clone.querySelector('.outDoctorName');
+
+            const clinicLen = (data.clinicName || '').length;
+            const doctorLen = (data.doctorName || '').length;
+            const maxLen = Math.max(clinicLen, doctorLen);
+
+            let targetFontSize = '20px';
+            let clinicLetterSpacing = '0.08em';
+
+            if (maxLen > 45) {
+                targetFontSize = '15px';
+                clinicLetterSpacing = '0.02em';
+            } else if (maxLen > 30) {
+                targetFontSize = '18px';
+                clinicLetterSpacing = '0.04em';
+            } else if (maxLen > 18) {
+                targetFontSize = '21px';
+                clinicLetterSpacing = '0.06em';
+            } else {
+                targetFontSize = '24px';
+                clinicLetterSpacing = '0.08em';
+            }
+
+            if (clinicNameEl) {
+                clinicNameEl.style.fontSize = targetFontSize;
+                clinicNameEl.style.letterSpacing = clinicLetterSpacing;
+                clinicNameEl.style.lineHeight = '1.2';
+            }
+            if (doctorNameEl) {
+                doctorNameEl.style.fontSize = targetFontSize;
+                doctorNameEl.style.letterSpacing = '0.02em';
+                doctorNameEl.style.lineHeight = '1.2';
+            }
+
+            const specialistEl = clone.querySelector('.outClinicSpecialist');
+            if (specialistEl) {
+                const specVal = (data.doctorSpecialist || '').trim();
+                if (specVal) {
+                    specialistEl.style.display = 'block';
+                    specialistEl.textContent = '(' + specVal + ')';
+                    const specLen = specVal.length;
+                    if (specLen > 35) {
+                        specialistEl.style.fontSize = '10px';
+                        specialistEl.style.letterSpacing = '0.05em';
+                    } else if (specLen > 20) {
+                        specialistEl.style.fontSize = '11px';
+                        specialistEl.style.letterSpacing = '0.08em';
+                    } else {
+                        specialistEl.style.fontSize = '12px';
+                        specialistEl.style.letterSpacing = '0.1em';
+                    }
                 } else {
-                    specialistEl.style.fontSize = '12px';
-                    specialistEl.style.letterSpacing = '0.1em';
+                    specialistEl.style.display = 'none';
                 }
-            } else {
-                specialistEl.style.display = 'none';
             }
-        }
 
-        // --- REG. NO. RENDERING ---
-        const regNoEl = document.getElementById('outClinicRegNo');
-        if (regNoEl) {
-            const regVal = (data.clinicRegNo || '').trim();
-            if (regVal) {
-                regNoEl.style.display = 'block';
-                regNoEl.textContent = 'Reg. No: ' + regVal;
-            } else {
-                regNoEl.style.display = 'none';
-            }
-        }
-
-        // --- DYNAMIC SCALING FOR CLINIC ADDRESS ---
-        const addressContainer = document.getElementById('containerClinicAddress');
-        if (addressContainer) {
-            const addrVal = (data.clinicAddress || '').replace(/\s+/g, ' ').trim();
-            if (addrVal) {
-                addressContainer.style.display = 'flex';
-                setText('outClinicAddress', addrVal);
-                const addrLen = addrVal.length;
-                if (addrLen > 80) {
-                    addressContainer.style.fontSize = '10px';
-                    addressContainer.style.letterSpacing = '0.02em';
-                } else if (addrLen > 45) {
-                    addressContainer.style.fontSize = '11px';
-                    addressContainer.style.letterSpacing = '0.04em';
+            const regNoEl = clone.querySelector('.outClinicRegNo');
+            if (regNoEl) {
+                const regVal = (data.clinicRegNo || '').trim();
+                if (regVal) {
+                    regNoEl.style.display = 'block';
+                    regNoEl.textContent = 'Reg. No: ' + regVal;
                 } else {
-                    addressContainer.style.fontSize = '12px';
-                    addressContainer.style.letterSpacing = '0.05em';
+                    regNoEl.style.display = 'none';
                 }
-            } else {
-                addressContainer.style.display = 'none';
             }
-        } else {
-            setText('outClinicAddress', data.clinicAddress, '');
-        }
 
-        const phoneContainer = document.getElementById('containerClinicPhone');
-        if (phoneContainer) {
-            const phoneVal = (data.clinicPhone || '').trim();
-            if (phoneVal) {
-                phoneContainer.style.display = 'inline-flex';
-                setText('outClinicPhone', phoneVal);
-            } else {
-                phoneContainer.style.display = 'none';
+            const addressContainer = clone.querySelector('#containerClinicAddress');
+            const addressEl = clone.querySelector('.outClinicAddress');
+            if (addressContainer && addressEl) {
+                const addrVal = (data.clinicAddress || '').replace(/\s+/g, ' ').trim();
+                if (addrVal) {
+                    addressContainer.style.display = 'flex';
+                    addressEl.textContent = addrVal;
+                    const addrLen = addrVal.length;
+                    if (addrLen > 80) {
+                        addressContainer.style.fontSize = '10px';
+                        addressContainer.style.letterSpacing = '0.02em';
+                    } else if (addrLen > 45) {
+                        addressContainer.style.fontSize = '11px';
+                        addressContainer.style.letterSpacing = '0.04em';
+                    } else {
+                        addressContainer.style.fontSize = '12px';
+                        addressContainer.style.letterSpacing = '0.05em';
+                    }
+                } else {
+                    addressContainer.style.display = 'none';
+                }
             }
-        } else {
-            setText('outClinicPhone', data.clinicPhone, '');
-        }
 
-        const timingContainer = document.getElementById('containerClinicTiming');
-        if (timingContainer) {
-            const timingText = (data.clinicTiming || '').replace(/^Timing\s*:\s*/i, '').trim();
-            if (timingText) {
-                timingContainer.style.display = 'inline-flex';
-                setText('outClinicTiming', timingText);
-            } else {
-                timingContainer.style.display = 'none';
+            const phoneContainer = clone.querySelector('#containerClinicPhone');
+            const phoneEl = clone.querySelector('.outClinicPhone');
+            if (phoneContainer && phoneEl) {
+                const phoneVal = (data.clinicPhone || '').trim();
+                if (phoneVal) {
+                    phoneContainer.style.display = 'inline-flex';
+                    phoneEl.textContent = phoneVal;
+                } else {
+                    phoneContainer.style.display = 'none';
+                }
             }
-        } else {
-            setText('outClinicTiming', data.clinicTiming, '');
-        }
-        setText('outPatientName', data.patientName);
-        setText('outPatientAgeGender', data.patientAgeGender);
-        setText('outVisitDate', data.visitDate);
 
-        renderClinicalInfo(data.chiefComplaint, data.diagnosis);
-        renderAllergy(data.allergies);
-        renderMedicines(data.medicines);
-        renderAdvice(data.advice);
-
-        const rxIdEl = document.getElementById('outRxId');
-        if (rxIdEl) {
-            const normalizedRx = normalizeText(data.rxNumber);
-            if (normalizedRx) {
-                rxIdEl.textContent = normalizedRx;
-            } else if (data.patientId) {
-                rxIdEl.textContent = `#RX-${data.patientId}`;
-            } else {
-                rxIdEl.textContent = '#RX-0000';
+            const timingContainer = clone.querySelector('#containerClinicTiming');
+            const timingEl = clone.querySelector('.outClinicTiming');
+            if (timingContainer && timingEl) {
+                const timingText = (data.clinicTiming || '').replace(/^Timing\s*:\s*/i, '').trim();
+                if (timingText) {
+                    timingContainer.style.display = 'inline-flex';
+                    timingEl.textContent = timingText;
+                } else {
+                    timingContainer.style.display = 'none';
+                }
             }
-        }
-        const stamp = document.getElementById('footerTimeStamp');
-        if (stamp) stamp.textContent = 'SECURE RX: ' + Date.now().toString().slice(-8) + ' • ' + new Date().toLocaleDateString();
+
+            helperSetText(clone, '.outPatientName', data.patientName);
+            helperSetText(clone, '.outPatientAgeGender', data.patientAgeGender);
+            helperSetText(clone, '.outVisitDate', data.visitDate);
+
+            // Clinical Info
+            const complaintEl = clone.querySelector('.outChiefComplaint');
+            const diagnosisEl = clone.querySelector('.outDiagnosis');
+            if (complaintEl) complaintEl.textContent = normalizeText(data.chiefComplaint) || '-';
+            if (diagnosisEl) diagnosisEl.textContent = normalizeText(data.diagnosis) || '-';
+
+            // Allergies
+            const allergyText = clone.querySelector('.outPatientAllergies');
+            if (allergyText) {
+                const value = (data.allergies || '').trim();
+                if (value && value.toLowerCase() !== 'none' && value !== '-') {
+                    allergyText.textContent = value;
+                    allergyText.className = "outPatientAllergies px-2.5 py-0.5 text-[11px] font-semibold text-red-800 bg-red-50 border border-red-200 rounded-md inline-block break-words max-w-full";
+                } else {
+                    allergyText.textContent = 'None';
+                    allergyText.className = "outPatientAllergies px-2.5 py-0.5 text-[11px] font-semibold text-slate-600 bg-slate-50 border border-slate-200 rounded-md inline-block break-words max-w-full";
+                }
+            }
+
+            // Medicines
+            const tbody = clone.querySelector('.outMedicineList');
+            if (tbody) {
+                tbody.innerHTML = '';
+                if (chunk.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="py-3 text-center text-xs text-slate-400">No medicines listed</td></tr>';
+                } else {
+                    chunk.forEach((m, i) => {
+                        const tr = document.createElement('tr');
+                        tr.className = 'border-b border-slate-200';
+                        const displayDosage = calculateDisplayDosage(m.dosage, m.frequency || m.freq, m.duration);
+                        const foodKeyword = m.food || '-';
+                        const indexNum = (pageIndex * 7) + (i + 1);
+                        tr.innerHTML = `
+                            <td class="py-3 text-slate-700 font-bold font-mono text-xs">${indexNum.toString().padStart(2, '0')}</td>
+                            <td class="py-3 pr-2">
+                                <div class="font-bold text-slate-900 text-xs sm:text-sm">${m.name || '-'}</div>
+                                <div class="text-[10px] text-slate-600 font-medium uppercase tracking-tighter">${displayDosage}</div>
+                            </td>
+                            <td class="py-3 px-1 text-center text-xs text-slate-700 font-bold">${foodKeyword}</td>
+                            <td class="py-3 px-1 text-center text-xs text-slate-700 font-medium">${m.frequency || m.freq || '-'}</td>
+                            <td class="py-3 pl-1 text-right text-xs text-slate-700 font-bold font-mono whitespace-normal break-words">${m.duration || '-'}</td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                }
+            }
+
+            // Advice
+            const adviceList = clone.querySelector('.outAdvice');
+            if (adviceList) {
+                const lines = (data.advice || '').split('\n').map(line => line.trim()).filter(Boolean);
+                adviceList.innerHTML = lines.length
+                    ? lines.map(line => `<li class="pl-2">${line}</li>`).join('')
+                    : '<li>Standard dental clinical follow-up protocol.</li>';
+            }
+
+            const rxIdEl = clone.querySelector('.outRxId');
+            if (rxIdEl) {
+                const normalizedRx = normalizeText(data.rxNumber);
+                if (normalizedRx) {
+                    rxIdEl.textContent = normalizedRx;
+                } else if (data.patientId) {
+                    rxIdEl.textContent = `#RX-${data.patientId}`;
+                } else {
+                    rxIdEl.textContent = '#RX-0000';
+                }
+            }
+
+            const stamp = clone.querySelector('.footerTimeStamp');
+            if (stamp) stamp.textContent = timeStampStr;
+
+            const pageNumEl = clone.querySelector('.footerPageNum');
+            if (pageNumEl) pageNumEl.textContent = `Digital Prescription Document • Page ${pageNum} of ${totalPages}`;
+
+            wrapper.appendChild(clone);
+        });
     }
 
     let prescriptionPrefillAbortController = null;
@@ -878,7 +1043,7 @@
     function printPrescription(triggerButton = null) {
         if (isPrintRunning) return;
 
-        const source = document.getElementById('prescription-content');
+        const source = document.getElementById('prescription-wrapper');
         if (!source) {
             window.print();
             return;
@@ -891,7 +1056,7 @@
         }
 
         const originalTitle = document.title;
-        const patientName = (document.getElementById('outPatientName')?.textContent || '').trim();
+        const patientName = (document.querySelector('.outPatientName')?.textContent || '').trim();
         if (patientName) {
             document.title = `Prescription_${patientName.replace(/\s+/g, '_')}`;
         } else {
@@ -919,7 +1084,7 @@
         const printRoot = document.createElement('div');
         printRoot.id = 'rx-print-root';
         const clone = source.cloneNode(true);
-        clone.id = 'prescription-content-print';
+        clone.id = 'prescription-wrapper-print';
         printRoot.appendChild(clone);
         document.body.appendChild(printRoot);
 
@@ -991,4 +1156,28 @@
         const name = document.getElementById('outPatientName')?.textContent || 'Patient';
         window.location.href = `mailto:?subject=Dental Prescription: ${name}&body=The clinical prescription has been generated and is ready for your review.`;
     }
+
+    // Self-executing tests for total tab calculation on page load
+    (function runPrescriptionCalculationTests() {
+        const testCases = [
+            { dosage: '1 Tab', frequency: '1-0-1', duration: '5 Days', expected: '10 TAB' },
+            { dosage: '1 TAB', frequency: '1-1-1', duration: '3 Days', expected: '9 TAB' },
+            { dosage: '2 Tabs', frequency: '1-0-1', duration: '5 Days', expected: '20 TABS' },
+            { dosage: '1 Capsule', frequency: '1-0-1-1', duration: '10 Days', expected: '30 CAPSULE' },
+            { dosage: '1 Tab', frequency: 'SOS', duration: '3 Days', expected: '1 Tab' },
+            { dosage: '2 Tabs', frequency: 'once daily', duration: '5 Days', expected: '2 Tabs' },
+            { dosage: '10ml', frequency: '1-0-1', duration: '1 Week', expected: '140 ML' },
+            { dosage: '1 Tab', frequency: '1-0-1', duration: '1 Month', expected: '60 TAB' }
+        ];
+
+        console.group('Prescription Generator Calculation Tests');
+        testCases.forEach((tc, idx) => {
+            const result = calculateDisplayDosage(tc.dosage, tc.frequency, tc.duration);
+            const passed = result.toUpperCase() === tc.expected.toUpperCase();
+            console.log(
+                `Test #${idx + 1}: Input (${tc.dosage}, ${tc.frequency}, ${tc.duration}) -> Got: "${result}", Expected: "${tc.expected}" - ${passed ? 'PASSED ✅' : 'FAILED ❌'}`
+            );
+        });
+        console.groupEnd();
+    })();
 </script>
