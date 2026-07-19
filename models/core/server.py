@@ -57,7 +57,24 @@ def run_embedded_django_server(port: int):
             env=migration_env,
         )
 
-        os.execv(python_exe, [python_exe, manage_script, 'runserver', f'0.0.0.0:{port}'])
+        # --- WAITRESS (replaces runserver) ---
+        # runserver is single-threaded and causes IPv6 DNS delays on Windows hotspot.
+        # Waitress is multi-threaded, production-grade, and works perfectly on LAN.
+        waitress_script = str(project_dir.parent.parent / 'start_clinic_server.py')
+        if Path(waitress_script).exists():
+            os.execv(python_exe, [python_exe, waitress_script])
+        else:
+            # Fallback: launch waitress inline via subprocess args
+            os.execv(python_exe, [
+                python_exe, '-c',
+                f'import sys; sys.path.insert(0, r"{project_dir}"); '
+                f'from waitress import serve; '
+                f'import django; import os; '
+                f'os.environ["DJANGO_SETTINGS_MODULE"] = "clinic.settings"; '
+                f'django.setup(); '
+                f'from clinic.wsgi import application; '
+                f'serve(application, host="0.0.0.0", port={port}, threads=8)'
+            ])
 
     from django.core.management import execute_from_command_line
 
