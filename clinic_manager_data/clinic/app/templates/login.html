@@ -18,7 +18,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>{% if clinic and clinic.clinic_name %}{{ clinic.clinic_name }}{% else %}DentaCare Pro{% endif %} – Dental Clinic Management System</title>
     {% load static %}
-    <script src="{% static 'vendor/tailwindcss/browser.js' %}"></script>
+    <script src="{% static 'vendor/tailwindcss/tailwind.js' %}"></script>
     <script>
       tailwind.config = {
         theme: {
@@ -355,7 +355,7 @@
             </div>
           </div>
 {% load static %}
-<script src="{% static 'vendor/htmx/htmx-2.0.4.min.js' %}"></script>
+<script src="{% static 'vendor/htmx/htmx-1.9.10.min.js' %}"></script>
 
 
           <form id="login-form" 

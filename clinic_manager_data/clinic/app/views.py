@@ -95,13 +95,14 @@ class CustomLogoutView(TemplateView):
 
 class HtmxLoginView(TemplateView):
     
+    @csrf_exempt
     def get(self, request):
         clinic = ClinicInformation.objects.first()
         if request.user.is_authenticated:
             return TemplateView.as_view(template_name="base.html")(request)
         else:
             return render(request, "login.html", {"clinic": clinic})
-
+    @csrf_exempt    
     def post(self, request):
         email = request.POST.get("email")
         password = request.POST.get("password")
@@ -310,23 +311,18 @@ def _normalize_dashboard_revenue_selection(selection_raw, reference_date):
 
 
 def _daily_patient_treatment_analysis():
-    # Limit to last 500 records for dashboard performance
-    # Full table scan is expensive as patient records grow
-    recent_qs = DailyPatient.objects.order_by('-created_at')[:500]
+    daily_patients = DailyPatient.objects.all()
     treatment_counter = Counter()
 
-    for raw_treatments in recent_qs.values_list('treatments', flat=True):
+    for raw_treatments in daily_patients.values_list('treatments', flat=True):
         treatment_counter.update(_split_treatment_names(raw_treatments))
-
-    # Also get the total count separately (efficient COUNT query)
-    total_count = DailyPatient.objects.count()
 
     treatment_pairs = treatment_counter.most_common(6)
     if not treatment_pairs:
         treatment_pairs = [('No treatment data', 1)]
 
     return {
-        'daily_patient_count': total_count,
+        'daily_patient_count': daily_patients.count(),
         'daily_treatment_total': sum(treatment_counter.values()),
         'daily_treatment_labels': [label for label, _ in treatment_pairs],
         'daily_treatment_values': [count for _, count in treatment_pairs],
@@ -362,13 +358,8 @@ def _dashboard_chart_payload(selection_raw):
 class IndexView(LoginRequiredMixin, TemplateView):
     template_name = 'base.html'
     def get(self, request):
-        # Use select_related to avoid extra DB hit for clinic data
-        clinic_data = ClinicInformation.objects.first()
-        appt_count = appoinments.objects.count()
-        return render(request, self.template_name, {
-            "clinic": clinic_data,
-            "appoinment": appt_count,
-        })
+        ClinicInformationdata=ClinicInformation.objects.first()  # ensure clinic info exists for sidebar display
+        return render(request, self.template_name, {"clinic": ClinicInformationdata,"appoinment":appoinments.objects.count()})
 
 # --------------------------
 class DashboardPartialView(LoginRequiredMixin, TemplateView):
