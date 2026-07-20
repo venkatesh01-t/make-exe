@@ -4,6 +4,11 @@
   font-family: 'Inter', sans-serif;
 }
 
+html, body {
+  overflow-x: hidden;
+  width: 100%;
+}
+
 ::-webkit-scrollbar {
   width: 6px;
 }
@@ -243,12 +248,13 @@
 
 .card-hover:hover {
   transform: translateY(-4px);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12) !important;
 }
 
 .stat-card {
   position: relative;
   overflow: hidden;
+  box-shadow: 0 8px 20px rgba(0,0,0,.08) !important;
 }
 
 .stat-card::before {

@@ -511,4 +511,70 @@ class SettingsClearTemporaryDataView(LoginRequiredMixin, TemplateView):
             }
         })
         return response
+
+
+class ProfileEditModalView(LoginRequiredMixin, TemplateView):
+    template_name = "ext/settings/profile_modal.html"
+
+    def get(self, request):
+        response = render(request, self.template_name, {"user": request.user})
+        response["HX-Trigger-After-Settle"] = json.dumps({"openModal": "profileEditModal"})
+        return response
+
+
+class ProfileUpdateView(LoginRequiredMixin, TemplateView):
+    def post(self, request):
+        from django.contrib.auth import update_session_auth_hash
+        user = request.user
+        username = request.POST.get("username", "").strip()
+        email = request.POST.get("email", "").strip()
+        phonenumber = request.POST.get("phonenumber", "").strip()
+        name = request.POST.get("name", "").strip()
+        password = request.POST.get("password")
+
+        if not username or not email or not name:
+            response = HttpResponse()
+            response["HX-Trigger"] = json.dumps({
+                "showNotification": {
+                    "message": "Username, Email and Full Name are required.",
+                    "type": "error",
+                    "duration": 4000
+                }
+            })
+            return response
+
+        if User.objects.filter(username=username).exclude(pk=user.pk).exists():
+            response = HttpResponse()
+            response["HX-Trigger"] = json.dumps({
+                "showNotification": {
+                    "message": f"Username '{username}' is already taken.",
+                    "type": "error",
+                    "duration": 4000
+                }
+            })
+            return response
+
+        user.username = username
+        user.email = email
+        user.phone_number = phonenumber
+
+        parts = name.split(" ", 1)
+        user.first_name = parts[0]
+        user.last_name = parts[1] if len(parts) > 1 else ""
+
+        if user.custom_permissions == "doctor" and user.doctor:
+            user.doctor.name = name
+            user.doctor.save()
+
+        if password:
+            user.set_password(password)
+            user.save()
+            update_session_auth_hash(request, user)
+        else:
+            user.save()
+
+        response = HttpResponse()
+        response["HX-Redirect"] = reverse("clinic:index")
+        return response
+
         

@@ -165,11 +165,15 @@ function syncBodyScrollLock() {
 }
 
 function openModal(id) {
+    console.log("openModal called with ID:", id);
     document.querySelectorAll('.action-menu')
         .forEach(m => m.classList.add('hidden'));
 
     const modal = document.getElementById(id);
-    if (!modal) return;
+    if (!modal) {
+        console.error("openModal failed: element with ID '" + id + "' not found in DOM.");
+        return;
+    }
 
     modal.classList.remove('hidden');
     syncBodyScrollLock();
@@ -179,6 +183,7 @@ function openModal(id) {
         const content = modal.querySelector('.modal-content');
         if (backdrop) backdrop.classList.add('modal-visible');
         if (content) content.classList.add('modal-visible');
+        console.log("openModal visibility transitions applied for ID:", id);
     });
 }
 
@@ -203,8 +208,14 @@ function openModal1(id) {
 }
 
 document.body.addEventListener("openModal", function (evt) {
+    console.log("openModal custom event received on body. Event detail:", evt.detail);
     if (evt.detail) {
-        openModal(evt.detail);
+        let modalId = evt.detail;
+        if (typeof evt.detail === 'object' && evt.detail !== null) {
+            modalId = evt.detail.value || evt.detail.id || evt.detail;
+        }
+        console.log("Target modal ID resolved to:", modalId);
+        openModal(modalId);
     }
 });
 

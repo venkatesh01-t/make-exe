@@ -35,7 +35,7 @@
     <div class="sidebar-header flex items-center gap-3 px-6 py-5 border-b border-gray-100">
       <div class="sidebar-logo w-10 h-10 rounded-xl flex items-center justify-center shadow-lg 
     {% if not clinic.logo %}bg-gradient-to-br from-teal-500 to-teal-700 shadow-teal-200{% endif %} 
-    overflow-hidden">
+    overflow-hidden flex-shrink-0">
 
         {% if clinic.logo %}
         <img src="{{ clinic.logo.url }}" alt="Clinic Logo" class="w-full h-full object-contain">
@@ -47,18 +47,18 @@
         {% endif %}
 
       </div>
-      <div class="sidebar-header-text">
-        <h1 class="text-lg font-bold text-gray-800 tracking-tight">{{clinic.clinic_name}}</h1>
-        <p class="text-xs text-gray-400 font-medium">Clinic Management</p>
+      <div class="sidebar-header-text min-w-0 flex-1">
+        <h1 class="text-sm font-bold text-gray-800 tracking-tight line-clamp-2 leading-tight" title="{{clinic.clinic_name}}">{{clinic.clinic_name}}</h1>
+        <p class="text-[10px] text-gray-400 font-medium uppercase tracking-wider mt-0.5">Clinic Management</p>
       </div>
       <!-- Desktop Toggle Button -->
-      <button id="desktopToggleBtn" class="hidden lg:flex ml-auto p-2 rounded-xl hover:bg-gray-100 transition-colors">
+      <button id="desktopToggleBtn" class="hidden lg:flex ml-auto p-2 rounded-xl hover:bg-gray-100 transition-colors flex-shrink-0">
         <svg class="w-5 h-5 text-gray-500 transform transition-transform duration-300" id="toggleIcon" fill="none"
           stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
         </svg>
       </button>
-      <button class="lg:hidden ml-auto p-1 rounded-lg hover:bg-gray-100" onclick="toggleSidebar()">
+      <button class="lg:hidden ml-auto p-1 rounded-lg hover:bg-gray-100 flex-shrink-0" onclick="toggleSidebar()">
         <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
         </svg>
@@ -275,12 +275,12 @@
   </aside>
 
   <!-- Main Content Shell -->
-  <div id="main-wrapper" class="lg:ml-72 min-h-screen transition-all duration-450">
+  <div id="main-wrapper" class="lg:ml-72 min-h-screen transition-all duration-450 overflow-x-hidden">
     <!-- Navbar -->
     <header class="glass-nav sticky top-0 z-30 px-4 sm:px-6 lg:px-8 py-3">
       <div class="flex items-center justify-between">
-        <div class="flex items-center gap-3 sm:gap-4">
-          <button id="hamburgerBtn" class="hamburger-btn lg:hidden p-2 rounded-xl hover:bg-gray-100 transition"
+        <div class="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+          <button id="hamburgerBtn" class="hamburger-btn lg:hidden pl-0 pr-2 py-1.5 rounded-xl hover:bg-gray-100 transition"
             onclick="toggleSidebar()">
             <svg class="w-6 h-6 text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
               stroke-linecap="round" stroke-linejoin="round">
@@ -307,13 +307,13 @@
           </div>
 
           <div class="min-w-0">
-            <h2 id="pageTitle" class="text-lg sm:text-xl font-bold text-gray-800 truncate">Dashboard</h2>
+            <h2 id="pageTitle" class="text-sm sm:text-xl font-bold text-gray-800 line-clamp-2 sm:truncate">Dashboard</h2>
             <p id="breadcrumb" class="text-xs text-gray-400 hidden sm:block truncate">Home / Dashboard</p>
           </div>
         </div>
-        <div class="flex items-center gap-2 sm:gap-4">
+        <div class="flex-shrink-0 flex items-center gap-2 sm:gap-4">
           <!-- theme toggle -->
-          <button id="themeToggleBtn" class="p-2.5 rounded-xl hover:bg-gray-100 transition text-gray-500"
+          <button id="themeToggleBtn" class="p-1.5 sm:p-2.5 rounded-xl hover:bg-gray-100 transition text-gray-500"
             onclick="toggleTheme()" title="Toggle dark/light mode">
             <svg id="themeIcon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <!-- default icon replaced by script -->
@@ -334,13 +334,13 @@
               hx-on::after-request="setActivePage(document.querySelector('[data-page=patients]'), 'Patients', 'Home / Patients')"
               class="bg-transparent border-none text-sm text-gray-600 placeholder-gray-400 w-full focus:outline-none">
           </div>
-          <button class="md:hidden p-2.5 rounded-xl hover:bg-gray-100 transition" onclick="toggleMobileSearch()">
+          <button class="md:hidden p-1.5 sm:p-2.5 rounded-xl hover:bg-gray-100 transition" onclick="toggleMobileSearch()">
             <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
           </button>
-          <button class="relative p-2.5 rounded-xl hover:bg-gray-100 transition" 
+          <button class="relative p-1.5 sm:p-2.5 rounded-xl hover:bg-gray-100 transition" 
                   hx-get="{% url 'clinic:notifications_dropdown' %}"
                   hx-target="#notificationsDropdown"
                   hx-swap="innerHTML"
@@ -425,14 +425,19 @@
               <!-- Menu -->
               <div class="py-1">
 
-                <a href="#" class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50">
+                <a href="#"
+                   hx-get="{% url 'clinic:profile_edit_modal' %}"
+                   hx-target="#dynamicModalContainer"
+                   hx-swap="innerHTML"
+                   onclick="setTimeout(closeAllDropdowns, 50)"
+                   class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50">
                   <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                       d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                   </svg>
                   My Profile
                 </a>
-
+{% if user.custom_permissions == "admin" %}
                 <a class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
                   hx-get="{% url 'clinic:settings_partial' %}" hx-target="#mainContent"
                   hx-swap="innerHTML transition:true"
@@ -453,7 +458,7 @@
 
                   Settings
                 </a>
-
+{% endif %}
               </div>
 
               <!-- Logout -->
@@ -526,7 +531,7 @@
   <!-- Modal Container -->
   <div id="modalContainer"></div>
 
-  <script src="{% static 'js/app.js' %}"></script>
+  <script src="{% static 'js/app.js' %}?v={% now 'U' %}"></script>
   <script>
     document.querySelectorAll('.sidebar-link').forEach(link => {
       link.addEventListener('click', function () {
@@ -536,6 +541,7 @@
     });
 
     document.addEventListener('DOMContentLoaded', function () {
+      initTheme();
       const lastPage = localStorage.getItem('activePage') || 'dashboard';
       let urlMap = {
         'dashboard': '{% url "clinic:dashboard_partial" %}',

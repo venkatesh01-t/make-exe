@@ -20,6 +20,8 @@ urlpatterns = [
     # Main shell page
     path("users/create/", UserCreateView.as_view(), name="user_create"),
     path("users/edit/<int:pk>/", UserEditView.as_view(), name="user_edit"),
+    path("profile/edit-modal/", ProfileEditModalView.as_view(), name="profile_edit_modal"),
+    path("profile/update/", ProfileUpdateView.as_view(), name="profile_update"),
     path("doctors/list-json/", get_doctors_json, name="doctors_list_json"),
 
     path("login/", HtmxLoginView.as_view(), name="htmx_login"),
