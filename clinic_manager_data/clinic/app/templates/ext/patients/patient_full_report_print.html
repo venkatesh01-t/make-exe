@@ -120,7 +120,7 @@
                     <th class="p-2">Doctor</th>
                     <th class="p-2">Complaint</th>
                     <th class="p-2">Diagnosis</th>
-                    <th class="p-2">Advice</th>
+                    <th class="p-2">Medical History</th>
                     <th class="p-2">Treatment</th>
                     <th class="p-2">Status</th>
                 </tr>
@@ -203,7 +203,7 @@
                     {% endfor %}
                 </ul>
                 {% if rx.advice %}
-                    <p class="mt-2 text-gray-600"><strong>Advice:</strong> {{ rx.advice }}</p>
+                    <p class="mt-2 text-gray-600"><strong>Medical History:</strong> {{ rx.advice }}</p>
                 {% endif %}
             </div>
         </div>
