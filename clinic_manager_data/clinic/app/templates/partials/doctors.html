@@ -193,14 +193,31 @@
 
 
 
-<div id="editDoctorModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+<!-- ==================== EDIT DOCTOR MODAL ==================== -->
+<div id="editDoctorModal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4"
+  onclick="if (event.target === this) closeModal('editDoctorModal')">
 
-  <div class="modal-backdrop absolute inset-0 bg-black/40 backdrop-blur-sm" onclick="closeModal('editDoctorModal')"></div>
+  <div class="modal-backdrop absolute inset-0 bg-slate-900/60 backdrop-blur-xs" onclick="closeModal('editDoctorModal')"></div>
 
-  <div class="modal-content bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl m-4">
+  <div class="modal-content bg-white rounded-3xl w-full max-w-xl shadow-2xl relative z-10 overflow-hidden flex flex-col max-h-[90vh] transition-all">
 
-    <h3 class="text-xl font-bold mb-6 text-gray-800">Edit Doctor</h3>
+    <!-- Header -->
+    <div class="px-5 py-4 border-b border-gray-100 bg-gradient-to-r from-teal-50 to-cyan-50 flex items-center justify-between shrink-0">
+      <div class="flex items-center gap-2.5">
+        <span class="p-2 bg-teal-600 text-white rounded-xl shadow-xs">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+        </span>
+        <div>
+          <h3 class="text-base font-bold text-gray-900">Edit Doctor Profile</h3>
+          <p class="text-xs text-gray-500">Update doctor qualifications, schedule, and signature</p>
+        </div>
+      </div>
+      <button type="button" onclick="closeModal('editDoctorModal')" class="p-2 rounded-xl text-gray-400 hover:text-gray-700 hover:bg-gray-200/60 transition">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
 
+    <!-- Form Content -->
     <form
       hx-post="{% url 'clinic:edit_doctor' %}"
       hx-target="#doctorList"
@@ -208,92 +225,125 @@
       hx-headers='{"X-CSRFToken":"{{csrf_token}}"}'
       enctype="multipart/form-data"
       hx-encoding="multipart/form-data"
-      class="space-y-4">
+      class="flex flex-col flex-1 overflow-hidden">
 
-      <!-- Hidden ID -->
-      <input type="hidden" name="doctor_id" id="editDoctorId">
+      <div class="p-4 sm:p-6 space-y-4 overflow-y-auto flex-1">
 
-      <!-- Doctor Name -->
-      <div>
-        <label class="text-sm font-medium text-gray-700">Doctor Name</label>
-        <input type="text" name="name" id="editDoctorName"
-        class="w-full mt-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 outline-none">
-      </div>
+        <!-- Hidden ID -->
+        <input type="hidden" name="doctor_id" id="editDoctorId">
 
-      <!-- Specialization -->
-      <div>
-        <label class="text-sm font-medium text-gray-700">Specialization</label>
-        <input type="text" name="specialization" id="editDoctorSpecialization"
-        class="w-full mt-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 outline-none">
-      </div>
-
-      <!-- Education -->
-      <div>
-        <label class="text-sm font-medium text-gray-700">Education</label>
-        <input type="text" name="education" id="editDoctorEducation"
-        class="w-full mt-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 outline-none">
-      </div>
-
-      <!-- Signature -->
-      <div>
-        <label class="text-sm font-medium text-gray-700">Signature</label>
-        <input type="file" name="signature" accept="image/*"
-        class="w-full mt-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 outline-none">
-        <img id="editDoctorSignaturePreview" src="" alt="Signature Preview" class="hidden mt-2 h-10 object-contain bg-gray-50 border rounded px-2 py-1">
-        <label id="editDoctorRemoveSignatureWrap" class="hidden mt-2 inline-flex items-center gap-2 text-xs text-red-600 font-medium">
-          <input type="checkbox" name="remove_signature" id="editDoctorRemoveSignature" value="1" class="rounded border-gray-300 text-red-600 focus:ring-red-500">
-          Remove current signature
-        </label>
-        <p class="text-xs text-gray-400 mt-1">Upload a new file to replace current signature.</p>
-      </div>
-
-      <!-- Experience -->
-      <div>
-        <label class="text-sm font-medium text-gray-700">Experience (Years)</label>
-        <input type="number" name="experience" id="editDoctorExperience"
-        class="w-full mt-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 outline-none">
-      </div>
-
-      <!-- Rating -->
-      <div>
-        <label class="text-sm font-medium text-gray-700">Rating</label>
-        <input type="text" name="rating" id="editDoctorRating"
-        class="w-full mt-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 outline-none">
-      </div>
-
-      <!-- Working Days -->
-      <div>
-        <label class="text-sm font-medium text-gray-700">Working Days</label>
-
-        <div class="grid grid-cols-3 gap-2 mt-1 mb-2">
-          <label><input type="checkbox" name="working_days" value="Mon" class="day-checkbox"> Mon</label>
-          <label><input type="checkbox" name="working_days" value="Tue" class="day-checkbox"> Tue</label>
-          <label><input type="checkbox" name="working_days" value="Wed" class="day-checkbox"> Wed</label>
-          <label><input type="checkbox" name="working_days" value="Thu" class="day-checkbox"> Thu</label>
-          <label><input type="checkbox" name="working_days" value="Fri" class="day-checkbox"> Fri</label>
-          <label><input type="checkbox" name="working_days" value="Sat" class="day-checkbox"> Sat</label>
+        <!-- Row 1: Name & Specialization -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          <div>
+            <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Doctor Name <span class="text-red-500">*</span></label>
+            <input type="text" name="name" id="editDoctorName"
+              class="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-gray-800 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition bg-slate-50 focus:bg-white" required>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Specialization <span class="text-red-500">*</span></label>
+            <input type="text" name="specialization" id="editDoctorSpecialization"
+              class="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-gray-800 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition bg-slate-50 focus:bg-white" required>
+          </div>
         </div>
 
-        <div class="flex gap-2 mt-1">
-          <input type="time" name="start_time" id="editDoctorStart"
-          class="flex-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 outline-none">
+        <!-- Row 2: Education & Experience -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          <div>
+            <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Education <span class="text-red-500">*</span></label>
+            <input type="text" name="education" id="editDoctorEducation" placeholder="e.g. B.D.S, M.D.S"
+              class="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-gray-800 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition bg-slate-50 focus:bg-white" required>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Experience (Years)</label>
+            <input type="number" name="experience" id="editDoctorExperience" min="0"
+              class="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-gray-800 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition bg-slate-50 focus:bg-white">
+          </div>
+        </div>
 
-          <input type="time" name="end_time" id="editDoctorEnd"
-          class="flex-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 outline-none">
+        <!-- Row 3: Rating & Signature -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          <div>
+            <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Rating</label>
+            <input type="text" name="rating" id="editDoctorRating" placeholder="4.8"
+              class="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-gray-800 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition bg-slate-50 focus:bg-white">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Signature Image</label>
+            <input type="file" name="signature" accept="image/*"
+              class="w-full border border-gray-200 rounded-xl px-3 py-1.5 text-xs text-gray-800 focus:ring-2 focus:ring-teal-500 outline-none transition bg-gray-50 file:mr-3 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100">
+            
+            <div class="mt-2 flex items-center gap-2">
+              <img id="editDoctorSignaturePreview" src="" alt="Signature Preview" class="hidden h-9 object-contain bg-gray-50 border rounded-lg px-2 py-1">
+              <label id="editDoctorRemoveSignatureWrap" class="hidden inline-flex items-center gap-1.5 text-xs text-rose-600 font-semibold cursor-pointer">
+                <input type="checkbox" name="remove_signature" id="editDoctorRemoveSignature" value="1" class="rounded border-gray-300 text-rose-600 focus:ring-rose-500">
+                Remove current signature
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Working Schedule -->
+        <div class="bg-slate-50/80 rounded-2xl p-4 border border-slate-200/80 space-y-3">
+          <label class="block text-xs font-extrabold text-slate-800 uppercase tracking-wider">Working Schedule</label>
+
+          <div>
+            <p class="text-[11px] font-bold text-slate-500 uppercase mb-1.5">Working Days</p>
+            <div class="flex flex-wrap gap-1.5">
+              <label class="cursor-pointer">
+                <input type="checkbox" name="working_days" value="Mon" class="day-checkbox peer sr-only">
+                <div class="px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-xs font-semibold text-gray-600 peer-checked:bg-teal-600 peer-checked:border-teal-600 peer-checked:text-white transition">Mon</div>
+              </label>
+              <label class="cursor-pointer">
+                <input type="checkbox" name="working_days" value="Tue" class="day-checkbox peer sr-only">
+                <div class="px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-xs font-semibold text-gray-600 peer-checked:bg-teal-600 peer-checked:border-teal-600 peer-checked:text-white transition">Tue</div>
+              </label>
+              <label class="cursor-pointer">
+                <input type="checkbox" name="working_days" value="Wed" class="day-checkbox peer sr-only">
+                <div class="px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-xs font-semibold text-gray-600 peer-checked:bg-teal-600 peer-checked:border-teal-600 peer-checked:text-white transition">Wed</div>
+              </label>
+              <label class="cursor-pointer">
+                <input type="checkbox" name="working_days" value="Thu" class="day-checkbox peer sr-only">
+                <div class="px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-xs font-semibold text-gray-600 peer-checked:bg-teal-600 peer-checked:border-teal-600 peer-checked:text-white transition">Thu</div>
+              </label>
+              <label class="cursor-pointer">
+                <input type="checkbox" name="working_days" value="Fri" class="day-checkbox peer sr-only">
+                <div class="px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-xs font-semibold text-gray-600 peer-checked:bg-teal-600 peer-checked:border-teal-600 peer-checked:text-white transition">Fri</div>
+              </label>
+              <label class="cursor-pointer">
+                <input type="checkbox" name="working_days" value="Sat" class="day-checkbox peer sr-only">
+                <div class="px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-xs font-semibold text-gray-600 peer-checked:bg-teal-600 peer-checked:border-teal-600 peer-checked:text-white transition">Sat</div>
+              </label>
+            </div>
+          </div>
+
+          <div>
+            <p class="text-[11px] font-bold text-slate-500 uppercase mb-1.5">Working Hours</p>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <input type="time" name="start_time" id="editDoctorStart"
+                  class="w-full border border-gray-200 rounded-xl px-3.5 py-2 text-xs sm:text-sm text-gray-800 focus:ring-2 focus:ring-teal-500 outline-none transition bg-white">
+              </div>
+              <div>
+                <input type="time" name="end_time" id="editDoctorEnd"
+                  class="w-full border border-gray-200 rounded-xl px-3.5 py-2 text-xs sm:text-sm text-gray-800 focus:ring-2 focus:ring-teal-500 outline-none transition bg-white">
+              </div>
+            </div>
+          </div>
         </div>
 
       </div>
 
-      <div class="flex gap-3 pt-4">
+      <!-- Footer Action Buttons -->
+      <div class="px-5 py-3.5 border-t border-gray-100 flex items-center justify-end gap-2.5 bg-gray-50 shrink-0">
         <button type="button"
           onclick="closeModal('editDoctorModal')"
-          class="flex-1 py-2 bg-gray-100 text-gray-700 rounded-lg font-bold">
+          class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold text-gray-600 hover:bg-gray-200/70 transition">
           Cancel
         </button>
 
         <button type="submit"
-          class="flex-1 py-2 bg-teal-600 text-white rounded-lg font-bold hover:bg-teal-700">
-          Update
+          class="px-5 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs sm:text-sm font-bold shadow-md transition">
+          Update Doctor
         </button>
       </div>
 

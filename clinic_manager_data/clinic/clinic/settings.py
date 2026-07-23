@@ -134,6 +134,7 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 STATIC_ROOT = Path(os.environ.get('CLINIC_STATIC_ROOT', BASE_DIR / 'staticfiles'))
+STATICFILES_DIRS = []
 
 # Media files (user uploaded)
 MEDIA_URL = '/media/'

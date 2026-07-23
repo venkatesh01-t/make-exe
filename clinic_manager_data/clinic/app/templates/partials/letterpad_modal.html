@@ -1,0 +1,535 @@
+<!-- ==================== LETTERPAD GENERATOR MODAL ==================== -->
+<div id="letterpadModal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4">
+  <div class="bg-white rounded-2xl shadow-2xl border border-slate-100 w-full max-w-7xl overflow-hidden flex flex-col max-h-[92vh] transition-all">
+    
+    <!-- Modal Header -->
+    <div class="px-4 py-3.5 sm:px-5 sm:py-4 bg-gradient-to-r from-slate-900 via-teal-950 to-slate-900 text-white flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-sm flex-shrink-0 relative">
+      <div class="flex items-center gap-2.5 sm:gap-3 pr-8 sm:pr-0">
+        <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-teal-500/20 border border-teal-400/30 flex items-center justify-center text-teal-300 shadow-inner shrink-0">
+          <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6M7 4h8l4 4v12a1 1 0 01-1 1H7a1 1 0 01-1-1V5a1 1 0 011-1z" />
+          </svg>
+        </div>
+        <div>
+          <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
+            <h3 class="text-sm sm:text-base font-bold text-white tracking-wide">Letterpad Generator & Print</h3>
+            <span id="lpPatientBadge" class="bg-teal-500/20 text-teal-300 text-[10px] sm:text-xs font-semibold px-2 py-0.5 rounded-full border border-teal-500/30">
+              Loading Patient...
+            </span>
+          </div>
+          <p class="text-[11px] sm:text-xs text-slate-400 hidden sm:block">Write custom letters with dynamic placeholders & side-by-side A4 preview</p>
+        </div>
+      </div>
+
+      <!-- Header Action Tabs & Close -->
+      <div class="flex items-center justify-between w-full sm:w-auto gap-2">
+        <div class="bg-slate-800/80 p-1 rounded-xl flex items-center border border-slate-700/50 text-xs">
+          <button id="lpTabEditorBtn" onclick="switchLpTab('editor')" class="px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg text-xs font-semibold bg-teal-600 text-white shadow-sm transition">
+            Editor & Preview
+          </button>
+          <button id="lpTabHistoryBtn" onclick="switchLpTab('history')" class="px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white transition">
+            Saved History (<span id="lpHistoryCount">0</span>)
+          </button>
+        </div>
+        <button onclick="closeLetterpadModal()" class="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 transition absolute top-3 right-3 sm:static">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Modal Body -->
+    <div class="flex-1 overflow-y-auto bg-slate-50/50 p-3 sm:p-5">
+      
+      <!-- ================= EDITOR TAB ================= -->
+      <div id="lpTabEditor" class="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5 h-full">
+        
+        <!-- LEFT COLUMN: Controls & Content Editor (5 cols) -->
+        <div class="lg:col-span-5 flex flex-col gap-3.5 sm:gap-4 bg-white p-3.5 sm:p-5 rounded-2xl border border-slate-200/80 shadow-sm">
+          
+          <!-- Template Selector & Title -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Preset Template</label>
+              <select id="lpTemplateSelect" onchange="lpOnTemplateChange(this.value)" class="w-full text-xs font-semibold border border-slate-200 rounded-xl px-3 py-2 text-slate-700 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition">
+                <option value="">-- Custom / Select Preset --</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Doctor Name</label>
+              <input id="lpDoctorNameInput" type="text" placeholder="Dr. Name" oninput="updateLpPreview()" class="w-full text-xs font-semibold border border-slate-200 rounded-xl px-3 py-2 text-slate-700 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
+            <div class="sm:col-span-6">
+              <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Letter Title</label>
+              <input id="lpTitleInput" type="text" placeholder="e.g. MEDICAL FITNESS CERTIFICATE" oninput="updateLpPreview()" class="w-full text-xs font-bold border border-slate-200 rounded-xl px-3 py-2 text-teal-800 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition">
+            </div>
+            <div class="sm:col-span-3">
+              <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">Header Mode</label>
+              <select id="lpHeaderModeSelect" onchange="updateLpPreview()" class="w-full text-xs font-bold border border-teal-200 rounded-xl px-2 py-2 text-teal-800 bg-teal-50/70 focus:bg-white focus:ring-2 focus:ring-teal-500 transition">
+                <option value="full">Show Header</option>
+                <option value="preprinted">Pre-Printed</option>
+              </select>
+            </div>
+            <div class="sm:col-span-3">
+              <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">Page Border</label>
+              <select id="lpBorderStyleSelect" onchange="updateLpPreview()" class="w-full text-xs font-bold border border-teal-200 rounded-xl px-2 py-2 text-teal-800 bg-teal-50/70 focus:bg-white focus:ring-2 focus:ring-teal-500 transition">
+                <option value="dental_frame">✨ Dental Graphic Frame</option>
+                <option value="double">Double Frame</option>
+                <option value="single">Single Line</option>
+                <option value="accent">Side Accents</option>
+                <option value="none">No Border</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Dynamic Tags Pills Toolbar -->
+          <div>
+            <div class="flex items-center justify-between mb-1.5">
+              <label class="text-xs font-bold text-slate-700 uppercase tracking-wider">Quick Key Tags</label>
+              <span class="text-[10px] text-slate-400">Click tag to insert at cursor</span>
+            </div>
+            <div class="flex flex-wrap gap-1.5 p-2 bg-teal-50/60 border border-teal-100 rounded-xl">
+              <button type="button" onclick="insertLpTag('{tab}')" class="px-2.5 py-1 bg-teal-600 hover:bg-teal-700 text-white text-xs font-black rounded-lg shadow-2xs transition flex items-center gap-1">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 5l7 7-7 7M5 5l7 7-7 7"/></svg>
+                {tab} Indent
+              </button>
+              <button type="button" onclick="insertLpTag('{name}')" class="px-2.5 py-1 bg-white hover:bg-teal-600 hover:text-white text-teal-700 text-xs font-bold rounded-lg border border-teal-200/80 shadow-2xs transition">
+                {name}
+              </button>
+              <button type="button" onclick="insertLpTag('{age}')" class="px-2.5 py-1 bg-white hover:bg-teal-600 hover:text-white text-teal-700 text-xs font-bold rounded-lg border border-teal-200/80 shadow-2xs transition">
+                {age}
+              </button>
+              <button type="button" onclick="insertLpTag('{gender}')" class="px-2.5 py-1 bg-white hover:bg-teal-600 hover:text-white text-teal-700 text-xs font-bold rounded-lg border border-teal-200/80 shadow-2xs transition">
+                {gender}
+              </button>
+              <button type="button" onclick="insertLpTag('{date}')" class="px-2.5 py-1 bg-white hover:bg-teal-600 hover:text-white text-teal-700 text-xs font-bold rounded-lg border border-teal-200/80 shadow-2xs transition">
+                {date}
+              </button>
+              <button type="button" onclick="insertLpTag('{doctor}')" class="px-2.5 py-1 bg-white hover:bg-teal-600 hover:text-white text-teal-700 text-xs font-bold rounded-lg border border-teal-200/80 shadow-2xs transition">
+                {doctor}
+              </button>
+              <button type="button" onclick="insertLpTag('{phone}')" class="px-2.5 py-1 bg-white hover:bg-teal-600 hover:text-white text-teal-700 text-xs font-bold rounded-lg border border-teal-200/80 shadow-2xs transition">
+                {phone}
+              </button>
+              <button type="button" onclick="insertLpTag('{email}')" class="px-2.5 py-1 bg-white hover:bg-teal-600 hover:text-white text-teal-700 text-xs font-bold rounded-lg border border-teal-200/80 shadow-2xs transition">
+                {email}
+              </button>
+              <button type="button" onclick="insertLpTag('{medical_history}')" class="px-2.5 py-1 bg-white hover:bg-teal-600 hover:text-white text-teal-700 text-xs font-bold rounded-lg border border-teal-200/80 shadow-2xs transition">
+                {medical_history}
+              </button>
+            </div>
+          </div>
+
+          <!-- Letter Content Textarea -->
+          <div class="flex-1 flex flex-col">
+            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Letter Content</label>
+            <textarea id="lpContentTextarea" oninput="updateLpPreview()" rows="10" placeholder="Write letter content here..." class="w-full flex-1 text-xs sm:text-sm font-medium text-slate-800 border border-slate-200 rounded-xl p-3 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition resize-none leading-relaxed min-h-[140px]"></textarea>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="flex flex-wrap sm:flex-nowrap items-center gap-2 pt-2 border-t border-slate-100">
+            <button id="lpSaveBtn" onclick="saveLpToDb()" class="flex-1 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold py-2.5 px-3 sm:px-4 rounded-xl shadow-sm transition flex items-center justify-center gap-1.5 min-w-[120px]">
+              <svg class="w-4 h-4 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/>
+              </svg>
+              <span>Save to DB</span>
+            </button>
+            <button onclick="printCurrentLp()" class="flex-1 bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white text-xs font-bold py-2.5 px-3 sm:px-4 rounded-xl shadow-md shadow-teal-200 transition flex items-center justify-center gap-1.5 min-w-[130px]">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+              </svg>
+              <span>Print A4 Page</span>
+            </button>
+          </div>
+
+        </div>
+
+        <!-- RIGHT COLUMN: Real-Time Side-by-Side A4 Paper Preview (7 cols) -->
+        <div class="lg:col-span-7 bg-slate-200/70 p-2.5 sm:p-4 rounded-2xl border border-slate-300/80 shadow-inner flex flex-col items-center justify-start overflow-hidden">
+          
+          <div class="w-full flex items-center justify-between mb-2 px-1 gap-2">
+            <div class="flex items-center gap-1.5 sm:gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-teal-500 animate-pulse shrink-0"></span>
+              <span class="text-[11px] sm:text-xs font-extrabold text-slate-700 uppercase tracking-wider">Live A4 Print Preview</span>
+            </div>
+            <button onclick="openLpPrintWindow()" class="text-[11px] sm:text-xs font-semibold text-teal-700 hover:text-teal-900 bg-white hover:bg-teal-50 px-2.5 py-1 rounded-lg border border-teal-200 shadow-2xs transition flex items-center gap-1 shrink-0">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+              </svg>
+              <span>Open Full Print Page</span>
+            </button>
+          </div>
+
+          <!-- Real-Time Exact A4 Printer Output IFrame Preview -->
+          <div class="w-full bg-slate-300/80 rounded-2xl shadow-inner flex justify-center items-start pt-2 sm:pt-3 pb-2 px-1 sm:px-2 overflow-hidden min-h-[440px] sm:min-h-[620px]">
+            <div class="w-[210mm] min-w-[210mm] h-[297mm] origin-top transform scale-[0.36] min-[380px]:scale-[0.42] min-[480px]:scale-[0.48] sm:scale-[0.55] lg:scale-[0.54] xl:scale-[0.58] -mb-[182mm] min-[380px]:-mb-[162mm] min-[480px]:-mb-[145mm] sm:-mb-[128mm] shadow-2xl rounded-sm overflow-hidden bg-white shrink-0">
+              <iframe id="lpA4PreviewIframe" src="about:blank" class="w-[210mm] h-[297mm] border-0 overflow-hidden" scrolling="no"></iframe>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- ================= SAVED HISTORY TAB ================= -->
+      <div id="lpTabHistory" class="hidden bg-white p-5 rounded-2xl border border-slate-200 shadow-sm min-h-[450px]">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h4 class="text-sm font-bold text-slate-800">Saved Letterpads for Patient</h4>
+            <p class="text-xs text-slate-500">View, edit, or re-print previously generated letterpads</p>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs text-slate-600">
+            <thead class="bg-slate-50 text-slate-500 font-bold uppercase tracking-wider border-b border-slate-200">
+              <tr>
+                <th class="py-3 px-4">Title</th>
+                <th class="py-3 px-4">Doctor</th>
+                <th class="py-3 px-4">Created Date</th>
+                <th class="py-3 px-4">Created By</th>
+                <th class="py-3 px-4 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="lpHistoryTableBody" class="divide-y divide-slate-100">
+              <tr>
+                <td colspan="5" class="text-center py-8 text-slate-400 font-medium">No saved letterpads found.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+<script>
+  let currentLpData = {
+    patient: null,
+    clinic: null,
+    templates: [],
+    history: [],
+    currentLetterpadId: null
+  };
+
+  function openLetterpadModal(patientId) {
+    if (!patientId) return;
+    
+    document.getElementById('letterpadModal').classList.remove('hidden');
+    document.getElementById('lpPatientBadge').innerText = "Loading Patient...";
+
+    const apiUrl = `/letterpad/patient/${patientId}/data/`;
+    fetch(apiUrl)
+      .then(res => {
+        if (!res.ok) {
+          return fetch(`/clinic/letterpad/patient/${patientId}/data/`).then(r => r.json());
+        }
+        return res.json();
+      })
+      .then(res => {
+        if (res.success) {
+          currentLpData.patient = res.data.patient;
+          currentLpData.clinic = res.data.clinic;
+          currentLpData.templates = res.data.templates;
+          currentLpData.history = res.data.history;
+          currentLpData.currentLetterpadId = null;
+
+          // Set Patient Badge
+          document.getElementById('lpPatientBadge').innerText = `${res.data.patient.name} (#PAT-${res.data.patient.id})`;
+          document.getElementById('lpHistoryCount').innerText = res.data.history.length;
+
+          // Doctor name default
+          const defaultDoc = res.data.patient.doctor || res.data.clinic.doctor_name || "";
+          document.getElementById('lpDoctorNameInput').value = defaultDoc;
+
+          // Populate Templates dropdown
+          const select = document.getElementById('lpTemplateSelect');
+          select.innerHTML = '<option value="">-- Select Preset Template --</option>';
+          res.data.templates.forEach(t => {
+            select.innerHTML += `<option value="${t.id}">${t.name}</option>`;
+          });
+
+          // Set default template (Medical Fitness Certificate)
+          if (res.data.templates.length > 0) {
+            select.value = res.data.templates[0].id;
+            lpOnTemplateChange(res.data.templates[0].id);
+          }
+
+          // Render History Table
+          renderLpHistoryTable();
+
+          // Render Live Preview
+          updateLpPreview();
+        } else {
+          alert('Error loading patient data: ' + (res.error || 'Unknown error'));
+        }
+      })
+      .catch(err => console.error('Letterpad modal error:', err));
+  }
+
+  function closeLetterpadModal() {
+    document.getElementById('letterpadModal').classList.add('hidden');
+  }
+
+  function switchLpTab(tab) {
+    const editorTab = document.getElementById('lpTabEditor');
+    const historyTab = document.getElementById('lpTabHistory');
+    const editorBtn = document.getElementById('lpTabEditorBtn');
+    const historyBtn = document.getElementById('lpTabHistoryBtn');
+
+    if (tab === 'editor') {
+      editorTab.classList.remove('hidden');
+      historyTab.classList.add('hidden');
+      editorBtn.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-teal-600 text-white shadow-sm transition';
+      historyBtn.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white transition';
+    } else {
+      editorTab.classList.add('hidden');
+      historyTab.classList.remove('hidden');
+      historyBtn.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-teal-600 text-white shadow-sm transition';
+      editorBtn.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white transition';
+    }
+  }
+
+  function lpOnTemplateChange(tmplId) {
+    if (!tmplId) return;
+    const tmpl = currentLpData.templates.find(t => t.id === tmplId);
+    if (tmpl) {
+      document.getElementById('lpTitleInput').value = tmpl.title;
+      document.getElementById('lpContentTextarea').value = tmpl.content;
+      currentLpData.currentLetterpadId = null; // reset if new template selected
+      updateLpPreview();
+    }
+  }
+
+  function insertLpTag(tag) {
+    const textarea = document.getElementById('lpContentTextarea');
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const text = textarea.value;
+    
+    textarea.value = text.substring(0, start) + tag + text.substring(end);
+    textarea.selectionStart = textarea.selectionEnd = start + tag.length;
+    textarea.focus();
+    updateLpPreview();
+  }
+
+  function parseLpText(rawText) {
+    if (!rawText) return "";
+    const p = currentLpData.patient || {};
+    const c = currentLpData.clinic || {};
+    const doctorName = document.getElementById('lpDoctorNameInput').value || c.doctor_name || "Doctor";
+    const todayStr = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+    let parsed = rawText;
+    parsed = parsed.replace(/\{name\}/gi, p.name || "");
+    parsed = parsed.replace(/\{age\}/gi, p.age !== undefined ? p.age : "");
+    parsed = parsed.replace(/\{gender\}/gi, p.gender || "");
+    parsed = parsed.replace(/\{date\}/gi, todayStr);
+    parsed = parsed.replace(/\{doctor\}/gi, doctorName);
+    parsed = parsed.replace(/\{phone\}/gi, p.phone || "");
+    parsed = parsed.replace(/\{email\}/gi, p.email || "");
+    parsed = parsed.replace(/\{medical_history\}|\{history\}/gi, p.medical_history || "N/A");
+    parsed = parsed.replace(/\{clinic_name\}/gi, c.name || "");
+    parsed = parsed.replace(/\{reg_no\}/gi, c.reg_no || "");
+
+    return parsed;
+  }
+
+  let lpPreviewDebounceTimer = null;
+  function updateLpPreview() {
+    const p = currentLpData.patient || {};
+    if (!p.id) return;
+    const c = currentLpData.clinic || {};
+    const doctorName = encodeURIComponent(document.getElementById('lpDoctorNameInput').value.trim() || c.doctor_name || "Doctor");
+    const title = encodeURIComponent(document.getElementById('lpTitleInput').value.trim() || "LETTERPAD");
+    const content = encodeURIComponent(document.getElementById('lpContentTextarea').value.trim() || "");
+    const headerMode = document.getElementById('lpHeaderModeSelect').value;
+    const borderStyle = document.getElementById('lpBorderStyleSelect').value;
+    const hideHeader = headerMode === 'preprinted' ? '1' : '0';
+
+    clearTimeout(lpPreviewDebounceTimer);
+    lpPreviewDebounceTimer = setTimeout(() => {
+      const iframe = document.getElementById('lpA4PreviewIframe');
+      if (iframe) {
+        const printUrl = `/letterpad/print/?patient_id=${p.id}&title=${title}&doctor_name=${doctorName}&content=${content}&hide_header=${hideHeader}&border_style=${borderStyle}&preview_mode=1`;
+        iframe.src = printUrl;
+      }
+    }, 120);
+  }
+
+  function saveLpToDb() {
+    if (!currentLpData.patient) return;
+
+    const title = document.getElementById('lpTitleInput').value.trim();
+    const content = document.getElementById('lpContentTextarea').value.trim();
+    const doctorName = document.getElementById('lpDoctorNameInput').value.trim();
+    const tmplSelect = document.getElementById('lpTemplateSelect').value;
+
+    if (!content) {
+      alert("Please write content before saving.");
+      return;
+    }
+
+    const btn = document.getElementById('lpSaveBtn');
+    btn.disabled = true;
+    btn.innerHTML = `<span>Saving...</span>`;
+
+    const headerMode = document.getElementById('lpHeaderModeSelect').value;
+    const borderStyle = document.getElementById('lpBorderStyleSelect').value;
+    const hideHeader = headerMode === 'preprinted' ? '1' : '0';
+
+    fetch('/letterpad/save/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken')
+      },
+      body: JSON.stringify({
+        patient_id: currentLpData.patient.id,
+        letterpad_id: currentLpData.currentLetterpadId,
+        title: title || 'Medical Letter',
+        template_type: tmplSelect || 'General',
+        content: content,
+        doctor_name: doctorName,
+        border_style: borderStyle,
+        hide_header: hideHeader
+      })
+    })
+    .then(res => res.json())
+    .then(res => {
+      btn.disabled = false;
+      btn.innerHTML = `<svg class="w-4 h-4 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg><span>Save to DB</span>`;
+
+      if (res.success) {
+        alert(res.message);
+        currentLpData.currentLetterpadId = res.letterpad.id;
+
+        if (typeof loadPatientLetterpadHistory === 'function') {
+          loadPatientLetterpadHistory();
+        }
+      } else {
+        alert("Failed to save: " + (res.error || "Unknown error"));
+      }
+    })
+    .catch(err => {
+      btn.disabled = false;
+      btn.innerHTML = `<span>Save to DB</span>`;
+      console.error(err);
+    });
+  }
+
+  function renderLpHistoryTable() {
+    const tbody = document.getElementById('lpHistoryTableBody');
+    if (!currentLpData.history || currentLpData.history.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="5" class="text-center py-8 text-slate-400 font-medium">No saved letterpads found for this patient.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = currentLpData.history.map(lp => `
+      <tr class="hover:bg-slate-50 transition">
+        <td class="py-3 px-4 font-bold text-slate-800">${lp.title}</td>
+        <td class="py-3 px-4 font-medium text-slate-600">${lp.doctor_name || '-'}</td>
+        <td class="py-3 px-4 text-slate-500">${lp.created_at}</td>
+        <td class="py-3 px-4 text-slate-500">${lp.created_by}</td>
+        <td class="py-3 px-4 text-right flex items-center justify-end gap-2">
+          <button onclick="loadLpFromHistory(${lp.id})" class="px-2.5 py-1 bg-teal-50 text-teal-700 hover:bg-teal-600 hover:text-white font-bold rounded-lg border border-teal-200 transition">
+            Load / Edit
+          </button>
+          <button onclick="printLpById(${lp.id})" class="px-2.5 py-1 bg-slate-900 text-white hover:bg-slate-800 font-bold rounded-lg transition">
+            Print A4
+          </button>
+          <button onclick="deleteLpFromHistory(${lp.id})" class="px-2 py-1 text-red-600 hover:bg-red-50 font-bold rounded-lg transition">
+            Delete
+          </button>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  function loadLpFromHistory(lpId) {
+    const lp = currentLpData.history.find(h => h.id === lpId);
+    if (lp) {
+      currentLpData.currentLetterpadId = lp.id;
+      document.getElementById('lpTitleInput').value = lp.title;
+      document.getElementById('lpContentTextarea').value = lp.content;
+      document.getElementById('lpDoctorNameInput').value = lp.doctor_name || "";
+      switchLpTab('editor');
+      updateLpPreview();
+    }
+  }
+
+  function deleteLpFromHistory(lpId) {
+    if (!confirm("Are you sure you want to delete this saved letterpad?")) return;
+    
+    fetch(`/letterpad/${lpId}/delete/`, {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': getCookie('csrftoken')
+      }
+    })
+    .then(res => res.json())
+    .then(res => {
+      if (res.success) {
+        openLetterpadModal(currentLpData.patient.id);
+      } else {
+        alert("Failed to delete: " + res.error);
+      }
+    });
+  }
+
+  function openLpPrintWindow() {
+    if (!currentLpData.patient) return;
+    const title = encodeURIComponent(document.getElementById('lpTitleInput').value.trim());
+    const docName = encodeURIComponent(document.getElementById('lpDoctorNameInput').value.trim());
+    const content = encodeURIComponent(document.getElementById('lpContentTextarea').value.trim());
+    const headerMode = document.getElementById('lpHeaderModeSelect').value;
+    const borderStyle = document.getElementById('lpBorderStyleSelect').value;
+    const hideHeader = headerMode === 'preprinted' ? '1' : '0';
+    
+    const url = `/letterpad/print/?patient_id=${currentLpData.patient.id}&title=${title}&doctor_name=${docName}&content=${content}&hide_header=${hideHeader}&border_style=${borderStyle}`;
+    window.open(url, '_blank');
+  }
+
+  function printCurrentLp() {
+    if (!currentLpData.patient) return;
+    const title = encodeURIComponent(document.getElementById('lpTitleInput').value.trim());
+    const docName = encodeURIComponent(document.getElementById('lpDoctorNameInput').value.trim());
+    const content = encodeURIComponent(document.getElementById('lpContentTextarea').value.trim());
+    const headerMode = document.getElementById('lpHeaderModeSelect').value;
+    const borderStyle = document.getElementById('lpBorderStyleSelect').value;
+    const hideHeader = headerMode === 'preprinted' ? '1' : '0';
+    
+    const url = `/letterpad/print/?patient_id=${currentLpData.patient.id}&title=${title}&doctor_name=${docName}&content=${content}&hide_header=${hideHeader}&border_style=${borderStyle}&auto_print=1`;
+    window.open(url, '_blank');
+  }
+
+  function printLpById(lpId) {
+    const headerMode = document.getElementById('lpHeaderModeSelect').value;
+    const borderStyle = document.getElementById('lpBorderStyleSelect').value;
+    const hideHeader = headerMode === 'preprinted' ? '1' : '0';
+    const url = `/letterpad/print/${lpId}/?hide_header=${hideHeader}&border_style=${borderStyle}&auto_print=1`;
+    window.open(url, '_blank');
+  }
+
+  // Helper function for Django CSRF Token
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+</script>

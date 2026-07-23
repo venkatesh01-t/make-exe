@@ -1,0 +1,613 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ title }} - Letterpad Print</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: #f1f5f9;
+      color: #1e293b;
+      line-height: 1.6;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+
+    /* Action bar for manual print */
+    .no-print-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: #0f172a;
+      color: #fff;
+      padding: 12px 24px;
+      display: flex;
+      justify: space-between;
+      align-items: center;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      z-index: 9999;
+    }
+    .no-print-bar h2 {
+      font-size: 15px;
+      font-weight: 600;
+      color: #f8fafc;
+    }
+    .no-print-bar .btn-group {
+      display: flex;
+      gap: 10px;
+    }
+    .no-print-bar button {
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-print {
+      background: #0d9488;
+      color: white;
+    }
+    .btn-print:hover {
+      background: #0f766e;
+    }
+    .btn-close {
+      background: #334155;
+      color: white;
+    }
+    .btn-close:hover {
+      background: #475569;
+    }
+
+    /* Container holding the A4 paper */
+    .a4-container {
+      padding-top: 70px;
+      padding-bottom: 40px;
+      display: flex;
+      justify-content: center;
+    }
+
+    {% if preview_mode %}
+    body {
+      background: transparent !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      overflow: hidden !important;
+    }
+    .a4-container {
+      padding: 0 !important;
+      margin: 0 !important;
+    }
+    {% endif %}
+
+    /* A4 Paper Dimensions */
+    .a4-page {
+      width: 210mm;
+      height: 297mm;
+      min-height: 297mm;
+      background: #ffffff;
+      padding: 15mm 16mm 16mm 16mm;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      box-sizing: border-box;
+    }
+
+    /* Decorative Professional A4 Border Frame Styles */
+    .a4-page.border-double {
+      border: 2px solid #0d9488;
+      outline: 1px solid #94a3b8;
+      outline-offset: -5px;
+    }
+
+    .a4-page.border-single {
+      border: 1.5px solid #0d9488;
+    }
+
+    .a4-page.border-accent {
+      border-top: 5px solid #0d9488;
+      border-left: 5px solid #0f766e;
+      border-bottom: 5px solid #0d9488;
+      border-right: 1px solid #e2e8f0;
+    }
+
+    .a4-page.border-none {
+      border: none;
+    }
+
+    /* Dental Graphic Frame Style (Cyan frame with rounded inner white card & tooth emblem) */
+    .a4-page.border-dental_frame {
+      background: #38bdf8 !important;
+      padding: 12mm 10mm 10mm 10mm !important;
+      border: none !important;
+      outline: none !important;
+      position: relative !important;
+    }
+    .inner-canvas {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      box-sizing: border-box;
+    }
+    .a4-page.border-dental_frame .inner-canvas {
+      background: #ffffff !important;
+      border-radius: 18px !important;
+      padding: 10mm 14mm 12mm 14mm !important;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.06) !important;
+      position: relative !important;
+    }
+    .tooth-badge {
+      display: none;
+    }
+    .a4-page.border-dental_frame .tooth-badge {
+      display: block;
+      position: absolute;
+      top: 2mm;
+      right: 2mm;
+      z-index: 50;
+      pointer-events: none;
+    }
+
+    /* Header Styling */
+    .header-section {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding-bottom: 16px;
+      border-bottom: 2.5px solid #0d9488;
+    }
+    .brand-col {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .brand-logo {
+      width: 65px;
+      height: 65px;
+      object-fit: contain;
+      border-radius: 10px;
+      background: #f8fafc;
+      padding: 4px;
+      border: 1px solid #e2e8f0;
+    }
+    .clinic-title {
+      font-size: 22px;
+      font-weight: 800;
+      color: #0f766e;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+    }
+    .doctor-name-tag {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: #1e293b;
+      margin-top: 3px;
+    }
+    .doctor-spec {
+      font-size: 11.5px;
+      color: #64748b;
+      font-weight: 500;
+    }
+    .clinic-info-col {
+      text-align: right;
+      font-size: 11.5px;
+      color: #475569;
+      line-height: 1.5;
+    }
+    .clinic-info-col strong {
+      color: #0f172a;
+    }
+    .badge-reg {
+      display: inline-block;
+      background: #ccfbf1;
+      color: #0f766e;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 10.5px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    /* Patient Details Header Bar */
+    .patient-bar {
+      margin-top: 18px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-left: 4px solid #0d9488;
+      border-radius: 8px;
+      padding: 10px 16px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+    .patient-bar-item {
+      display: flex;
+      flex-direction: column;
+    }
+    .patient-bar-label {
+      font-size: 10px;
+      font-weight: 700;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .patient-bar-val {
+      font-size: 12.5px;
+      font-weight: 700;
+      color: #0f172a;
+      margin-top: 2px;
+    }
+
+    /* Letter Title */
+    .letter-title {
+      margin-top: 28px;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    .letter-title h1 {
+      font-size: 17px;
+      font-weight: 800;
+      color: #0f766e;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      display: inline-block;
+      padding-bottom: 4px;
+      border-bottom: 2px dashed #0d9488;
+    }
+
+    /* Center Content Body */
+    .letter-content {
+      flex: 1;
+      font-size: 14px;
+      color: #1e293b;
+      line-height: 1.85;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      tab-size: 4;
+      padding: 12px 18px 24px 18px;
+      margin-bottom: 16px;
+      min-height: 200px;
+      font-weight: 400;
+      letter-spacing: 0.01em;
+    }
+
+    /* Footer Section */
+    .footer-section {
+      margin-top: auto;
+      padding-top: 16px;
+      border-top: 1.5px solid #cbd5e1;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      width: 100%;
+    }
+    .footer-notes {
+      font-size: 10.5px;
+      color: #94a3b8;
+      max-width: 55%;
+      line-height: 1.4;
+    }
+    .signatory-box {
+      text-align: center;
+      min-width: 180px;
+    }
+    .signature-img {
+      max-height: 45px;
+      object-fit: contain;
+      margin-bottom: 6px;
+    }
+    .signature-line {
+      width: 160px;
+      height: 1px;
+      background: #cbd5e1;
+      margin: 0 auto 8px auto;
+    }
+    .signatory-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: #0f172a;
+    }
+    .signatory-title {
+      font-size: 11px;
+      color: #64748b;
+      font-weight: 500;
+    }
+
+    /* Printable Page Break & Exact A4 Height Rules */
+    @media print {
+      html, body {
+        width: 210mm !important;
+        height: 297mm !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #ffffff !important;
+        overflow: hidden !important;
+      }
+      .no-print-bar {
+        display: none !important;
+      }
+      .a4-container {
+        padding: 0 !important;
+        margin: 0 !important;
+        width: 210mm !important;
+        height: 297mm !important;
+      }
+      .a4-page {
+        width: 210mm !important;
+        height: 297mm !important;
+        min-height: 297mm !important;
+        max-height: 297mm !important;
+        box-shadow: none !important;
+        padding: 12mm 15mm 15mm 15mm !important;
+        margin: 0 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: space-between !important;
+        box-sizing: border-box !important;
+        page-break-after: avoid !important;
+        page-break-inside: avoid !important;
+      }
+      @page {
+        size: A4 portrait;
+        margin: 0;
+      }
+    }
+
+    /* Mobile Responsive Media Query for standalone page */
+    @media screen and (max-width: 767px) {
+      .no-print-bar {
+        padding: 10px 14px;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+      }
+      .no-print-bar-header {
+        flex-direction: column;
+        align-items: flex-start !important;
+        gap: 8px !important;
+        width: 100%;
+      }
+      .no-print-bar-controls {
+        flex-wrap: wrap;
+        width: 100%;
+      }
+      .no-print-bar .btn-group {
+        width: 100%;
+        justify-content: flex-end;
+      }
+      {% if not preview_mode %}
+      .a4-container {
+        padding-top: 135px;
+        padding-left: 6px;
+        padding-right: 6px;
+        padding-bottom: 20px;
+        overflow-x: auto;
+      }
+      .a4-page {
+        max-width: 100% !important;
+        width: 100% !important;
+        height: auto !important;
+        min-height: auto !important;
+        padding: 8mm 6mm 8mm 6mm !important;
+      }
+      .a4-page.border-dental_frame {
+        padding: 6mm 4mm 6mm 4mm !important;
+      }
+      .a4-page.border-dental_frame .inner-canvas {
+        padding: 6mm 8mm 8mm 8mm !important;
+        border-radius: 12px !important;
+      }
+      {% endif %}
+      .header-section {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+      }
+      .clinic-info-col {
+        text-align: left !important;
+        font-size: 11px !important;
+      }
+      .patient-bar {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 8px !important;
+        padding: 8px 10px !important;
+      }
+      .patient-bar-item {
+        font-size: 11px !important;
+      }
+      .letter-title {
+        font-size: 14px !important;
+        letter-spacing: 1px !important;
+      }
+      .letter-content {
+        font-size: 12px !important;
+        line-height: 1.6 !important;
+      }
+      .sign-section {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  {% if not preview_mode %}
+  <!-- Top bar for digital viewing -->
+  <div class="no-print-bar">
+    <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+      <h2>📄 Letterpad A4 Preview - {{ title }}</h2>
+      <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:#cbd5e1;">
+        <label for="printBorderSelect">Page Border:</label>
+        <select id="printBorderSelect" onchange="updatePrintPageSettings()" style="background:#1e293b;color:#f8fafc;border:1px solid #475569;padding:5px 10px;border-radius:8px;font-size:12px;outline:none;cursor:pointer;">
+          <option value="dental_frame" {% if border_style == 'dental_frame' %}selected{% endif %}>Dental Graphic Frame</option>
+          <option value="double" {% if border_style == 'double' %}selected{% endif %}>Double Line Frame</option>
+          <option value="single" {% if border_style == 'single' %}selected{% endif %}>Single Line Frame</option>
+          <option value="accent" {% if border_style == 'accent' %}selected{% endif %}>Side Accents</option>
+          <option value="none" {% if border_style == 'none' %}selected{% endif %}>No Border Frame</option>
+        </select>
+
+        <label for="printHeaderSelect" style="margin-left:8px;">Header Mode:</label>
+        <select id="printHeaderSelect" onchange="updatePrintPageSettings()" style="background:#1e293b;color:#f8fafc;border:1px solid #475569;padding:5px 10px;border-radius:8px;font-size:12px;outline:none;cursor:pointer;">
+          <option value="0" {% if not hide_header %}selected{% endif %}>Full Clinic Header</option>
+          <option value="1" {% if hide_header %}selected{% endif %}>Pre-printed Paper (Hide Header)</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="btn-group">
+      <button onclick="window.print()" class="btn-print">
+        <svg style="width:16px;height:16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+        </svg>
+        Print / Save PDF
+      </button>
+      <button onclick="window.close()" class="btn-close">Close</button>
+    </div>
+  </div>
+
+  <script>
+    function updatePrintPageSettings() {
+      const border = document.getElementById('printBorderSelect').value;
+      const hideHeader = document.getElementById('printHeaderSelect').value;
+      const url = new URL(window.location.href);
+      url.searchParams.set('border_style', border);
+      url.searchParams.set('hide_header', hideHeader);
+      window.location.href = url.toString();
+    }
+  </script>
+  {% endif %}
+
+  <div class="a4-container">
+    <div class="a4-page border-{{ border_style|default:'double' }}">
+      
+      <!-- Dental Frame Tooth Emblem Badge -->
+      <div class="tooth-badge">
+        <img src="{% static 'images/dental_logo.svg' %}" alt="Dental Emblem" style="width:20mm;height:20mm;object-fit:contain;">
+      </div>
+
+      <div class="inner-canvas">
+        <div>
+          {% if hide_header %}
+          <!-- Reserved static blank top space for pre-printed letterhead paper -->
+          <div style="height: 35mm; width: 100%;"></div>
+          {% else %}
+          <!-- Static Fixed Clinic Header -->
+          <div class="header-section">
+            <div class="brand-col">
+              {% if clinic.logo %}
+                <img src="{{ clinic.logo.url }}" alt="Clinic Logo" class="brand-logo">
+              {% else %}
+                <img src="{% static 'images/dental_logo.svg' %}" alt="Clinic Logo" class="brand-logo">
+              {% endif %}
+              <div>
+                <div class="clinic-title">{{ clinic.clinic_name|default:"DENTAL & MEDICAL CLINIC" }}</div>
+                <div class="doctor-name-tag">
+                  Dr. {{ doctor_name|default:clinic.doctor_name|default:"Doctor" }}{% if doctor_education %}<span style="font-size:13px;font-weight:700;color:#0d9488;margin-left:6px;"> {{ doctor_education }}</span>{% endif %}
+                </div>
+                <div class="doctor-spec">{{ doctor_specialist|default:clinic.doctor_specialist|default:"Dental Surgeon & Healthcare Consultant" }}</div>
+              </div>
+            </div>
+            <div class="clinic-info-col">
+              {% if clinic.reg_no %}
+                <span class="badge-reg">Reg No: {{ clinic.reg_no }}</span><br>
+              {% endif %}
+              <strong>Phone:</strong> {{ clinic.phone|default:"N/A" }}<br>
+              <strong>Email:</strong> {{ clinic.email|default:"N/A" }}<br>
+              {% if clinic.address %}
+                <strong>Address:</strong> {{ clinic.address }}
+              {% endif %}
+            </div>
+          </div>
+          {% endif %}
+
+          <!-- Patient Details Bar -->
+          {% if patient %}
+          <div class="patient-bar">
+            <div class="patient-bar-item">
+              <span class="patient-bar-label">Patient Name</span>
+              <span class="patient-bar-val">{{ patient.first_name }} {{ patient.last_name|default_if_none:"" }}</span>
+            </div>
+            <div class="patient-bar-item">
+              <span class="patient-bar-label">Age / Gender</span>
+              <span class="patient-bar-val">{{ patient.age|default:"--" }} Yrs / {{ patient.gender|default:"--" }}</span>
+            </div>
+            <div class="patient-bar-item">
+              <span class="patient-bar-label">Phone</span>
+              <span class="patient-bar-val">{{ patient.phone|default:"--" }}</span>
+            </div>
+            <div class="patient-bar-item">
+              <span class="patient-bar-label">Date</span>
+              <span class="patient-bar-val">{{ date_formatted }}</span>
+            </div>
+          </div>
+          {% endif %}
+
+          <!-- Letter Title -->
+          <div class="letter-title">
+            <h1>{{ title }}</h1>
+          </div>
+
+          <!-- Center Content -->
+          <div class="letter-content">{{ parsed_content }}</div>
+        </div>
+
+        <!-- Footer Section -->
+        <div class="footer-section">
+          <div class="footer-notes">
+            * This is an official medical document issued by {{ clinic.clinic_name|default:"the Clinic" }}.<br>
+            * System Generated Report | Date: {{ date_formatted }}
+          </div>
+          <div class="signatory-box">
+            {% if doctor_signature_url %}
+              <br>
+            {% elif doctor_obj and doctor_obj.signature %}
+              <img src="{{ doctor_obj.signature.url }}" alt="Doctor Signature" class="signature-img"><br>
+            {% else %}
+              <div style="height: 35px;"></div>
+            {% endif %}
+            <div class="signature-line"></div>
+            <div class="signatory-name">
+              Dr. {{ doctor_name|default:clinic.doctor_name|default:"Authorized Doctor" }}{% if doctor_education %}<span style="font-size:11px;font-weight:700;color:#0d9488;margin-left:4px;"> {{ doctor_education }}</span>{% endif %}
+            </div>
+            <div class="signatory-title">{{ doctor_specialist|default:"Authorized Signatory" }}</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // Auto-trigger print if query param auto_print=1 is present
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('auto_print') === '1') {
+      window.onload = function() {
+        setTimeout(function() {
+          window.print();
+        }, 300);
+      };
+    }
+  </script>
+
+</body>
+</html>

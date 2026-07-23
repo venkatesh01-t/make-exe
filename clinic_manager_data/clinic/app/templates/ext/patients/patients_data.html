@@ -73,7 +73,7 @@
         </svg>
         <span class="tp-lbl">Add Today</span>
       </button>
-
+      {% if user.custom_permissions == "admin" or user.custom_permissions == "doctor" %}
       <!-- Patient History -->
       <button type="button" onclick="openPatientHistoryModal('{{ patient.id }}', '{{ patient.name|escapejs }}')"
         class="tp-btn tp-hist"
@@ -95,6 +95,16 @@
         <span class="tp-lbl">Report</span>
       </button>
 
+      <!-- Letterpad -->
+      <button type="button" onclick="openLetterpadModal('{{ patient.id }}')"
+        class="tp-btn text-teal-700 bg-teal-50 hover:bg-teal-100 hover:text-teal-800 border border-teal-200"
+        title="Letterpad Generator">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6M7 4h8l4 4v12a1 1 0 01-1 1H7a1 1 0 01-1-1V5a1 1 0 011-1z" />
+        </svg>
+        <span class="tp-lbl">Letterpad</span>
+      </button>
+{% endif %}
       <!-- Schedule -->
       <button type="button" onclick="openPatientAppointmentModal('{{ patient.name|escapejs }}')"
         class="tp-btn tp-sched"

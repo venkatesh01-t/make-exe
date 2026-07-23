@@ -346,3 +346,22 @@ class BillingInvoice(models.Model):
             next_no = (last.id + 1) if last else 1
             self.invoice_number = f"INV-{prefix}-{next_no:04d}"
         super().save(*args, **kwargs)
+
+
+class Letterpad(models.Model):
+    patient = models.ForeignKey('Patient', on_delete=models.CASCADE, related_name='letterpads')
+    title = models.CharField(max_length=255, default="Medical Letter")
+    template_type = models.CharField(max_length=100, default="General")
+    content = models.TextField()
+    doctor_name = models.CharField(max_length=255, blank=True, null=True)
+    border_style = models.CharField(max_length=50, default="dental_frame")
+    hide_header = models.BooleanField(default=False)
+    created_by = models.ForeignKey('CustomUser', on_delete=models.SET_NULL, null=True, blank=True, related_name='created_letterpads')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Letterpad #{self.id} - {self.title} ({self.patient})"

@@ -11,6 +11,7 @@ from .inventory_views import *
 from .labwork_views import *
 from .today_patient import *
 from .medication_views import *
+from .letterpad_views import *
 from .patient_uploads_api import PatientFileDetailAPIView
 from .notification_views import notifications_dropdown, all_notifications_modal
 
@@ -145,6 +146,18 @@ urlpatterns = [
     path('clinic/api/patient/<int:patient_id>/uploads/', PatientFilesAPIView.as_view(), name='api_patient_uploads_compat'),
     path('api/file/<int:file_id>/detail/', PatientFileDetailAPIView.as_view(), name='api_file_detail'),
     
+    # Letterpad Endpoints
+    path('letterpad/patient/<int:patient_id>/data/', LetterpadPatientDataView.as_view(), name='letterpad_patient_data'),
+    path('clinic/letterpad/patient/<int:patient_id>/data/', LetterpadPatientDataView.as_view(), name='letterpad_patient_data_compat'),
+    path('letterpad/save/', LetterpadSaveView.as_view(), name='letterpad_save'),
+    path('clinic/letterpad/save/', LetterpadSaveView.as_view(), name='letterpad_save_compat'),
+    path('letterpad/<int:letterpad_id>/delete/', LetterpadDeleteView.as_view(), name='letterpad_delete'),
+    path('clinic/letterpad/<int:letterpad_id>/delete/', LetterpadDeleteView.as_view(), name='letterpad_delete_compat'),
+    path('letterpad/print/<int:letterpad_id>/', LetterpadPrintView.as_view(), name='letterpad_print'),
+    path('clinic/letterpad/print/<int:letterpad_id>/', LetterpadPrintView.as_view(), name='letterpad_print_compat'),
+    path('letterpad/print/', LetterpadPrintView.as_view(), name='letterpad_print_raw'),
+    path('clinic/letterpad/print/', LetterpadPrintView.as_view(), name='letterpad_print_raw_compat'),
+
     # Test error pages (remove in production)
     path('test-404/', test_404_page, name='test_404'),
     path('test-500/', test_500_page, name='test_500'),
